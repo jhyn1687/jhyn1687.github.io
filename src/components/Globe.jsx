@@ -12,6 +12,8 @@ function Earth() {
   }, []);
 
   return (
+    <div>
+      
     <Globe
       ref={globeEl}
       height={window.innerHeight}
@@ -19,6 +21,7 @@ function Earth() {
       backgroundColor="rgba(0,0,0,0)"
       globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
     />
+    </div>
   )
 }
 
