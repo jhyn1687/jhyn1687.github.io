@@ -1,12 +1,10 @@
-import Earth from "./Globe";
+import Earth from "./Earth";
 import {
   AiFillGithub as Github,
   AiFillLinkedin as LinkedIn,
-  AiFillCaretDown as Down
+  AiFillCaretDown as Down,
 } from "react-icons/ai";
-import {
-  Link
-} from "react-scroll";
+import { Link } from "react-scroll";
 
 function Home() {
   return (
@@ -28,14 +26,22 @@ function Home() {
           />
         </svg>
         <div className="flex-col">
-          <p>Hey there! I'm Tony, a computer science student who has a <b>huge</b> passion for gaming. </p>
           <p>
-          I am always looking for new and exciting technologies to further my knowledge and enhance ideas.
+            Hey there! I'm Tony, a computer science student with a huge passion
+            for gaming.{" "}
           </p>
-          <p>In my free time, I enjoy playing a wide range of games, from fast-paced shooter games to
-          complex strategy games.</p>
-          <p>I'm super excited to continue exploring the fascinating world
-          of gaming and computer science.</p>
+          <p>
+            I'm always looking for new and exciting technologies to further my
+            knowledge and enhance my ideas.
+          </p>
+          <p>
+            In my free time, I enjoy playing a wide range of games, from
+            fast-paced shooter games to complex strategy games.
+          </p>
+          <p>
+            I'm super excited to continue exploring the fascinating worlds of
+            gaming and computer science.
+          </p>
         </div>
         <div className="flex-row" style={{ justifyContent: "center" }}>
           <a className="icon-link" href="https://github.com/jhyn1687">
@@ -45,12 +51,11 @@ function Home() {
             <LinkedIn />
           </a>
         </div>
-        <Link
-          to="Projects"
-          smooth={true}
-          duration={1000}
-        >
-          <Down className="icon-link bounce" style={{fontSize: "2rem", marginTop: "2rem"}}/>
+        <Link to="Projects" smooth={true} duration={1000}>
+          <Down
+            className="icon-link bounce"
+            style={{ fontSize: "2rem", marginTop: "2rem" }}
+          />
         </Link>
       </div>
       <Earth />

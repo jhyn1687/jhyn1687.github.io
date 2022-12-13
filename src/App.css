@@ -49,21 +49,19 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
+  background-size: 100vw 100vh;
   background-image: linear-gradient(
-    135deg,
-    hsl(240deg 100% 25%) 0%,
-    hsl(239deg 100% 23%) 8%,
-    hsl(238deg 100% 22%) 17%,
-    hsl(237deg 100% 21%) 25%,
-    hsl(236deg 100% 20%) 33%,
-    hsl(236deg 100% 19%) 42%,
-    hsl(235deg 100% 17%) 50%,
-    hsl(235deg 100% 16%) 58%,
-    hsl(235deg 100% 15%) 67%,
-    hsl(236deg 97% 14%) 75%,
-    hsl(239deg 90% 13%) 83%,
-    hsl(244deg 93% 12%) 92%,
-    hsl(249deg 100% 10%) 100%
+    225deg,
+    hsl(0deg 56% 28%) 0%,
+    hsl(359deg 58% 26%) 11%,
+    hsl(357deg 61% 23%) 21%,
+    hsl(356deg 64% 21%) 32%,
+    hsl(355deg 67% 19%) 43%,
+    hsl(354deg 71% 17%) 55%,
+    hsl(353deg 76% 15%) 66%,
+    hsl(354deg 82% 13%) 77%,
+    hsl(358deg 87% 11%) 89%,
+    hsl(0deg 100% 9%) 100%
   );
   padding: 1rem 1rem;
   font-weight: bold;
@@ -85,7 +83,7 @@
 
 #Home {
   background-image: linear-gradient(
-    135deg,
+    225deg,
     hsl(240deg 100% 25%) 0%,
     hsl(239deg 100% 23%) 8%,
     hsl(238deg 100% 22%) 17%,
@@ -118,6 +116,22 @@
     hsl(134deg 100% 12%) 83%,
     hsl(133deg 100% 11%) 92%,
     hsl(132deg 100% 10%) 100%
+  );
+}
+
+#Contact {
+  background-image: linear-gradient(
+    45deg,
+    hsl(37deg 67% 35%) 0%,
+    hsl(37deg 69% 34%) 11%,
+    hsl(36deg 71% 32%) 21%,
+    hsl(36deg 74% 31%) 32%,
+    hsl(35deg 76% 29%) 43%,
+    hsl(35deg 79% 27%) 55%,
+    hsl(34deg 83% 26%) 66%,
+    hsl(34deg 87% 24%) 77%,
+    hsl(34deg 91% 23%) 89%,
+    hsl(33deg 94% 21%) 100%
   );
 }
 
@@ -169,12 +183,16 @@
   animation: bounce 2s infinite;
 }
 
+.cards-container {
+  padding: 1vh 1vw;
+}
+
 .card {
   display: flex;
   flex-direction: column;
-  background-color: black;
-  width: 20rem;
-  height: 25rem;
+  background-color: #143d1b;
+  width: 20vw;
+  min-height: 45vh;
   border-radius: 1rem;
   transition: box-shadow 150ms;
 }
@@ -199,7 +217,7 @@
 
 .card-title {
   text-align: left;
-  padding: .25rem 1rem 0 1rem;
+  padding: .25rem 1rem .5rem 1rem;
 }
 
 .card-links {
@@ -220,5 +238,13 @@
 
 .card-icon {
   vertical-align: -.1rem;
+}
 
+.email-button {
+  border-width: 3px;
+}
+
+.email-button:hover {
+  border-width: 3px;
+  border-color:#DB4C40;
 }

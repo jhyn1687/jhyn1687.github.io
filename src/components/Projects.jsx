@@ -2,32 +2,41 @@ import Card from "./Card";
 import {
   AiFillGithub as Github,
   AiFillCaretDown as Down,
+  AiFillYoutube as YouTube
 } from "react-icons/ai";
 import { Link } from "react-scroll";
 
 function Projects() {
   return (
     <div id="Projects" className="section flex-row">
-      <div className="flex-row">
+      <div className="flex-row cards-container">
         <Card
-          className="shadow-dark-green"
-          img="images/alhaitham.jpg"
-          title="hi"
+          img="images/wwyfv2.png"
+          title="WhereWhenYouFly V2 | Interactive Article"
+          button1="Github"
+          button1Link="//github.com/evaliu2002/WhereWhenYouFlyV2"
+          button1Icon={Github}
+          button2="Visualization"
+          button2Link="//wwyfv2.tnyyn.com"
         />
         <Card
-          img="images/alhaitham.jpg"
-          title="al-hi-tham"
-          button1="Github"
-          button1Link="//tnyyn.com"
-          button1Icon={Github}
-          button2="Demo"
-          button2Link="//tnyyn.com"
+          img="images/stylegans.png"
+          title="StyleGANs | Graphics Exploration"
+          button1="Video"
+          button1Link="//youtu.be/_x7jpMqJFF0"
+          button1Icon={YouTube}
+        />
+        <Card
+          img="images/cat-dog.png"
+          title="Cats vs Dogs | ML Exploration"
+          button1="Article"
+          button1Link="//cat-dog.tnyyn.com"
         />
       </div>
       <div className="flex-col">
         <h1>Projects</h1>
         <p>These are some projects that I've worked on</p>
-        <Link to="Projects" smooth={true} duration={1000}>
+        <Link to="Contact" smooth={true} duration={1000}>
           <Down
             className="icon-link bounce"
             style={{ fontSize: "2rem", marginTop: "2rem" }}

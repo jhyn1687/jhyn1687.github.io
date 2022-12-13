@@ -9,6 +9,8 @@ function Header() {
     } else {
       setShow(false)
     }
+
+    
   }
   useEffect(() => {
     window.addEventListener('scroll',
@@ -21,7 +23,7 @@ function Header() {
   
 
   return (
-    <div id="Header" className={show ? "header active" : "header"}>
+    <div id="Header" className={`header ${show && "active"}`}>
       <a onClick={scroll.scrollToTop}>
         <svg
           id="Logo"
