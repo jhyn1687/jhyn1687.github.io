@@ -168,3 +168,57 @@
 .bounce {
   animation: bounce 2s infinite;
 }
+
+.card {
+  display: flex;
+  flex-direction: column;
+  background-color: black;
+  width: 20rem;
+  height: 25rem;
+  border-radius: 1rem;
+  transition: box-shadow 150ms;
+}
+
+.card:hover {
+  box-shadow: 0px 0px 10px #143d1b;
+}
+
+.card-image {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  object-position: 100% 0;
+  border-radius: 1rem;
+  padding: .5rem;
+  transition: padding 150ms ease-in-out;
+}
+
+.card-image:hover {
+  padding: .3rem;
+}
+
+.card-title {
+  text-align: left;
+  padding: .25rem 1rem 0 1rem;
+}
+
+.card-links {
+  display: flex;
+  align-self: flex-end;
+  margin-top: auto;
+  margin-bottom: .5rem;
+  flex-direction: row;
+  justify-content: flex-end;
+  padding: 0 .5rem;
+  gap: .5rem;
+}
+
+.card-button {
+  vertical-align: middle;
+  padding: .3rem .6rem;
+}
+
+.card-icon {
+  vertical-align: -.1rem;
+
+}
