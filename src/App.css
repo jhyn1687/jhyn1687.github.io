@@ -232,12 +232,25 @@
 }
 
 .card-button {
-  vertical-align: middle;
+  border-width: 3px;
   padding: .3rem .6rem;
 }
 
+.card-button:hover {
+  border-color:#128625;
+}
+
 .card-icon {
-  vertical-align: -.1rem;
+  vertical-align: -.15rem;
+}
+
+.emacail-button {
+  border-width: 3px;
+}
+
+.email-button:hover {
+  border-width: 3px;
+  border-color:#DB4C40;
 }
 
 .email-button {
