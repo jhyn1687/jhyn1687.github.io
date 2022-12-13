@@ -244,15 +244,6 @@
   vertical-align: -.15rem;
 }
 
-.emacail-button {
-  border-width: 3px;
-}
-
-.email-button:hover {
-  border-width: 3px;
-  border-color:#DB4C40;
-}
-
 .email-button {
   border-width: 3px;
 }
