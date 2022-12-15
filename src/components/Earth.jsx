@@ -15,7 +15,7 @@ function Earth() {
   }, []);
 
   return (
-    <div>
+    <div id='Globe'>
       <Globe
         ref={globeEl}
         arcsData={arcs}
@@ -23,7 +23,7 @@ function Earth() {
         objectsData={objs}
         objectAltitude={0}
         height={window.innerHeight}
-        width={window.innerWidth * 0.4}
+        width={window.innerWidth * ((window.innerWidth > 992) ? 0.4 : 1)}
         backgroundColor="rgba(0,0,0,0)"
         globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
       />

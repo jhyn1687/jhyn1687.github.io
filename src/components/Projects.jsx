@@ -8,7 +8,11 @@ import { Link } from "react-scroll";
 
 function Projects() {
   return (
-    <div id="Projects" className="section flex-row">
+    <div id="Projects" className="section flex-col">
+      <div className="flex-col">
+        <h1 className="section-title">Projects</h1>
+        <p>Here are some projects that I've worked on.</p>
+      </div>
       <div className="flex-row cards-container">
         <Card
           img="images/wwyfv2.png"
@@ -33,16 +37,13 @@ function Projects() {
           button1Link="//cat-dog.tnyyn.com"
         />
       </div>
-      <div className="flex-col">
-        <h1>Projects</h1>
-        <p>These are some projects that I've worked on</p>
-        <Link to="Contact" smooth={true} duration={1000}>
+      
+      <Link to="Contact" smooth={true} duration={1000}>
           <Down
             className="icon-link bounce"
             style={{ fontSize: "2rem", marginTop: "2rem" }}
           />
         </Link>
-      </div>
     </div>
   );
 }

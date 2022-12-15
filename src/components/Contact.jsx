@@ -6,7 +6,7 @@ function Contact() {
   return (
     <div id="Contact" className="section flex-row">
       <div className="flex-col">
-        <h1 className="typewriter">Let's chat.</h1>
+        <h1 className="section-title">Let's chat.</h1>
         <p>I have some wonderful ideas that I haven't even thought of yet.</p>
         <a href="mailto:jhyuan01@gmail.com">
           <div className="flex-col bounce">

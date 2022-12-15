@@ -43,7 +43,7 @@ function Home() {
             gaming and computer science.
           </p>
         </div>
-        <div className="flex-row" style={{ justifyContent: "center" }}>
+        <div className="flex-row">
           <a className="icon-link" href="https://github.com/jhyn1687">
             <Github />
           </a>

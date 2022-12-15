@@ -23,11 +23,10 @@ function Header() {
   
 
   return (
-    <div id="Header" className={`header ${show && "active"}`}>
+    <div className={`header ${show && "header-active"}`}>
       <a onClick={scroll.scrollToTop}>
         <svg
           id="Logo"
-          height="36px"
           preserveAspectRatio="xMidYMid meet"
           viewBox="0 0 675 225"
           fill="none"
