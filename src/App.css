@@ -40,19 +40,9 @@ body {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  background-size: 100vw 100vh;
-  background-image: linear-gradient(315deg,
-      hsl(240deg 100% 25%) 0%,
-      hsl(238deg 100% 24%) 10%,
-      hsl(237deg 100% 22%) 20%,
-      hsl(235deg 100% 21%) 30%,
-      hsl(234deg 100% 19%) 40%,
-      hsl(233deg 100% 18%) 50%,
-      hsl(233deg 100% 16%) 60%,
-      hsl(233deg 100% 15%) 70%,
-      hsl(235deg 100% 13%) 80%,
-      hsl(237deg 100% 11%) 90%,
-      hsl(240deg 100% 10%) 100%);
+  background: rgba( 0, 0, 0, 0.5 );
+  backdrop-filter: blur( 10px );
+  -webkit-backdrop-filter: blur( 10px );
   padding: .5rem 1rem;
   font-weight: bold;
   z-index: 1000;
@@ -170,7 +160,6 @@ body {
 }
 
 /* Glyph icons styling */
-
 .icon-link {
   font-size: 3rem;
   color: white;
@@ -178,6 +167,18 @@ body {
 
 .icon-link:hover {
   color: #adadad;
+}
+
+.email-icon {
+  font-size: 2rem;
+  color: white;
+  margin-top: 2rem;
+  cursor: pointer;
+}
+
+.email-icon:hover {
+  font-size: 2rem;
+  color: #e26c61;
 }
 
 .email-button {
@@ -214,21 +215,33 @@ body {
 /* Cards styling */
 
 .cards-container {
-  padding: 0 calc(30vw - 500px);
+  width: 70vw;
 }
 
 .card {
+  max-width: 350px;
   display: flex;
   flex-direction: column;
-  background-color: #143d1b;
-  width: max(20rem, 25%);
+  background: rgba( 0, 0, 0, 0.5 );
+  backdrop-filter: blur( 10px );
+  -webkit-backdrop-filter: blur( 10px );
+  flex-grow: 1;
   min-height: 45vh;
   border-radius: 1rem;
   transition: box-shadow 150ms;
 }
 
 .card:hover {
-  box-shadow: 0px 0px 10px #143d1b;
+  box-shadow:
+    0px 0px 1.2px rgba(0, 0, 0, 0.087),
+    0px 0px 3.4px rgba(0, 0, 0, 0.125),
+    0px 0px 9.1px rgba(0, 0, 0, 0.163),
+    0px 0px 30px rgba(0, 0, 0, 0.25)
+  ;
+}
+
+.card:hover .card-image {
+  scale: 100%;
 }
 
 .card-image {
@@ -236,13 +249,9 @@ body {
   aspect-ratio: 1;
   object-fit: cover;
   object-position: 100% 0;
-  border-radius: 1rem;
-  padding: .5rem;
-  transition: padding 150ms ease-in-out;
-}
-
-.card-image:hover {
+  scale: 99%;
   padding: .3rem;
+  border-radius: 1rem;
 }
 
 .card-title {
