@@ -16,8 +16,6 @@ function Contact() {
           .limit(1)
           .single();
 
-        console.log(data);
-
         if (error && status !== 406) {
           throw error;
         }
@@ -37,12 +35,12 @@ function Contact() {
       <div className="flex-col">
         <h1 className="section-title">Let's chat!</h1>
         <p>{quote}</p>
-        <a href="mailto:jhyuan01@gmail.com" style={{ cursor: "default"}}>
+        <a href="mailto:jhyuan01@gmail.com">
           <div className="flex-col bounce">
-          <Email
-            className="email-icon"
-          />
           <button className="email-button">
+            <Email
+              className="email-icon"
+            /> {' '}
             jhyuan01@gmail.com
           </button>
           </div>

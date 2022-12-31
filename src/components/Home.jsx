@@ -54,7 +54,6 @@ function Home() {
         <Link to="Projects" smooth={true} duration={1000}>
           <Down
             className="icon-link bounce"
-            style={{ fontSize: "2rem", marginTop: "2rem" }}
           />
         </Link>
       </div>

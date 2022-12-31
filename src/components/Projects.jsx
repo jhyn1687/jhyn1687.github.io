@@ -1,4 +1,4 @@
-import Card from "./Card";
+import ProjectCard from "./ProjectCard";
 import {
   AiFillGithub as Github,
   AiFillCaretDown as Down,
@@ -11,10 +11,10 @@ function Projects() {
     <div id="Projects" className="section flex-col">
       <div className="flex-col">
         <h1 className="section-title">Projects</h1>
-        <p>Here are some projects that I've worked on.</p>
+        <p>Demonstration of Theory</p>
       </div>
-      <div className="flex-row cards-container">
-        <Card
+      <div className="flex-row project-cards-container">
+        <ProjectCard
           img="images/wwyfv2.png"
           title="WhereWhenYouFly V2 | Interactive Article"
           button1="Github"
@@ -23,14 +23,14 @@ function Projects() {
           button2="Visualization"
           button2Link="//wwyfv2.tnyyn.com"
         />
-        <Card
+        <ProjectCard
           img="images/stylegans.png"
           title="StyleGANs | Graphics Exploration"
           button1="Video"
           button1Link="//youtu.be/_x7jpMqJFF0"
           button1Icon={YouTube}
         />
-        <Card
+        <ProjectCard
           img="images/cat-dog.png"
           title="Cats vs Dogs | ML Exploration"
           button1="Article"
@@ -38,10 +38,9 @@ function Projects() {
         />
       </div>
       
-      <Link to="Contact" smooth={true} duration={1000}>
+      <Link to="Experiences" smooth={true} duration={1000}>
           <Down
             className="icon-link bounce"
-            style={{ fontSize: "2rem", marginTop: "2rem" }}
           />
         </Link>
     </div>

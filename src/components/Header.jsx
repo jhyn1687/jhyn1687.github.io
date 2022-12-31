@@ -9,9 +9,8 @@ function Header() {
     } else {
       setShow(false)
     }
-
-    
   }
+
   useEffect(() => {
     window.addEventListener('scroll',
     scrollTrigger)
@@ -20,7 +19,6 @@ function Header() {
       scrollTrigger)
     }
   }, [])
-  
 
   return (
     <div className={`header ${show && "header-active"}`}>
