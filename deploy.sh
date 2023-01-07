@@ -16,12 +16,12 @@ echo > .nojekyll
 echo 'jhyn.dev' > CNAME
 
 git init
-git checkout -B main
+git checkout -B gh-pages
 git add -A
 git commit -m 'deploy'
 
 # if you are deploying to https://<USERNAME>.github.io
-git push -f git@github.com:jhyn1687/jhyn1687.github.io.git main
+git push -f git@github.com:jhyn1687/jhyn1687.github.io.git gh-pages
 
 # if you are deploying to https://<USERNAME>.github.io/<REPO>
 # git push -f git@github.com:<USERNAME>/<REPO>.git main:gh-pages
