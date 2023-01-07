@@ -21,7 +21,7 @@ function Projects() {
           button1Link="//github.com/evaliu2002/WhereWhenYouFlyV2"
           button1Icon={Github}
           button2="Visualization"
-          button2Link="//wwyfv2.tnyyn.com"
+          button2Link="//wwyfv2.jhyn.dev"
         />
         <ProjectCard
           img="images/stylegans.png"
@@ -34,7 +34,7 @@ function Projects() {
           img="images/cat-dog.png"
           title="Cats vs Dogs | ML Exploration"
           button1="Article"
-          button1Link="//cat-dog.tnyyn.com"
+          button1Link="//cat-dog.jhyn.dev"
         />
       </div>
       
