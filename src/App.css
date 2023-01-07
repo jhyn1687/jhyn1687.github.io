@@ -1,0 +1,376 @@
+/* Global styling */
+* {
+  font-family: 'Chivo Mono', monospace;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+#root {
+  width: 100vw;
+  text-align: center;
+}
+
+#App {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header styling */
+
+/* need to use class instead of id or else the header flashes on refresh */
+.header {
+  position: fixed;
+  opacity: 0;
+  transition: opacity .5s ease-in;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba( 0, 0, 0, 0.5 );
+  backdrop-filter: blur( 10px );
+  -webkit-backdrop-filter: blur( 10px );
+  padding: .5rem 1rem;
+  font-weight: bold;
+  z-index: 1000;
+}
+
+#Logo {
+  margin-top: .5rem;
+  height: 36px;
+}
+
+.header-active {
+  opacity: 1;
+}
+
+/* Section styling */
+.section {
+  max-width: 100vw;
+  min-height: 100vh;
+}
+
+.section-title {
+  font-style: italic;
+}
+
+/* Home section */
+#Home {
+  background-image: linear-gradient(45deg,
+      hsl(240deg 100% 25%) 0%,
+      hsl(238deg 100% 24%) 10%,
+      hsl(237deg 100% 22%) 20%,
+      hsl(235deg 100% 21%) 30%,
+      hsl(234deg 100% 19%) 40%,
+      hsl(233deg 100% 18%) 50%,
+      hsl(233deg 100% 16%) 60%,
+      hsl(233deg 100% 15%) 70%,
+      hsl(235deg 100% 13%) 80%,
+      hsl(237deg 100% 11%) 90%,
+      hsl(240deg 100% 10%) 100%);
+}
+
+#Signature {
+  stroke-dasharray: 2831;
+  stroke-dashoffset: 2831;
+  animation: sign 4s ease;
+  animation-fill-mode: forwards;
+}
+
+@keyframes sign {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+#Globe {
+  position: absolute;
+  z-index: 0;
+  opacity: 30%;
+}
+
+/* Project section */
+#Projects {
+  background-image: linear-gradient(135deg,
+      hsl(135deg 100% 25%) 0%,
+      hsl(135deg 100% 23%) 8%,
+      hsl(135deg 100% 22%) 17%,
+      hsl(135deg 100% 21%) 25%,
+      hsl(135deg 100% 20%) 33%,
+      hsl(135deg 100% 18%) 42%,
+      hsl(135deg 100% 17%) 50%,
+      hsl(135deg 100% 16%) 58%,
+      hsl(134deg 100% 15%) 67%,
+      hsl(134deg 100% 14%) 75%,
+      hsl(134deg 100% 12%) 83%,
+      hsl(133deg 100% 11%) 92%,
+      hsl(132deg 100% 10%) 100%);
+}
+
+/* Contact section */
+#Contact {
+  background-image: linear-gradient(45deg,
+      hsl(37deg 67% 35%) 0%,
+      hsl(37deg 69% 34%) 11%,
+      hsl(36deg 71% 32%) 21%,
+      hsl(36deg 74% 31%) 32%,
+      hsl(35deg 76% 29%) 43%,
+      hsl(35deg 79% 27%) 55%,
+      hsl(34deg 83% 26%) 66%,
+      hsl(34deg 87% 24%) 77%,
+      hsl(34deg 91% 23%) 89%,
+      hsl(33deg 94% 21%) 100%);
+}
+
+/* Experiences section */
+#Experiences {
+  background-image: linear-gradient(
+  45deg,
+  hsl(295deg 100% 35%) 0%,
+  hsl(294deg 100% 35%) 10%,
+  hsl(292deg 100% 35%) 20%,
+  hsl(291deg 100% 36%) 30%,
+  hsl(290deg 100% 36%) 40%,
+  hsl(288deg 100% 36%) 50%,
+  hsl(287deg 100% 36%) 60%,
+  hsl(286deg 100% 36%) 70%,
+  hsl(284deg 100% 36%) 80%,
+  hsl(283deg 100% 36%) 90%,
+  hsl(281deg 100% 36%) 100%
+);
+}
+
+/* Generic flex div styling */
+
+.flex-row {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  z-index: 1;
+}
+
+.flex-col {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: .5rem;
+  z-index: 1;
+}
+
+/* Glyph icons styling */
+.icon-link {
+  font-size: 2rem;
+  margin-top: 1rem;
+  color: white;
+}
+
+.icon-link:hover {
+  color: #adadad;
+}
+
+.email-icon {
+  vertical-align: -.15rem;
+}
+
+.email-button {
+  background: rgba( 0, 0, 0, 0.5 );
+  border-width: 3px;
+}
+
+.email-button:hover {
+  border-width: 3px;
+  border-color: #db8b40;
+}
+
+.bounce {
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+
+  40% {
+    transform: translateY(-10px);
+  }
+
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Project Cards styling */
+
+.project-cards-container {
+  width: 70vw;
+}
+
+.project-card {
+  max-width: min(350px, 70vw);
+  display: flex;
+  flex-direction: column;
+  background: rgba( 0, 0, 0, 0.5 );
+  backdrop-filter: blur( 10px );
+  -webkit-backdrop-filter: blur( 10px );
+  flex-grow: 1;
+  min-height: 45vh;
+  border-radius: 1rem;
+  transition: box-shadow 150ms;
+}
+
+.project-card:hover {
+  box-shadow:
+    0px 0px 1.2px rgba(0, 0, 0, 0.087),
+    0px 0px 3.4px rgba(0, 0, 0, 0.125),
+    0px 0px 9.1px rgba(0, 0, 0, 0.163),
+    0px 0px 30px rgba(0, 0, 0, 0.25)
+  ;
+}
+
+.project-card:hover .project-card-image {
+  scale: 100%;
+}
+
+.project-card-image {
+  aspect-ratio: 1;
+  scale: 99%;
+  margin: .3rem;
+  border-radius: 1rem;
+}
+
+.project-card-title {
+  text-align: left;
+  padding: .25rem 1rem .5rem 1rem;
+}
+
+.project-card-links {
+  display: flex;
+  align-self: flex-end;
+  flex-wrap: wrap;
+  margin-top: auto;
+  margin-bottom: .5rem;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 0 .5rem;
+  gap: .5rem;
+}
+
+.project-card-button {
+  border-width: 3px;
+  padding: .3rem .6rem;
+}
+
+.project-card-button:hover {
+  border-color: #128625;
+}
+
+.project-card-icon {
+  vertical-align: -.15rem;
+}
+
+/* Experience Cards styling */
+
+.experience-cards-container {
+  width: 70vw;
+}
+
+.experience-card {
+  max-width: 350px;
+  display: flex;
+  flex-direction: column;
+  background: rgba( 0, 0, 0, 0.5 );
+  backdrop-filter: blur( 10px );
+  -webkit-backdrop-filter: blur( 10px );
+  flex-grow: 1;
+  border-radius: 1rem;
+  transition: box-shadow 150ms;
+}
+
+.experience-card:hover {
+  box-shadow:
+    0px 0px 1.2px rgba(0, 0, 0, 0.087),
+    0px 0px 3.4px rgba(0, 0, 0, 0.125),
+    0px 0px 9.1px rgba(0, 0, 0, 0.163),
+    0px 0px 30px rgba(0, 0, 0, 0.25)
+  ;
+}
+
+.experience-card-title {
+  text-align: left;
+  padding: .5rem 1rem 0rem 1rem;
+}
+
+.experience-card-subtitle {
+  text-align: left;
+  padding: .25rem 1rem;
+  color: rgb(170, 170, 170);
+}
+
+.experience-card-list {
+  display: flex;
+  align-self: flex-start;
+  flex-wrap: wrap;
+  margin-top: 0rem;
+  margin-left: .5rem;
+  margin-bottom: .5rem;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 0 .25rem;
+  gap: .5rem;
+}
+
+.experience-card-item {
+  text-align: left;
+  margin-left: 1rem;
+}
+
+.experience-card-button {
+  border-width: 3px;
+  padding: .3rem .6rem;
+}
+
+.experience-card-button:hover {
+  border-color: #128625;
+}
+
+.experience-card-icon {
+  vertical-align: -.15rem;
+}
+
+.resume-button {
+  border-width: 3px;
+  margin-top: 1rem;
+  padding: .3rem .6rem;
+  background: rgba( 0, 0, 0, 0.5 );
+}
+
+.resume-button:hover {
+  border-color: #E3A6FF;
+}
