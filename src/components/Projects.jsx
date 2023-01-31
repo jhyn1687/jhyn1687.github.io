@@ -15,8 +15,14 @@ function Projects() {
       </div>
       <div className="flex-row project-cards-container">
         <ProjectCard
+          img="images/holodash.png"
+          title="HoloDash | Games Capstone"
+          button1="Website"
+          button1Link="//holodash.jhyn.dev"
+        />
+        <ProjectCard
           img="images/wwyfv2.png"
-          title="WhereWhenYouFly V2 | Interactive Article"
+          title="WhereWhenYouFly V2 | Data Viz"
           button1="Github"
           button1Link="//github.com/evaliu2002/WhereWhenYouFlyV2"
           button1Icon={Github}
