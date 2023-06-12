@@ -17,6 +17,12 @@ function Experiences() {
       <div className="flex-row experience-cards-container">
         <ExperienceCard
           img=""
+          title="Software Engineer"
+          subtitle="@ Center for Reproducible Biomedical Modeling"
+          list={["Designed and developed a web UI for biology researchers to access published articles and associated models/simulation in Biosimulations"]}
+        />
+        <ExperienceCard
+          img=""
           title="SHAPELAB"
           subtitle="@ UW"
           list={["Designed server infrastructure", "Rebuilt lab website", "Setup and maintain on-site NAS"]}
