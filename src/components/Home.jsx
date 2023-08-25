@@ -27,27 +27,21 @@ function Home() {
         </svg>
         <div className="flex-col">
           <p>
-            Hey there! I'm Tony, a computer science student with a huge passion
-            for gaming.{" "}
+            Hey there! I'm Tony, a software engineer that just graduated with a CS degree from UW. {" "}
           </p>
           <p>
             I'm always looking for new and exciting technologies to further my
             knowledge and enhance my ideas.
           </p>
           <p>
-            In my free time, I enjoy playing a wide range of games, from
-            fast-paced shooter games to complex strategy games.
-          </p>
-          <p>
-            I'm super excited to continue exploring the fascinating worlds of
-            gaming and computer science.
+            Right now, I'm working on <a href="//reproducibilityportal.org" className="underline">Reproducibility Portal</a>.
           </p>
         </div>
         <div className="flex-row">
           <a className="icon-link" href="https://github.com/jhyn1687">
             <Github />
           </a>
-          <a className="icon-link" href="https://www.linkedin.com/in/jnhyn">
+          <a className="icon-link" href="https://www.linkedin.com/in/jnhyn" >
             <LinkedIn />
           </a>
         </div>
