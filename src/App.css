@@ -375,3 +375,8 @@ body {
 .resume-button:hover {
   border-color: #E3A6FF;
 }
+
+.underline {
+  text-decoration: underline;
+  text-decoration-color: rgb(252, 255, 73);
+}
