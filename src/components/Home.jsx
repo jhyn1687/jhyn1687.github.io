@@ -50,7 +50,7 @@ function Home() {
             .{" "}
           </p>
           <p>
-            I'm always looking for new and exciting technologies to further my
+            Always looking for new and exciting technologies to further my
             knowledge and enhance my ideas.
           </p>
           <p>
@@ -68,6 +68,9 @@ function Home() {
               Reproducibility Portal
             </motion.a>
             .
+          </p>
+          <p>
+            Currently looking for opportunities as a software engineer. Most well versed with front-end development, but willing to learn and take on other challenges as well.
           </p>
         </div>
         <div className="flex-col">
