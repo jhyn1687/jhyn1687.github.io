@@ -1,10 +1,8 @@
 import ProjectCard from "./ProjectCard";
 import {
   AiFillGithub as Github,
-  AiFillCaretDown as Down,
   AiFillYoutube as YouTube
 } from "react-icons/ai";
-import { Link } from "react-scroll";
 
 function Projects() {
   return (
@@ -49,12 +47,6 @@ function Projects() {
           button1Link="//cat-dog.jhyn.dev"
         />
       </div>
-      
-      <Link to="Experiences" smooth={true} duration={1000}>
-          <Down
-            className="icon-link bounce"
-          />
-        </Link>
     </div>
   );
 }

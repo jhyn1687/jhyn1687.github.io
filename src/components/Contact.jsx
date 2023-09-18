@@ -1,7 +1,4 @@
 import { useEffect, useState } from "react";
-import {
-  MdEmail as Email
-} from "react-icons/md";
 
 import { supabase } from "../SupabaseClient";
 
@@ -35,16 +32,6 @@ function Contact() {
       <div className="flex-col">
         <h1 className="section-title">Let's chat!</h1>
         <p>{quote}</p>
-        <a href="mailto:jhyuan01@gmail.com">
-          <div className="flex-col bounce">
-          <button className="email-button">
-            <Email
-              className="email-icon"
-            /> {' '}
-            jhyuan01@gmail.com
-          </button>
-          </div>
-        </a>
       </div>
     </div>
   );
