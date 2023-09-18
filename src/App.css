@@ -83,6 +83,10 @@ body {
       hsl(240deg 100% 10%) 100%);
 }
 
+#Home ::selection {
+  background: hsl(240deg, 100%, 25%);
+}
+
 #Signature {
   stroke-dasharray: 2831;
   stroke-dashoffset: 2831;
@@ -118,6 +122,11 @@ body {
       hsl(134deg 100% 12%) 83%,
       hsl(133deg 100% 11%) 92%,
       hsl(132deg 100% 10%) 100%);
+      
+}
+
+#Projects ::selection {
+  background: hsl(135deg 100% 25%);
 }
 
 /* Experiences section */
@@ -136,6 +145,9 @@ body {
       hsl(281deg 100% 36%) 100%);
 }
 
+#Experiences ::selection {
+  background: hsl(295deg 100% 35%);
+}
 /* Generic flex div styling */
 
 .flex-row {
@@ -189,11 +201,11 @@ body {
 /* Project Cards styling */
 
 .project-cards-container {
-  width: 70vw;
+  min-width: 350px;
 }
 
 .project-card {
-  width: min(350px, 70vw);
+  width: 350px;
   display: flex;
   flex-direction: column;
   background: rgba(0, 0, 0, 0.5);
@@ -254,7 +266,7 @@ body {
 /* Experience Cards styling */
 
 .experience-cards-container {
-  width: 70vw;
+  min-width: 350px;
 }
 
 .experience-card {

@@ -5,11 +5,14 @@ function FloatUpDiv({whileHover = {}, children}) {
     <motion.div
       variants={{
         offscreen: {
+          opacity: 0,
           y: 100,
         },
         onscreen: {
+          opacity: 1,
           y: 0,
           transition: {
+            delay: 0.1,
             type: "spring",
             bounce: 0.4,
             duration: 0.8,
