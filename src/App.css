@@ -40,9 +40,9 @@ body {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  background: rgba( 0, 0, 0, 0.5 );
-  backdrop-filter: blur( 10px );
-  -webkit-backdrop-filter: blur( 10px );
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   padding: .5rem 1rem;
   font-weight: bold;
   z-index: 1000;
@@ -70,7 +70,7 @@ body {
 /* Home section */
 #Home {
   background-image: linear-gradient(45deg,
-      hsl(240deg 100% 25%) 0%,
+      hsl(240deg, 100%, 25%) 0%,
       hsl(238deg 100% 24%) 10%,
       hsl(237deg 100% 22%) 20%,
       hsl(235deg 100% 21%) 30%,
@@ -120,37 +120,20 @@ body {
       hsl(132deg 100% 10%) 100%);
 }
 
-/* Contact section */
-#Contact {
-  background-image: linear-gradient(45deg,
-      hsl(37deg 67% 35%) 0%,
-      hsl(37deg 69% 34%) 11%,
-      hsl(36deg 71% 32%) 21%,
-      hsl(36deg 74% 31%) 32%,
-      hsl(35deg 76% 29%) 43%,
-      hsl(35deg 79% 27%) 55%,
-      hsl(34deg 83% 26%) 66%,
-      hsl(34deg 87% 24%) 77%,
-      hsl(34deg 91% 23%) 89%,
-      hsl(33deg 94% 21%) 100%);
-}
-
 /* Experiences section */
 #Experiences {
-  background-image: linear-gradient(
-  45deg,
-  hsl(295deg 100% 35%) 0%,
-  hsl(294deg 100% 35%) 10%,
-  hsl(292deg 100% 35%) 20%,
-  hsl(291deg 100% 36%) 30%,
-  hsl(290deg 100% 36%) 40%,
-  hsl(288deg 100% 36%) 50%,
-  hsl(287deg 100% 36%) 60%,
-  hsl(286deg 100% 36%) 70%,
-  hsl(284deg 100% 36%) 80%,
-  hsl(283deg 100% 36%) 90%,
-  hsl(281deg 100% 36%) 100%
-);
+  background-image: linear-gradient(45deg,
+      hsl(295deg 100% 35%) 0%,
+      hsl(294deg 100% 35%) 10%,
+      hsl(292deg 100% 35%) 20%,
+      hsl(291deg 100% 36%) 30%,
+      hsl(290deg 100% 36%) 40%,
+      hsl(288deg 100% 36%) 50%,
+      hsl(287deg 100% 36%) 60%,
+      hsl(286deg 100% 36%) 70%,
+      hsl(284deg 100% 36%) 80%,
+      hsl(283deg 100% 36%) 90%,
+      hsl(281deg 100% 36%) 100%);
 }
 
 /* Generic flex div styling */
@@ -162,6 +145,7 @@ body {
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
+  padding: 1rem;
   gap: 1rem;
   z-index: 1;
 }
@@ -172,7 +156,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 1rem;
   gap: .5rem;
   z-index: 1;
 }
@@ -193,35 +177,13 @@ body {
 }
 
 .email-button {
-  background: rgba( 0, 0, 0, 0.5 );
+  background: rgba(0, 0, 0, 0.5);
   border-width: 3px;
 }
 
 .email-button:hover {
   border-width: 3px;
-  border-color: #db8b40;
-}
-
-.bounce {
-  animation: bounce 2s infinite;
-}
-
-@keyframes bounce {
-  0%,
-  20%,
-  50%,
-  80%,
-  100% {
-    transform: translateY(0);
-  }
-
-  40% {
-    transform: translateY(-10px);
-  }
-
-  60% {
-    transform: translateY(-5px);
-  }
+  border-color: #405dff;
 }
 
 /* Project Cards styling */
@@ -231,12 +193,12 @@ body {
 }
 
 .project-card {
-  max-width: min(350px, 70vw);
+  width: min(350px, 70vw);
   display: flex;
   flex-direction: column;
-  background: rgba( 0, 0, 0, 0.5 );
-  backdrop-filter: blur( 10px );
-  -webkit-backdrop-filter: blur( 10px );
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   flex-grow: 1;
   min-height: 45vh;
   border-radius: 1rem;
@@ -248,12 +210,7 @@ body {
     0px 0px 1.2px rgba(0, 0, 0, 0.087),
     0px 0px 3.4px rgba(0, 0, 0, 0.125),
     0px 0px 9.1px rgba(0, 0, 0, 0.163),
-    0px 0px 30px rgba(0, 0, 0, 0.25)
-  ;
-}
-
-.project-card:hover .project-card-image {
-  scale: 100%;
+    0px 0px 30px rgba(0, 0, 0, 0.25);
 }
 
 .project-card-image {
@@ -301,12 +258,12 @@ body {
 }
 
 .experience-card {
-  max-width: 350px;
+  width: 350px;
   display: flex;
   flex-direction: column;
-  background: rgba( 0, 0, 0, 0.5 );
-  backdrop-filter: blur( 10px );
-  -webkit-backdrop-filter: blur( 10px );
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   flex-grow: 1;
   border-radius: 1rem;
   transition: box-shadow 150ms;
@@ -317,8 +274,7 @@ body {
     0px 0px 1.2px rgba(0, 0, 0, 0.087),
     0px 0px 3.4px rgba(0, 0, 0, 0.125),
     0px 0px 9.1px rgba(0, 0, 0, 0.163),
-    0px 0px 30px rgba(0, 0, 0, 0.25)
-  ;
+    0px 0px 30px rgba(0, 0, 0, 0.25);
 }
 
 .experience-card-title {
@@ -369,11 +325,11 @@ body {
   border-width: 3px;
   margin-top: 1rem;
   padding: .3rem .6rem;
-  background: rgba( 0, 0, 0, 0.5 );
+  background: rgba(0, 0, 0, 0.5);
 }
 
 .resume-button:hover {
-  border-color: #E3A6FF;
+  border-color: #ebaeff;
 }
 
 .underline {

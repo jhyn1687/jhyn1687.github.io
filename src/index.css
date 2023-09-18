@@ -21,10 +21,6 @@ a {
   text-decoration: inherit;
 }
 
-a:hover {
-  color: #929292;
-}
-
 body {
   margin: 0;
   display: flex;

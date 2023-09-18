@@ -1,12 +1,14 @@
-import Earth from "./Earth";
+import { useState } from "react";
 import {
   AiFillGithub as Github,
   AiFillLinkedin as LinkedIn,
-  AiFillCaretDown as Down,
+  AiFillMail as Email,
 } from "react-icons/ai";
-import { Link } from "react-scroll";
+import {  motion } from "framer-motion";
+import Earth from "./Earth";
 
 function Home() {
+  const [isHovering, setIsHovering] = useState(false);
   return (
     <div id="Home" className="section flex-row">
       <div className="flex-col">
@@ -27,29 +29,64 @@ function Home() {
         </svg>
         <div className="flex-col">
           <p>
-            Hey there! I'm Tony, a software engineer that just graduated with a CS degree from UW. {" "}
+            Hey there! I'm Tony, a software engineer that just graduated with a
+            Bachelor's in Computer Science from{" "}
+            <motion.span
+              initial={{ backgroundColor: "rgba(252, 255, 73, 0)" }}
+              whileHover={{
+                backgroundColor: "rgba(252, 255, 73, 0.3)",
+                transition: {
+                  duration: 0.25,
+                  delay: 0.05,
+                },
+              }}
+              key={isHovering ? "hovering" : "not-hovering"}
+              onHoverStart={() => setIsHovering(true)}
+              onHoverEnd={() => setIsHovering(false)}
+              className="underline"
+            >
+              {isHovering ? "the University of Washington" : "UW"}
+            </motion.span>
+            .{" "}
           </p>
           <p>
             I'm always looking for new and exciting technologies to further my
             knowledge and enhance my ideas.
           </p>
           <p>
-            Right now, I'm working on <a href="//reproducibilityportal.org" className="underline">Reproducibility Portal</a>.
+            My most recent project is{" "}
+            <motion.a 
+            initial={{ backgroundColor: "rgba(252, 255, 73, 0)" }}
+            whileHover={{
+              backgroundColor: "rgba(252, 255, 73, 0.3)",
+              transition: {
+                duration: 0.25,
+                delay: 0.05,
+              },
+            }}
+            href="//reproducibilityportal.org" className="underline">
+              Reproducibility Portal
+            </motion.a>
+            .
           </p>
         </div>
-        <div className="flex-row">
-          <a className="icon-link" href="https://github.com/jhyn1687">
-            <Github />
+        <div className="flex-col">
+          <a href="mailto:jhyuan01@gmail.com">
+            <div className="flex-col" style={{padding: 0}}>
+              <button className="email-button">
+                <Email className="email-icon" /> jhyuan01@gmail.com
+              </button>
+            </div>
           </a>
-          <a className="icon-link" href="https://www.linkedin.com/in/jnhyn" >
-            <LinkedIn />
-          </a>
+          <div className="flex-row">
+            <a className="icon-link" href="https://github.com/jhyn1687">
+              <Github />
+            </a>
+            <a className="icon-link" href="https://www.linkedin.com/in/jnhyn">
+              <LinkedIn />
+            </a>
+          </div>
         </div>
-        <Link to="Projects" smooth={true} duration={1000}>
-          <Down
-            className="icon-link bounce"
-          />
-        </Link>
       </div>
       <Earth />
     </div>

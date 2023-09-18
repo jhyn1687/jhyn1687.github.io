@@ -1,11 +1,6 @@
 import ExperienceCard from "./ExperienceCard";
-import {
-  AiFillCaretDown as Down
-} from "react-icons/ai";
-import {
-  IoDocumentTextSharp as Document
-} from "react-icons/io5";
-import { Link } from "react-scroll";
+import { AiOutlineFileText as Document } from "react-icons/ai";
+import FloatUpDiv from "./FloatUpDiv";
 
 function Experiences() {
   return (
@@ -16,34 +11,38 @@ function Experiences() {
       </div>
       <div className="flex-row experience-cards-container">
         <ExperienceCard
-          img=""
           title="Software Engineer"
           subtitle="@ Center for Reproducible Biomedical Modeling"
-          list={["Designed and developed a web UI for biology researchers to access published articles and associated models/simulation in Biosimulations"]}
+          list={[
+            "Designed and developed a web UI for biology researchers to access published articles and associated models/simulation in Biosimulations",
+          ]}
         />
         <ExperienceCard
-          img=""
-          title="SHAPELAB"
-          subtitle="@ UW"
-          list={["Designed server infrastructure", "Rebuilt lab website", "Setup and maintain on-site NAS"]}
+          title="Student Assistant"
+          subtitle="@ SHAPELAB UW"
+          list={[
+            "Designed server infrastructure",
+            "Rebuilt lab website",
+            "Setup and maintain on-site NAS",
+          ]}
         />
         <ExperienceCard
-          img="images/Port_of_Seattle_Logo.svg"
           title="Asset Management Intern"
           subtitle="@ Port of Seattle"
-          list={["Preliminary development of asset tracking software", "Composed and revised Port-wide policies", "Nominated for an internal innovation award"]}
+          list={[
+            "Preliminary development of asset tracking software",
+            "Composed and revised Port-wide policies",
+            "Nominated for an internal innovation award",
+          ]}
         />
       </div>
       <a href="resume.pdf">
+        <FloatUpDiv>
         <button className="resume-button">
-          <Document className="experience-card-icon"/> Resume
+          <Document className="experience-card-icon" /> Resume
         </button>
+        </FloatUpDiv>
       </a>
-      <Link to="Contact" smooth={true} duration={1000}>
-          <Down
-            className="icon-link bounce"
-          />
-        </Link>
     </div>
   );
 }
