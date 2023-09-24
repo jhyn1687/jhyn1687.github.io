@@ -4,13 +4,13 @@ import {
   AiFillLinkedin as LinkedIn,
   AiFillMail as Email,
 } from "react-icons/ai";
-import {  motion } from "framer-motion";
+import { motion } from "framer-motion";
 import Earth from "./Earth";
 
 function Home() {
   const [isHovering, setIsHovering] = useState(false);
   return (
-    <div id="Home" className="section flex-row">
+    <section id="Home" className="section flex-row">
       <div className="flex-col">
         <svg
           width="50%"
@@ -55,27 +55,31 @@ function Home() {
           </p>
           <p>
             My most recent project is{" "}
-            <motion.a 
-            initial={{ backgroundColor: "rgba(252, 255, 73, 0)" }}
-            whileHover={{
-              backgroundColor: "rgba(252, 255, 73, 0.3)",
-              transition: {
-                duration: 0.25,
-                delay: 0.05,
-              },
-            }}
-            href="//reproducibilityportal.org" className="underline">
+            <motion.a
+              initial={{ backgroundColor: "rgba(252, 255, 73, 0)" }}
+              whileHover={{
+                backgroundColor: "rgba(252, 255, 73, 0.3)",
+                transition: {
+                  duration: 0.25,
+                  delay: 0.05,
+                },
+              }}
+              href="//reproducibilityportal.org"
+              className="underline"
+            >
               Reproducibility Portal
             </motion.a>
             .
           </p>
+          <p>Currently looking for opportunities as a software engineer.</p>
           <p>
-            Currently looking for opportunities as a software engineer. Most well versed with front-end development, but willing to learn and take on other challenges as well.
+            Most well versed with front-end development, but eager to adapt, learn,
+            and take on new challenges as well.
           </p>
         </div>
         <div className="flex-col">
           <a href="mailto:jhyuan01@gmail.com">
-            <div className="flex-col" style={{padding: 0}}>
+            <div className="flex-col" style={{ padding: 0 }}>
               <button className="email-button">
                 <Email className="email-icon" /> jhyuan01@gmail.com
               </button>
@@ -92,7 +96,7 @@ function Home() {
         </div>
       </div>
       <Earth />
-    </div>
+    </section>
   );
 }
 

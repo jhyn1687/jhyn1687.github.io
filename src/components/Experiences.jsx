@@ -4,7 +4,7 @@ import FloatUpDiv from "./FloatUpDiv";
 
 function Experiences() {
   return (
-    <div id="Experiences" className="section flex-col">
+    <section id="Experiences" className="section flex-col">
       <div className="flex-col">
         <h1 className="section-title">Experiences</h1>
         <p>Cultivation of Knowledge</p>
@@ -43,7 +43,7 @@ function Experiences() {
         </button>
         </FloatUpDiv>
       </a>
-    </div>
+    </section>
   );
 }
 
