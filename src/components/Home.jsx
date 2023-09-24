@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AiFillGithub as Github,
   AiFillLinkedin as LinkedIn,
@@ -6,9 +6,16 @@ import {
 } from "react-icons/ai";
 import { motion } from "framer-motion";
 import Earth from "./Earth";
+import getQuote from "./getQuote";
 
 function Home() {
   const [isHovering, setIsHovering] = useState(false);
+  const [quote, setQuote] = useState("");
+  useEffect(() => {
+    getQuote().then((quote) => {
+      setQuote(quote);
+    });
+  }, []);
   return (
     <section id="Home" className="section flex-row">
       <div className="flex-col">
@@ -73,26 +80,25 @@ function Home() {
           </p>
           <p>Currently looking for opportunities as a software engineer.</p>
           <p>
-            Most well versed with front-end development, but eager to adapt, learn,
-            and take on new challenges as well.
+            Most well versed with front-end development, but eager to adapt,
+            learn, and take on new challenges as well.
           </p>
         </div>
-        <div className="flex-col">
-          <a href="mailto:jhyuan01@gmail.com">
-            <div className="flex-col" style={{ padding: 0 }}>
-              <button className="email-button">
-                <Email className="email-icon" /> jhyuan01@gmail.com
-              </button>
-            </div>
-          </a>
-          <div className="flex-row">
-            <a className="icon-link" href="https://github.com/jhyn1687">
-              <Github />
-            </a>
-            <a className="icon-link" href="https://www.linkedin.com/in/jnhyn">
-              <LinkedIn />
-            </a>
+        <p className="quote">{quote}</p>
+        <a href="mailto:jhyuan01@gmail.com">
+          <div className="flex-col" style={{ padding: 0 }}>
+            <button className="email-button">
+              <Email className="email-icon" /> jhyuan01@gmail.com
+            </button>
           </div>
+        </a>
+        <div className="flex-row" style={{padding: 0}}>
+          <a className="icon-link" href="https://github.com/jhyn1687">
+            <Github />
+          </a>
+          <a className="icon-link" href="https://www.linkedin.com/in/jnhyn">
+            <LinkedIn />
+          </a>
         </div>
       </div>
       <Earth />

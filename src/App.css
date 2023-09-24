@@ -71,7 +71,6 @@ body {
   margin-bottom: .5rem;
 }
 
-
 #Header-Logo {
   height: 36px;
 }
@@ -114,6 +113,12 @@ body {
   opacity: 30%;
 }
 
+.quote {
+  font-size: .75rem;
+  font-style: italic;
+  font-weight: 200;
+  color: rgb(207, 207, 207);
+}
 /* Project section */
 #Projects {
   padding-top: 70px;
