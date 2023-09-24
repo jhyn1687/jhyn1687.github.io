@@ -28,12 +28,12 @@ function Contact() {
   }, []);
 
   return (
-    <div id="Contact" className="section flex-row">
+    <section id="Contact" className="section flex-row">
       <div className="flex-col">
         <h1 className="section-title">Let's chat!</h1>
         <p>{quote}</p>
       </div>
-    </div>
+    </section>
   );
 }
 

@@ -8,8 +8,13 @@
   -ms-overflow-style: none;
 }
 
+html {
+  scroll-snap-type: y proximity;
+}
+
 body {
   overflow-x: hidden;
+  scroll-snap-type: y proximity;
 }
 
 ::-webkit-scrollbar {
@@ -19,6 +24,18 @@ body {
 #root {
   width: 100vw;
   text-align: center;
+
+  background-image: linear-gradient(180deg,
+      hsl(240deg 100% 20%) 1%,
+      hsl(271deg 100% 19%) 45%,
+      hsl(289deg 100% 18%) 61%,
+      hsl(305deg 100% 18%) 72%,
+      hsl(317deg 100% 20%) 80%,
+      hsl(325deg 100% 22%) 86%,
+      hsl(331deg 100% 24%) 91%,
+      hsl(336deg 100% 26%) 95%,
+      hsl(341deg 100% 27%) 98%,
+      hsl(344deg 100% 27%) 100%);
 }
 
 #App {
@@ -48,8 +65,14 @@ body {
   z-index: 1000;
 }
 
-#Logo {
+#Header-Signature {
   margin-top: .5rem;
+  height: 36px;
+  margin-bottom: .5rem;
+}
+
+
+#Header-Logo {
   height: 36px;
 }
 
@@ -69,22 +92,7 @@ body {
 
 /* Home section */
 #Home {
-  background-image: linear-gradient(45deg,
-      hsl(240deg, 100%, 25%) 0%,
-      hsl(238deg 100% 24%) 10%,
-      hsl(237deg 100% 22%) 20%,
-      hsl(235deg 100% 21%) 30%,
-      hsl(234deg 100% 19%) 40%,
-      hsl(233deg 100% 18%) 50%,
-      hsl(233deg 100% 16%) 60%,
-      hsl(233deg 100% 15%) 70%,
-      hsl(235deg 100% 13%) 80%,
-      hsl(237deg 100% 11%) 90%,
-      hsl(240deg 100% 10%) 100%);
-}
-
-#Home ::selection {
-  background: hsl(240deg, 100%, 25%);
+  scroll-snap-align: start;
 }
 
 #Signature {
@@ -108,46 +116,16 @@ body {
 
 /* Project section */
 #Projects {
-  background-image: linear-gradient(135deg,
-      hsl(135deg 100% 25%) 0%,
-      hsl(135deg 100% 23%) 8%,
-      hsl(135deg 100% 22%) 17%,
-      hsl(135deg 100% 21%) 25%,
-      hsl(135deg 100% 20%) 33%,
-      hsl(135deg 100% 18%) 42%,
-      hsl(135deg 100% 17%) 50%,
-      hsl(135deg 100% 16%) 58%,
-      hsl(134deg 100% 15%) 67%,
-      hsl(134deg 100% 14%) 75%,
-      hsl(134deg 100% 12%) 83%,
-      hsl(133deg 100% 11%) 92%,
-      hsl(132deg 100% 10%) 100%);
-      
-}
-
-#Projects ::selection {
-  background: hsl(135deg 100% 25%);
+  padding-top: 70px;
+  scroll-snap-align: start;
 }
 
 /* Experiences section */
 #Experiences {
-  background-image: linear-gradient(45deg,
-      hsl(295deg 100% 35%) 0%,
-      hsl(294deg 100% 35%) 10%,
-      hsl(292deg 100% 35%) 20%,
-      hsl(291deg 100% 36%) 30%,
-      hsl(290deg 100% 36%) 40%,
-      hsl(288deg 100% 36%) 50%,
-      hsl(287deg 100% 36%) 60%,
-      hsl(286deg 100% 36%) 70%,
-      hsl(284deg 100% 36%) 80%,
-      hsl(283deg 100% 36%) 90%,
-      hsl(281deg 100% 36%) 100%);
+  padding-top: 75px;
+  scroll-snap-align: start;
 }
 
-#Experiences ::selection {
-  background: hsl(295deg 100% 35%);
-}
 /* Generic flex div styling */
 
 .flex-row {
@@ -256,7 +234,7 @@ body {
 }
 
 .project-card-button:hover {
-  border-color: #128625;
+  border-color: #9e0000;
 }
 
 .project-card-icon {
@@ -326,7 +304,7 @@ body {
 }
 
 .experience-card-button:hover {
-  border-color: #128625;
+  border-color: #833fd1;
 }
 
 .experience-card-icon {
@@ -341,7 +319,7 @@ body {
 }
 
 .resume-button:hover {
-  border-color: #ebaeff;
+  border-color: #833fd1;
 }
 
 .underline {

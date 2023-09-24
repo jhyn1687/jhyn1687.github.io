@@ -6,7 +6,7 @@ import {
 
 function Projects() {
   return (
-    <div id="Projects" className="section flex-col">
+    <section id="Projects" className="section flex-col">
       <div className="flex-col">
         <h1 className="section-title">Projects</h1>
         <p>Demonstration of Theory</p>
@@ -47,7 +47,7 @@ function Projects() {
           button1Link="//cat-dog.jhyn.dev"
         />
       </div>
-    </div>
+    </section>
   );
 }
 
