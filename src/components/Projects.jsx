@@ -13,6 +13,12 @@ function Projects() {
       </div>
       <div className="flex-row project-cards-container">
         <ProjectCard
+          img="images/logo.png"
+          title="Portfolio | Web Dev"
+          button1="Website"
+          button1Link="//jhyn.dev"
+        />
+        <ProjectCard
           img="images/rportal.png"
           title="Reproducibility Portal | Web Dev"
           button1="Website"
