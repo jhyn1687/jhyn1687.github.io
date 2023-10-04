@@ -9,12 +9,11 @@
 }
 
 html {
-  scroll-snap-type: y proximity;
+  scroll-behavior: smooth;
 }
 
 body {
   overflow-x: hidden;
-  scroll-snap-type: y proximity;
 }
 
 ::-webkit-scrollbar {
