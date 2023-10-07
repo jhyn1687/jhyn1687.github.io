@@ -1,10 +1,16 @@
 import ExperienceCard from "./ExperienceCard";
 import { AiOutlineFileText as Document } from "react-icons/ai";
 import FloatUpDiv from "./FloatUpDiv";
+import Marquee from "react-fast-marquee";
 
 function Experiences() {
   return (
     <section id="Experiences" className="section flex-col">
+      <div className="marquee-container">
+        <Marquee className="marquee" autoFill={true} speed={200} direction="right">
+          <h1 class="marquee-text">Experiences</h1>
+        </Marquee>
+      </div>
       <div className="flex-col">
         <h1 className="section-title">Experiences</h1>
         <p>Cultivation of Knowledge</p>
