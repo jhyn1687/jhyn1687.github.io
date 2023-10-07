@@ -1,12 +1,18 @@
 import ProjectCard from "./ProjectCard";
 import {
   AiFillGithub as Github,
-  AiFillYoutube as YouTube
+  AiFillYoutube as YouTube,
 } from "react-icons/ai";
+import Marquee from "react-fast-marquee";
 
 function Projects() {
   return (
     <section id="Projects" className="section flex-col">
+      <div className="marquee-container">
+        <Marquee className="marquee" autoFill={true} speed={200}>
+          <h1 class="marquee-text">Projects</h1>
+        </Marquee>
+      </div>
       <div className="flex-col">
         <h1 className="section-title">Projects</h1>
         <p>Demonstration of Theory</p>

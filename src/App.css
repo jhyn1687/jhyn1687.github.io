@@ -8,6 +8,15 @@
   -ms-overflow-style: none;
 }
 
+@media screen and (max-width: 992px) {
+  html {
+    scroll-snap-type: y proximity;
+  }
+  body {
+    scroll-snap-type: y proximity;
+  }
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -118,6 +127,7 @@ body {
   font-weight: 200;
   color: rgb(207, 207, 207);
 }
+
 /* Project section */
 #Projects {
   padding-top: 70px;
@@ -329,4 +339,40 @@ body {
 .underline {
   text-decoration: underline;
   text-decoration-color: rgb(252, 255, 73);
+}
+
+.marquee-container {
+  position: relative;
+  top: -2rem;
+  height: 0px;
+  width: 100%;
+}
+
+.marquee {
+  background-color: #ffffff00;
+  background-image: linear-gradient(90deg, #ff006a00 25%, #cccccc77 50%, #ff006a00 75%);
+  background-size: 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -moz-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -moz-text-fill-color: transparent;
+}
+
+@media screen and (max-width: 992px) {
+  .marquee {
+    background-image: linear-gradient(90deg, #ff006a00 15%, #cccccc77 50%, #ff006a00 85%);
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .marquee {
+    background-image: linear-gradient(90deg, #ff006a00 5%, #cccccc77 50%, #ff006a00 95%);
+  }
+}
+
+.marquee-text {
+  font-size: 7rem;
+  padding: 1rem;
+  font-style: italic;
 }
