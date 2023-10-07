@@ -98,9 +98,9 @@ body {
 }
 
 /* Home section */
-#Home {
+/* #Home {
   scroll-snap-align: start;
-}
+} */
 
 #Signature {
   stroke-dasharray: 2831;
