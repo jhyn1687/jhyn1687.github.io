@@ -78,7 +78,7 @@ function Home() {
             </motion.a>
             .
           </p>
-          <p>Currently looking for opportunities as a software engineer.</p>
+          <p>Joining Roblox as a Software Engineer in January 2024!</p>
           <p>
             Most well versed with front-end development, but eager to adapt,
             learn, and take on new challenges as well.
