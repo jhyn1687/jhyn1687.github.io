@@ -57,12 +57,15 @@ function Home() {
             .{" "}
           </p>
           <p>
-            Always looking for new and exciting technologies to further my
-            knowledge and enhance my ideas.
+            Most well versed with front-end development, but eager to adapt,
+            learn, and take on new challenges as well.
           </p>
           <p>
-            My most recent project is{" "}
-            <motion.a
+            Check out my projects below, or feel free to reach out to me via email.
+          </p>
+          <p>
+            Currently a Software Engineer @{" "}
+            <motion.span
               initial={{ backgroundColor: "rgba(252, 255, 73, 0)" }}
               whileHover={{
                 backgroundColor: "rgba(252, 255, 73, 0.3)",
@@ -71,17 +74,10 @@ function Home() {
                   delay: 0.05,
                 },
               }}
-              href="//reproducibilityportal.org"
               className="underline"
             >
-              Reproducibility Portal
-            </motion.a>
-            .
-          </p>
-          <p>Joining Roblox as a Software Engineer in January 2024!</p>
-          <p>
-            Most well versed with front-end development, but eager to adapt,
-            learn, and take on new challenges as well.
+              Roblox
+            </motion.span>.
           </p>
         </div>
         <p className="quote">{quote}</p>
@@ -92,7 +88,7 @@ function Home() {
             </button>
           </div>
         </a>
-        <div className="flex-row" style={{padding: 0}}>
+        <div className="flex-row" style={{ padding: 0 }}>
           <a className="icon-link" href="https://github.com/jhyn1687">
             <Github />
           </a>
