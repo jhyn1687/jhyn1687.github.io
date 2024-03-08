@@ -7,7 +7,12 @@ function Experiences() {
   return (
     <section id="Experiences" className="section flex-col">
       <div className="marquee-container">
-        <Marquee className="marquee" autoFill={true} speed={200} direction="right">
+        <Marquee
+          className="marquee"
+          autoFill={true}
+          speed={200}
+          direction="right"
+        >
           <h1 class="marquee-text">Experiences</h1>
         </Marquee>
       </div>
@@ -18,10 +23,18 @@ function Experiences() {
       <div className="flex-row experience-cards-container">
         <ExperienceCard
           title="Software Engineer"
+          subtitle="@ Roblox Corp"
+          list={["Can't tell you yet :)"]}
+          current
+        />
+        <ExperienceCard
+          title="Software Engineer"
           subtitle="@ Center for Reproducible Biomedical Modeling"
           list={[
             "Designed and developed a web UI for biology researchers to access published articles and associated models/simulation in Biosimulations",
           ]}
+          button="Reproducibility Portal"
+          buttonLink="//reproducibilityportal.org"
         />
         <ExperienceCard
           title="Student Assistant"
@@ -31,6 +44,8 @@ function Experiences() {
             "Rebuilt lab website",
             "Setup and maintain on-site NAS",
           ]}
+          button="Lab Website"
+          buttonLink="//depts.washington.edu/shapelab"
         />
         <ExperienceCard
           title="Asset Management Intern"
@@ -44,9 +59,9 @@ function Experiences() {
       </div>
       <a href="resume.pdf">
         <FloatUpDiv>
-        <button className="resume-button">
-          <Document className="experience-card-icon" /> Resume
-        </button>
+          <button className="resume-button">
+            <Document className="experience-card-icon" /> Resume
+          </button>
         </FloatUpDiv>
       </a>
     </section>

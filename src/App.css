@@ -195,7 +195,6 @@ body {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   flex-grow: 1;
-  min-height: 45vh;
   border-radius: 1rem;
   transition: box-shadow 150ms;
 }
@@ -314,6 +313,12 @@ body {
 
 .experience-card-icon {
   vertical-align: -.15rem;
+}
+
+.current-experience {
+  border-width: 3px;
+  border-color: #833fd1;
+  border-style: solid;
 }
 
 .resume-button {
