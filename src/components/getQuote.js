@@ -16,7 +16,9 @@ async function getQuote() {
       return data.quote;
     }
   } catch (error) {
-    alert(error.message);
+    if (import.meta.env.DEV) {
+      alert(error.message);
+    }
     return null;
   }
 }
