@@ -36,35 +36,7 @@ function Home() {
         </svg>
         <div className="flex-col">
           <p>
-            Hey there! I'm Tony, a software engineer that just graduated with a
-            Bachelor's in Computer Science from{" "}
-            <motion.span
-              initial={{ backgroundColor: "rgba(252, 255, 73, 0)" }}
-              whileHover={{
-                backgroundColor: "rgba(252, 255, 73, 0.3)",
-                transition: {
-                  duration: 0.25,
-                  delay: 0.05,
-                },
-              }}
-              key={isHovering ? "hovering" : "not-hovering"}
-              onHoverStart={() => setIsHovering(true)}
-              onHoverEnd={() => setIsHovering(false)}
-              className="underline"
-            >
-              {isHovering ? "the University of Washington" : "UW"}
-            </motion.span>
-            .{" "}
-          </p>
-          <p>
-            Most well versed with front-end development, but eager to adapt,
-            learn, and take on new challenges as well.
-          </p>
-          <p>
-            Check out my projects below, or feel free to reach out to me via email.
-          </p>
-          <p>
-            Currently a Software Engineer @{" "}
+            Hey there! I'm Tony, a Software Engineer @{" "}
             <motion.span
               initial={{ backgroundColor: "rgba(252, 255, 73, 0)" }}
               whileHover={{
@@ -77,7 +49,14 @@ function Home() {
               className="underline"
             >
               Roblox
-            </motion.span>.
+            </motion.span> on the Connections team.
+            </p>
+          <p>
+            Most well versed with front-end development, but eager to adapt,
+            learn, and take on new challenges as well.
+          </p>
+          <p>
+            Check out my projects below, or feel free to reach out to me via email.
           </p>
         </div>
         <p className="quote">{quote}</p>
