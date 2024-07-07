@@ -10,7 +10,7 @@ function Projects() {
     <section id="Projects" className="section flex-col">
       <div className="marquee-container">
         <Marquee className="marquee" autoFill={true} speed={200}>
-          <h1 class="marquee-text">Projects</h1>
+          <h1 className="marquee-text">Projects</h1>
         </Marquee>
       </div>
       <div className="flex-col">

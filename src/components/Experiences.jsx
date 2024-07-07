@@ -2,8 +2,19 @@ import ExperienceCard from "./ExperienceCard";
 import { AiOutlineFileText as Document } from "react-icons/ai";
 import FloatUpDiv from "./FloatUpDiv";
 import Marquee from "react-fast-marquee";
+import { useEffect, useState } from "react";
+import getExperiences from "../utils/getExperiences";
+import ExperienceCardSkeleton from "./ExperienceCardSkeleton";
+
+const N_SKELETONS = 4;
 
 function Experiences() {
+  const [experiences, setExperiences] = useState([]);
+  useEffect(() => {
+    getExperiences().then((experience) => {
+      setExperiences(experience);
+    });
+  }, []);
   return (
     <section id="Experiences" className="section flex-col">
       <div className="marquee-container">
@@ -13,7 +24,7 @@ function Experiences() {
           speed={200}
           direction="right"
         >
-          <h1 class="marquee-text">Experiences</h1>
+          <h1 className="marquee-text">Experiences</h1>
         </Marquee>
       </div>
       <div className="flex-col">
@@ -21,41 +32,14 @@ function Experiences() {
         <p>Cultivation of Knowledge</p>
       </div>
       <div className="flex-row experience-cards-container">
-        <ExperienceCard
-          title="Software Engineer"
-          subtitle="@ Roblox Corp"
-          list={["Can't tell you yet :)"]}
-          current
-        />
-        <ExperienceCard
-          title="Software Engineer"
-          subtitle="@ Center for Reproducible Biomedical Modeling"
-          list={[
-            "Designed and developed a web UI for biology researchers to access published articles and associated models/simulation in Biosimulations",
-          ]}
-          button="Reproducibility Portal"
-          buttonLink="//reproducibilityportal.org"
-        />
-        <ExperienceCard
-          title="Student Assistant"
-          subtitle="@ SHAPELAB UW"
-          list={[
-            "Designed server infrastructure",
-            "Rebuilt lab website",
-            "Setup and maintain on-site NAS",
-          ]}
-          button="Lab Website"
-          buttonLink="//depts.washington.edu/shapelab"
-        />
-        <ExperienceCard
-          title="Asset Management Intern"
-          subtitle="@ Port of Seattle"
-          list={[
-            "Preliminary development of asset tracking software",
-            "Composed and revised Port-wide policies",
-            "Nominated for an internal innovation award",
-          ]}
-        />
+        {experiences.length > 0 ? (
+          experiences.map((experience) => (
+            <ExperienceCard
+              experience={experience}
+              key={experience.id}
+            />
+          ))
+        ) : ([...Array(N_SKELETONS)].map((_, i) => <ExperienceCardSkeleton key={i} />))}
       </div>
       <a href="resume.pdf">
         <FloatUpDiv>

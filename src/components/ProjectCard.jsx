@@ -3,7 +3,7 @@ import FloatUpDiv from "./FloatUpDiv";
 function ProjectCard(props) {
   const Icon1 = props.button1Icon;
   return (
-    <FloatUpDiv whileHover={{ rotate: 1, scale: 1.025 }}>
+    <FloatUpDiv>
       <div className="project-card">
         <img className="project-card-image" src={props.img} />
         <p className="project-card-title"> {props.title} </p>
