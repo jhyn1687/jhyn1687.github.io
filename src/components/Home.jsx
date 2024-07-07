@@ -6,10 +6,9 @@ import {
 } from "react-icons/ai";
 import { motion } from "framer-motion";
 import Earth from "./Earth";
-import getQuote from "./getQuote";
+import getQuote from "../utils/getQuote";
 
 function Home() {
-  const [isHovering, setIsHovering] = useState(false);
   const [quote, setQuote] = useState("");
   useEffect(() => {
     getQuote().then((quote) => {
@@ -50,7 +49,7 @@ function Home() {
             >
               Roblox
             </motion.span> on the Connections team.
-            </p>
+          </p>
           <p>
             Most well versed with front-end development, but eager to adapt,
             learn, and take on new challenges as well.
