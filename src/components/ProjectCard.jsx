@@ -1,26 +1,44 @@
 import FloatUpDiv from "./FloatUpDiv";
+import {
+  AiFillGithub as GitHub,
+  AiFillYoutube as YouTube,
+} from "react-icons/ai";
+import getImageUrl from "../utils/getImageUrl";
+import Button from "./Button";
 
-function ProjectCard(props) {
-  const Icon1 = props.button1Icon;
+function ProjectCard({ project: { title, buttons, image_path } }) {
   return (
     <FloatUpDiv>
       <div className="project-card">
-        <img className="project-card-image" src={props.img} />
-        <p className="project-card-title"> {props.title} </p>
+        <img
+          className="project-card-image"
+          src={getImageUrl({ filePath: image_path })}
+        />
+        <p className="project-card-title"> {title} </p>
         <div className="project-card-links">
-          {props.button1 && (
-            <a href={props.button1Link}>
-              <button className="project-card-button">
-                {Icon1 && <Icon1 className="project-card-icon" />}{" "}
-                {props.button1}
-              </button>
-            </a>
-          )}
-          {props.button2 && (
-            <a href={props.button2Link}>
-              <button className="project-card-button">{props.button2}</button>
-            </a>
-          )}
+          {buttons.map((button) => {
+            let Icon;
+            switch (button.icon) {
+              case "GitHub":
+                Icon = GitHub;
+                break;
+              case "YouTube":
+                Icon = YouTube;
+                break;
+              default:
+                Icon = null;
+                break;
+            }
+            return (
+              <Button
+              className="project-card-button"
+                key={button.text}
+                icon={Icon}
+                link={button.link}
+                text={button.text}
+              />
+            );
+          })}
         </div>
       </div>
     </FloatUpDiv>

@@ -14,13 +14,13 @@ function ExperienceCard({
           </li>
         ))}
       </ul>
-      {link && (
-        <div className="experience-card-links">
+      <div className="experience-card-links">
+        {link && (
           <a href={link.link}>
             <button className="experience-card-button">{link.text}</button>
           </a>
-        </div>
-      )}
+        )}
+      </div>
     </FloatUpDiv>
   );
 }

@@ -194,7 +194,6 @@ body {
 .project-card {
   min-width: 350px;
   width: 350px;
-  min-height: 430px;
   display: flex;
   flex-direction: column;
   background-color: rgba(0, 0, 0, 0.5) !important;
@@ -246,10 +245,6 @@ body {
   border-color: #9e0000;
 }
 
-.project-card-icon {
-  vertical-align: -.15rem;
-}
-
 /* Experience Cards styling */
 
 .experience-cards-container {
@@ -260,7 +255,6 @@ body {
 .experience-card {
   min-width: 350px;
   width: 350px;
-  min-height: 260px;
   display: flex;
   flex-direction: column;
   background-color: rgba(0, 0, 0, 0.5) !important;
@@ -318,10 +312,6 @@ body {
 
 .experience-card-button:hover {
   border-color: #833fd1;
-}
-
-.experience-card-icon {
-  vertical-align: -.15rem;
 }
 
 .experience-card-links {
@@ -391,4 +381,8 @@ body {
   width: unset;
   display: flex !important;
   flex: 1;
+}
+
+.button-icon {
+  vertical-align: -.15rem;
 }

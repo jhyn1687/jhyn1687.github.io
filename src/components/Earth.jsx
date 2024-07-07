@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import Globe from 'react-globe.gl'
 
 import useWindowSize from '../hooks/useWindowSize';

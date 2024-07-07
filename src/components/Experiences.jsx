@@ -32,14 +32,13 @@ function Experiences() {
         <p>Cultivation of Knowledge</p>
       </div>
       <div className="flex-row experience-cards-container">
-        {experiences.length > 0 ? (
-          experiences.map((experience) => (
-            <ExperienceCard
-              experience={experience}
-              key={experience.id}
-            />
-          ))
-        ) : ([...Array(N_SKELETONS)].map((_, i) => <ExperienceCardSkeleton key={i} />))}
+        {experiences.length > 0
+          ? experiences.map((experience) => (
+              <ExperienceCard experience={experience} key={experience.id} />
+            ))
+          : [...Array(N_SKELETONS)].map((_, i) => (
+              <ExperienceCardSkeleton key={i} />
+            ))}
       </div>
       <a href="resume.pdf">
         <FloatUpDiv>
