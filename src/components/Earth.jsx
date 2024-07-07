@@ -5,7 +5,6 @@ import useWindowSize from '../hooks/useWindowSize';
 
 function Earth() {
   const globeEl = useRef();
-  const globeContainerRef = useRef(null);
   const [width, height] = useWindowSize();
 
   const objs = [{lat: 22.728689, lng: 113.824020}, {lat: 47.608013, lng: -122.335167}, {lat: 37.554169, lng: -122.313057}]
@@ -21,7 +20,7 @@ function Earth() {
   }, []);
 
   return (
-    <div id='Globe' ref={globeContainerRef}>
+    <div id='Globe'>
       <Globe
         ref={globeEl}
         arcsData={arcs}
