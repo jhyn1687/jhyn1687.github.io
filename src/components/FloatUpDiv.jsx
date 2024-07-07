@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
 
-function FloatUpDiv({whileHover = {}, children}) {
+function FloatUpDiv({className,  whileHover={ rotate: 1, scale: 1.025 }, children}) {
   return (
     <motion.div
+      className={className}
       variants={{
         offscreen: {
           opacity: 0,
