@@ -5,7 +5,6 @@ import {
   AiFillMail as Email,
 } from "react-icons/ai";
 import { motion } from "framer-motion";
-import Earth from "./Earth";
 import getQuote from "../utils/getQuote";
 
 function Home() {
@@ -59,10 +58,10 @@ function Home() {
           </p>
         </div>
         <p className="quote">{quote}</p>
-        <a href="mailto:jhyuan01@gmail.com">
+        <a href="mailto:tony@jhyn.dev">
           <div className="flex-col" style={{ padding: 0 }}>
             <button className="email-button">
-              <Email className="email-icon" /> jhyuan01@gmail.com
+              <Email className="email-icon" /> tony@jhyn.dev
             </button>
           </div>
         </a>
@@ -75,7 +74,6 @@ function Home() {
           </a>
         </div>
       </div>
-      <Earth />
     </section>
   );
 }
