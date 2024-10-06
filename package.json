@@ -2,7 +2,7 @@
   "homepage": "https://jhyn.dev/",
   "name": "jhyn1687.github.io",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,7 +16,6 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-fast-marquee": "^1.6.1",
-    "react-globe.gl": "^2.22.8",
     "react-icons": "^4.7.1",
     "react-loading-skeleton": "^3.4.0",
     "react-scroll": "^1.8.9",
