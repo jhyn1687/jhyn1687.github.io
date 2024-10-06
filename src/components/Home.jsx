@@ -5,7 +5,6 @@ import {
   AiFillMail as Email,
 } from "react-icons/ai";
 import { motion } from "framer-motion";
-import Earth from "./Earth";
 import getQuote from "../utils/getQuote";
 
 function Home() {
