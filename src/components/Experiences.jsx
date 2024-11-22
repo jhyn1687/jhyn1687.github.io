@@ -32,7 +32,7 @@ function Experiences() {
           ? experiences.map((experience) => <ExperienceCard experience={experience} key={experience.id} />)
           : [...Array(N_SKELETONS)].map((_, i) => <ExperienceCardSkeleton key={i} />)}
       </div>
-      <a href={getFileUrl({ filePath: 'resume.pdf', download: true })}>
+      <a href={getFileUrl({ filePath: 'jhyn_resume.pdf', download: true })}>
         <FloatUpDiv>
           <button className='resume-button'>
             <Document className='experience-card-icon' /> Resume
