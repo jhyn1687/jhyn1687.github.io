@@ -1,12 +1,8 @@
-import { supabase } from "../SupabaseClient";
+import { supabase } from '../SupabaseClient';
 
 async function getQuote() {
   try {
-    let { data, error, status } = await supabase
-      .from("random_quote")
-      .select("quote")
-      .limit(1)
-      .single();
+    let { data, error, status } = await supabase.from('random_quote').select('quote').limit(1).single();
 
     if (error && status !== 406) {
       throw error;
