@@ -1,11 +1,8 @@
-import { supabase } from "../SupabaseClient";
+import { supabase } from '../SupabaseClient';
 
 async function getExperiences() {
   try {
-    let { data, error, status } = await supabase
-      .from("experiences")
-      .select()
-      .order("id", { ascending: false });
+    let { data, error, status } = await supabase.from('experiences').select().order('id', { ascending: false });
 
     if (error && status !== 406) {
       throw error;

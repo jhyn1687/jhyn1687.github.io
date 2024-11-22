@@ -1,6 +1,6 @@
-import { motion } from "framer-motion";
+import { motion } from 'framer-motion';
 
-function FloatUpDiv({className,  whileHover={ rotate: 1, scale: 1.025 }, children}) {
+function FloatUpDiv({ className, whileHover = { rotate: 1, scale: 1.025 }, children }) {
   return (
     <motion.div
       className={className}
@@ -14,14 +14,14 @@ function FloatUpDiv({className,  whileHover={ rotate: 1, scale: 1.025 }, childre
           y: 0,
           transition: {
             delay: 0.1,
-            type: "spring",
+            type: 'spring',
             bounce: 0.4,
             duration: 0.8,
           },
         },
       }}
-      initial="offscreen"
-      whileInView="onscreen"
+      initial='offscreen'
+      whileInView='onscreen'
       viewport={{ once: true }}
       whileHover={whileHover}
     >
