@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { AiFillGithub as Github, AiFillLinkedin as LinkedIn, AiFillMail as Email } from 'react-icons/ai';
+import Skeleton from 'react-loading-skeleton';
 import { motion } from 'framer-motion';
 import getQuote from '../utils/getQuote';
 
 function Home() {
   const [quote, setQuote] = useState('');
+  const [quoteLoading, setQuoteLoading] = useState(true);
   useEffect(() => {
     getQuote().then((quote) => {
       setQuote(quote);
+      setQuoteLoading(false);
     });
   }, []);
   return (
@@ -51,7 +54,8 @@ function Home() {
           </p>
           <p>Check out my projects below, or feel free to reach out to me via email.</p>
         </div>
-        <p className='quote'>{quote}</p>
+        {(quoteLoading && <Skeleton className='quote-skeleton' width={500} height={20} inline={true} />) ||
+          (quote && <p className='quote'>{quote}</p>)}
         <a href='mailto:tony@jhyn.dev'>
           <div className='flex-col' style={{ padding: 0 }}>
             <button className='email-button'>
