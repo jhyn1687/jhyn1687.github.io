@@ -2,7 +2,7 @@
   "homepage": "https://jhyn.dev/",
   "name": "jhyn1687.github.io",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "scripts": {
     "dev": "vite",

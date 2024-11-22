@@ -4,6 +4,7 @@ import FloatUpDiv from "./FloatUpDiv";
 import Marquee from "react-fast-marquee";
 import { useEffect, useState } from "react";
 import getExperiences from "../utils/getExperiences";
+import getFileUrl from "../utils/getFileUrl";
 import ExperienceCardSkeleton from "./ExperienceCardSkeleton";
 
 const N_SKELETONS = 4;
@@ -40,7 +41,7 @@ function Experiences() {
               <ExperienceCardSkeleton key={i} />
             ))}
       </div>
-      <a href="resume.pdf">
+      <a href={getFileUrl({filePath: "resume.pdf"})}>
         <FloatUpDiv>
           <button className="resume-button">
             <Document className="experience-card-icon" /> Resume
