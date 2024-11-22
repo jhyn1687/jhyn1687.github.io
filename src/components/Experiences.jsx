@@ -41,7 +41,7 @@ function Experiences() {
               <ExperienceCardSkeleton key={i} />
             ))}
       </div>
-      <a href={getFileUrl({filePath: "resume.pdf"})}>
+      <a href={getFileUrl({filePath: "resume.pdf", download: true})}>
         <FloatUpDiv>
           <button className="resume-button">
             <Document className="experience-card-icon" /> Resume
