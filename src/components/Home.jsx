@@ -47,10 +47,10 @@ function Home() {
             >
               Roblox
             </motion.span>{' '}
-            on the Connections team.
+            on the Sharing team.
           </p>
           <p>
-            Most well versed with front-end development, but eager to adapt, learn, and take on new challenges as well.
+            I do my best work when I'm building products that I'm passionate about and that improve user experience. I have a strong interest in frontend development, but I'm always eager to learn and explore new technologies and areas of software engineering.
           </p>
           <p>Check out my projects below, or feel free to reach out to me via email.</p>
         </div>
