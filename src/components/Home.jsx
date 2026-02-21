@@ -31,7 +31,7 @@ function Home() {
             strokeLinecap='round'
           />
         </svg>
-        <div className='flex-col'>
+        <div className='flex-col bio'>
           <p>
             Hey there! I'm Tony, a Software Engineer @{' '}
             <motion.span
@@ -50,7 +50,10 @@ function Home() {
             on the Sharing team.
           </p>
           <p>
-            I do my best work when I'm building products that I'm passionate about and that improve user experience. I have a strong interest in frontend development, but I'm always eager to learn and explore new technologies and areas of software engineering.
+            I do my best work when I'm building products that I'm passionate about and that improve user experience. 
+          </p>
+          <p>
+            I have a strong interest in frontend development, but I'm always eager to learn and explore new technologies and areas of software engineering.
           </p>
           <p>Check out my projects below, or feel free to reach out to me via email.</p>
         </div>
