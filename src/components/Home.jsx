@@ -45,9 +45,8 @@ function Home() {
               }}
               className='underline'
             >
-              Roblox
-            </motion.span>{' '}
-            on the Sharing team.
+              Block
+            </motion.span>.
           </p>
           <p>
             I do my best work when I'm building products that I'm passionate about and that improve user experience. 
