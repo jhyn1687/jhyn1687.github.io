@@ -26,3 +26,6 @@ build
 *.sw?
 
 .env
+.dev.vars
+
+.wrangler
