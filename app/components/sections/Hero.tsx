@@ -18,17 +18,17 @@ export function Hero({ props }: { props: Record<string, unknown> }) {
             key={i}
             components={{
               p: ({ children }) => (
-                <p className="mb-4 text-lg leading-relaxed text-white/80">
+                <p className="mb-4 text-lg leading-relaxed text-ctp-subtext1">
                   {children}
                 </p>
               ),
               strong: ({ children }) => (
-                <strong className="font-bold text-white">{children}</strong>
+                <strong className="font-bold text-ctp-text">{children}</strong>
               ),
               a: ({ href, children }) => (
                 <a
                   href={href}
-                  className="text-white underline decoration-white/30 underline-offset-2 hover:decoration-white/80"
+                  className="text-ctp-text underline decoration-ctp-overlay1 underline-offset-2 hover:decoration-ctp-subtext1"
                 >
                   {children}
                 </a>

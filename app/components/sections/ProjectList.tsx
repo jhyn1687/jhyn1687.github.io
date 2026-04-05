@@ -21,14 +21,14 @@ export function ProjectList({ props }: { props: Record<string, unknown> }) {
   return (
     <section className="py-16">
       <div className="mb-10">
-        <h2 className="text-2xl font-bold text-white">{title}</h2>
-        <p className="mt-1 text-sm text-white/40">{subtitle}</p>
+        <h2 className="text-2xl font-bold text-ctp-text">{title}</h2>
+        <p className="mt-1 text-sm text-ctp-overlay1">{subtitle}</p>
       </div>
       <div className="grid gap-6 sm:grid-cols-2">
         {children.map((item, i) => (
           <div
             key={i}
-            className="flex flex-col gap-4 rounded-xl border border-white/10 bg-white/5 p-5"
+            className="flex flex-col gap-4 rounded-xl border border-ctp-surface1/50 bg-ctp-surface0/40 p-5"
           >
             {item.image_url && (
               <img
@@ -38,16 +38,16 @@ export function ProjectList({ props }: { props: Record<string, unknown> }) {
               />
             )}
             <div>
-              <h3 className="font-bold text-white">{item.title}</h3>
+              <h3 className="font-bold text-ctp-text">{item.title}</h3>
               {item.description && (
-                <div className="mt-1 text-sm text-white/70">
+                <div className="mt-1 text-sm text-ctp-subtext0">
                   <ReactMarkdown
                     components={{
                       p: ({ children }) => <p className="mb-2">{children}</p>,
                       a: ({ href, children }) => (
                         <a
                           href={href}
-                          className="text-white underline decoration-white/30 underline-offset-2 hover:decoration-white/80"
+                          className="text-ctp-text underline decoration-ctp-overlay1 underline-offset-2 hover:decoration-ctp-subtext1"
                         >
                           {children}
                         </a>

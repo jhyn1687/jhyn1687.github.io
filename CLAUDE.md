@@ -50,6 +50,8 @@ app/
 │   └── home.tsx             # Loader fetches sections, renders via registry
 ├── app.css                  # Tailwind imports + global styles
 └── root.tsx                 # HTML shell, meta, links, error boundary
+workers/
+└── app.ts                   # Cloudflare Worker entry point (injects cloudflare env/ctx into load context)
 public/
 ├── favicon.ico
 ├── logo.svg
@@ -65,6 +67,16 @@ pnpm preview      # Build + preview with wrangler
 pnpm deploy       # Build + deploy to Cloudflare Pages
 pnpm typecheck    # Generate route types + run tsc
 ```
+
+`pnpm deploy` (wrangler) deploys to a **preview** URL. Production deployments go through CI/CD triggered by pushing to `main`.
+
+## Cloudflare Integration
+
+Uses `@cloudflare/vite-plugin` (the newer Vite Environment API approach) with `v8_viteEnvironmentApi: true` in `react-router.config.ts`. **Do not use `cloudflareDevProxy()`** from `@react-router/dev/vite/cloudflare` — it conflicts with this plugin. The Worker entry is `workers/app.ts`, which injects `{ cloudflare: { env, ctx } }` into the React Router load context.
+
+## Theming
+
+Catppuccin Mocha via `@catppuccin/tailwindcss`. The `class="mocha"` on `<html>` (in `root.tsx`) activates the Mocha palette by setting `--catppuccin-color-*` CSS custom properties that cascade to the whole page. All Tailwind color utilities use the `ctp-` prefix (e.g., `text-ctp-text`, `bg-ctp-surface0/40`, `border-ctp-surface1/50`). `@catppuccin/palette` is also imported directly in `RippleBackground.tsx` for JavaScript-side RGB values used in the canvas color table.
 
 ## Environment Variables
 

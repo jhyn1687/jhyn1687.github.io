@@ -13,7 +13,7 @@ export function ActionButton({ action }: { action: Action }) {
     <a
       href={resolveHref(action)}
       download={action.type === "download" || undefined}
-      className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm transition-colors hover:border-white/40 hover:bg-white/10"
+      className="inline-flex items-center gap-2 rounded-lg border border-ctp-surface2/50 bg-ctp-surface0/40 px-4 py-2 text-sm text-ctp-text transition-colors hover:border-ctp-overlay1/50 hover:bg-ctp-surface1/40"
     >
       <Icon name={action.icon} size={16} />
       {action.label}

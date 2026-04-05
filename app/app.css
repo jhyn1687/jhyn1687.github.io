@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@catppuccin/tailwindcss/mocha.css";
 
 @theme {
   --font-mono:
@@ -6,9 +7,15 @@
     "Liberation Mono", monospace;
 }
 
-html,
-body {
-  @apply text-white;
+html {
+  /* Fallback before the canvas mounts */
+  background-color: var(--catppuccin-color-crust);
   color-scheme: dark;
+}
+
+body {
+  /* Transparent so the fixed canvas behind it shows through */
+  background-color: transparent;
+  color: var(--catppuccin-color-text);
   font-family: var(--font-mono);
 }
