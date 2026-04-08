@@ -1,6 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import type { Action } from "~/types";
-import { ActionButton } from "../ui/ActionButton";
+import { ActionButton } from "~/components/ui/ActionButton";
+import { Signature } from "~/components/ui/Signature";
 
 interface HeroProps {
   bio: string[];
@@ -11,7 +12,8 @@ export function Hero({ props }: { props: Record<string, unknown> }) {
   const { bio, actions } = props as unknown as HeroProps;
 
   return (
-    <section className="py-16">
+    <section className="pt-[15vh] pb-16">
+      <Signature className="mb-12 w-1/2 min-w-64 max-w-xs text-ctp-text" />
       <div className="prose prose-invert max-w-none">
         {bio.map((paragraph, i) => (
           <ReactMarkdown

@@ -1,6 +1,6 @@
 import type { Route } from "./+types/home";
 import type { Section } from "~/types";
-import { getSupabaseClient } from "~/utils/supabase.server";
+import { getSupabaseClient, getImageUrl } from "~/utils/supabase.server";
 import { getSection } from "~/components/registry";
 import { RippleBackground } from "~/components/ui/RippleBackground";
 
@@ -18,7 +18,26 @@ export async function loader({ context }: Route.LoaderArgs) {
     .select("*")
     .eq("visible", true)
     .order("order");
-  return { sections: (data ?? []) as Section[] };
+
+  const sections = (data ?? []).map((section) => {
+    const children = section.props?.children;
+    if (!Array.isArray(children)) return section;
+    return {
+      ...section,
+      props: {
+        ...section.props,
+        children: children.map((child: Record<string, unknown>) => {
+          if (typeof child.image_path !== "string") return child;
+          return {
+            ...child,
+            image_url: getImageUrl(supabase, "images", child.image_path),
+          };
+        }),
+      },
+    };
+  });
+
+  return { sections: sections as Section[] };
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
