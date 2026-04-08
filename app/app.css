@@ -1,0 +1,60 @@
+@import "tailwindcss";
+@import "@catppuccin/tailwindcss/mocha.css";
+
+@theme {
+  --font-mono:
+    "Chivo Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+}
+
+html {
+  /* Fallback before the canvas mounts */
+  background-color: var(--catppuccin-color-crust);
+  color-scheme: dark;
+}
+
+body {
+  /* Transparent so the fixed canvas behind it shows through */
+  background-color: transparent;
+  color: var(--catppuccin-color-text);
+  font-family: var(--font-mono);
+}
+
+.signature-path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw-signature 2s ease-in forwards;
+}
+
+@keyframes draw-signature {
+  0% {
+    stroke-dashoffset: 1;
+  }
+  10% {
+    stroke-dashoffset: 0.82;
+  }
+  20% {
+    stroke-dashoffset: 0.72;
+  }
+  30% {
+    stroke-dashoffset: 0.58;
+  }
+  40% {
+    stroke-dashoffset: 0.46;
+  }
+  48% {
+    stroke-dashoffset: 0.38;
+  }
+  58% {
+    stroke-dashoffset: 0.24;
+  }
+  72% {
+    stroke-dashoffset: 0.14;
+  }
+  86% {
+    stroke-dashoffset: 0.06;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
