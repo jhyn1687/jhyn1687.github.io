@@ -23,14 +23,14 @@ export function ExperienceCard({ item }: { item: ExperienceItem }) {
       </div>
 
       {/* content */}
-      <div className="flex flex-col gap-3">
-        <div>
+      <div className="flex flex-1 flex-col gap-3">
+        <div className="flex flex-row justify-between">
           <span
             className={`font-bold ${item.current ? "text-ctp-teal" : "text-ctp-text"}`}
           >
             {item.job_title}
           </span>
-          <span className="text-ctp-subtext0"> @ {item.company}</span>
+          <span className="text-ctp-subtext0">{item.company}</span>
         </div>
         {item.highlights.length > 0 && (
           <ul className="flex flex-col gap-1">
@@ -50,7 +50,7 @@ export function ExperienceCard({ item }: { item: ExperienceItem }) {
               <a
                 key={action.href}
                 href={action.href}
-                className="text-sm text-ctp-overlay1 underline decoration-ctp-surface2 underline-offset-2 hover:text-ctp-subtext1 hover:decoration-ctp-overlay1"
+                className="text-sm text-ctp-overlay1 underline decoration-ctp-surface2 underline-offset-2 transition-colors hover:text-ctp-teal hover:decoration-ctp-teal/50"
               >
                 {action.label} ↗
               </a>

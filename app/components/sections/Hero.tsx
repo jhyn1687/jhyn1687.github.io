@@ -14,7 +14,7 @@ export function Hero({ props }: { props: Record<string, unknown> }) {
   return (
     <section className="pt-[15vh] pb-16">
       <Signature className="mb-12 w-1/2 min-w-64 max-w-xs text-ctp-text" />
-      <div className="prose prose-invert max-w-none">
+      <div>
         {bio.map((paragraph, i) => (
           <ReactMarkdown
             key={i}
@@ -30,7 +30,7 @@ export function Hero({ props }: { props: Record<string, unknown> }) {
               a: ({ href, children }) => (
                 <a
                   href={href}
-                  className="text-ctp-text underline decoration-ctp-overlay1 underline-offset-2 hover:decoration-ctp-subtext1"
+                  className="text-ctp-text underline decoration-ctp-overlay1 underline-offset-2 transition-colors hover:text-ctp-teal hover:decoration-ctp-teal/50 [&_strong]:text-inherit"
                 >
                   {children}
                 </a>
