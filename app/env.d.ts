@@ -6,6 +6,7 @@ declare module "react-router" {
       env: {
         SUPABASE_URL: string;
         SUPABASE_ANON_KEY: string;
+        MINDEE_API_KEY: string;
       };
       ctx: {
         waitUntil(promise: Promise<unknown>): void;
