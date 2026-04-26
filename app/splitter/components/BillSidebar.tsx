@@ -30,11 +30,11 @@ function SidebarSection<T extends { bill: { title: string } }>({
   const [expanded, setExpanded] = useState(true);
 
   return (
-    <div className="px-1">
+    <div className="px-2">
       <button
         type="button"
         onClick={() => setExpanded((e) => !e)}
-        className="flex w-full items-center gap-0.75 px-2 py-1.5 text-left"
+        className="flex w-full items-center gap-0.75 px-1 py-1.5 text-left"
       >
         <span className="flex-1 text-xs font-bold uppercase tracking-wider text-ctp-overlay0">
           {label}
@@ -53,7 +53,7 @@ function SidebarSection<T extends { bill: { title: string } }>({
       {expanded && (
         <div className="flex flex-col gap-1">
           {bills.length === 0 ? (
-            <p className="px-3 py-1.5 text-xs italic text-ctp-overlay0">
+            <p className="px-1 py-1.5 text-xs italic text-ctp-overlay0">
               None yet
             </p>
           ) : (
@@ -64,7 +64,7 @@ function SidebarSection<T extends { bill: { title: string } }>({
                   <Link
                     to={getLink(b)}
                     className={[
-                      "relative flex items-center gap-2 overflow-hidden px-3 py-1.5 pr-8 text-xs rounded transition-colors",
+                      "relative flex items-center gap-2 overflow-hidden px-2 py-1.5 pr-8 text-xs rounded transition-colors",
                       active
                         ? "bg-ctp-surface0 font-semibold text-ctp-text"
                         : "text-ctp-subtext0 hover:bg-ctp-surface0/50 hover:text-ctp-text",
@@ -72,7 +72,7 @@ function SidebarSection<T extends { bill: { title: string } }>({
                   >
                     <span
                       className={[
-                        "absolute left-0 top-1/2 h-[85%] w-0.75 -translate-y-1/2 rounded",
+                        "absolute left-0 top-1/2 h-[60%] w-0.5 -translate-y-1/2 rounded",
                         active ? "bg-ctp-teal" : "bg-ctp-surface1",
                       ].join(" ")}
                     />
@@ -141,11 +141,11 @@ export function BillSidebar({
         </div>
 
         {/* New Bill */}
-        <div className="flex flex-col overflow-y-auto p-0.75 gap-1">
+        <div className="flex flex-col overflow-y-auto px-2 py-1 gap-1">
           <Link
             to="/splitter/new"
             onClick={onClose}
-            className="flex items-center gap-2 text-ctp-teal text-xs px-2 py-1.5 pr-8 font-semibold transition-opacity rounded hover:bg-ctp-surface0/50"
+            className="flex items-center gap-2 text-ctp-teal text-xs px-1 py-1.5 pr-8 font-semibold transition-opacity rounded hover:bg-ctp-surface0/50"
           >
             <MdAdd size={13} />
             New Bill
@@ -153,7 +153,7 @@ export function BillSidebar({
           <Link
             to="/splitter/settings"
             onClick={onClose}
-            className="flex items-center gap-2 text-ctp-subtext0 text-xs px-2 py-1.5 pr-8 font-semibold transition-opacity rounded hover:bg-ctp-surface0/50"
+            className="flex items-center gap-2 text-ctp-subtext0 text-xs px-1 py-1.5 pr-8 font-semibold transition-opacity rounded hover:bg-ctp-surface0/50"
           >
             <MdSettings size={13} />
             Settings
