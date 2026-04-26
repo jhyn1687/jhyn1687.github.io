@@ -6,12 +6,10 @@ import { AppHeader } from "~/splitter/components/AppHeader";
 import { BillSummary } from "~/splitter/components/BillSummary";
 import { ItemSection } from "~/splitter/components/ItemSection";
 import { ParticipantSection } from "~/splitter/components/ParticipantSection";
-import { ReceiptUpload } from "~/splitter/components/ReceiptUpload";
 import { ShareDialog } from "~/splitter/components/ShareDialog";
 import { TaxTip } from "~/splitter/components/TaxTip";
 import type { SplitterLayoutContext } from "~/splitter/routes/splitter.layout";
 import type { Bill, Item, LocalBill, SharedBill } from "~/splitter/types";
-import type { OcrItem } from "~/splitter/utils/parseReceiptText";
 
 interface SplitterShellProps {
   initialLocalBill: LocalBill | null;
@@ -28,7 +26,6 @@ export function SplitterShell({
 }: SplitterShellProps) {
   const navigate = useNavigate();
   const { store, onMobileMenu } = useOutletContext<SplitterLayoutContext>();
-  const [mobileScanOpen, setMobileScanOpen] = useState(false);
   const [shareAttempted, setShareAttempted] = useState(false);
 
   const isSharedView = !!sharedBill;
@@ -128,18 +125,6 @@ export function SplitterShell({
     mutate({ items: items.filter((item) => item.id !== id) });
   }
 
-  function importItems(ocrItems: OcrItem[]) {
-    const newItems = ocrItems
-      .filter((oi) => oi.description && oi.total_amount > 0)
-      .map((oi) => ({
-        id: crypto.randomUUID(),
-        name: oi.description,
-        price: oi.total_amount,
-        splitBetween: [] as string[],
-      }));
-    mutate({ items: [...items, ...newItems] });
-  }
-
   function handleFork() {
     const sourceBill = sharedBill?.bill ?? bill;
     const idMap = new Map(
@@ -197,7 +182,6 @@ export function SplitterShell({
     (sum, item) => sum + (isNaN(item.price) ? 0 : item.price),
     0,
   );
-  const hasContent = participants.length > 0 || items.length > 0;
 
   if (error) {
     return (
@@ -233,34 +217,12 @@ export function SplitterShell({
         onCancel={() => store.setShareDialogOpen(false)}
       />
 
-      {mobileScanOpen && (
-        <div
-          className="fixed inset-0 z-50 flex flex-col justify-end"
-          onClick={() => setMobileScanOpen(false)}
-        >
-          <div
-            className="rounded-t-2xl bg-ctp-surface0 p-5 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-ctp-surface2" />
-            <ReceiptUpload
-              onItemsImported={(oi) => {
-                importItems(oi);
-                setMobileScanOpen(false);
-              }}
-              hasContent={hasContent}
-            />
-          </div>
-        </div>
-      )}
-
       <AppHeader
         title={title}
         setTitle={setTitle}
         onShare={handleShare}
         onFork={isSharedView ? handleFork : undefined}
         onMobileMenu={onMobileMenu}
-        onMobileScan={() => setMobileScanOpen((o) => !o)}
         sharing={store.sharing}
         shareBlocked={shareBlocked}
         titleError={shareAttempted && !title.trim()}
@@ -302,14 +264,6 @@ export function SplitterShell({
           </div>
 
           <div className="flex flex-col gap-5 md:sticky md:top-4 md:self-start">
-            {!isSharedView && (
-              <div className="hidden md:block">
-                <ReceiptUpload
-                  onItemsImported={importItems}
-                  hasContent={hasContent}
-                />
-              </div>
-            )}
             <BillSummary
               items={items}
               participants={participants}

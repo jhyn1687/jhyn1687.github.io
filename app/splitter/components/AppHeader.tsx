@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MdScanner, MdForkRight, MdMenu, MdShare } from "react-icons/md";
+import { MdForkRight, MdMenu, MdShare } from "react-icons/md";
 
 interface AppHeaderProps {
   title: string;
@@ -7,7 +7,6 @@ interface AppHeaderProps {
   onShare: () => void;
   onFork?: () => void;
   onMobileMenu: () => void;
-  onMobileScan: () => void;
   sharing: boolean;
   shareBlocked?: boolean;
   titleError?: boolean;
@@ -20,7 +19,6 @@ export function AppHeader({
   onShare,
   onFork,
   onMobileMenu,
-  onMobileScan,
   sharing,
   shareBlocked = false,
   titleError = false,
@@ -61,18 +59,6 @@ export function AppHeader({
 
       {/* Actions */}
       <div className="flex shrink-0 items-center gap-2">
-        {/* Scan — mobile only, local bills only */}
-        {!readOnly && (
-          <button
-            type="button"
-            onClick={onMobileScan}
-            className="flex items-center gap-1.5 rounded-full border border-ctp-surface1/50 bg-ctp-surface0 px-3 py-1.5 text-xs font-bold text-ctp-subtext1 transition-colors hover:border-ctp-teal/50 hover:text-ctp-teal md:hidden"
-          >
-            <MdScanner size={14} />
-            Scan Receipt
-          </button>
-        )}
-
         {/* Fork & Edit — shared view only */}
         {onFork && (
           <button
@@ -85,7 +71,7 @@ export function AppHeader({
           </button>
         )}
 
-        {/* Share — always visible */}
+        {/* Share */}
         <button
           type="button"
           onClick={onShare}
