@@ -7,7 +7,7 @@ const SHARED_KEY = "splitter_shared_bills";
 
 export function meta(_args: Route.MetaArgs) {
   return [
-    { title: "Shared Bill — Splitter" },
+    { title: "Splitter" },
     { name: "description", content: "Viewing a shared bill." },
   ];
 }

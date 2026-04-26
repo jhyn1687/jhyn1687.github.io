@@ -3,7 +3,7 @@ import { SplitterShell } from "~/splitter/components/SplitterShell";
 
 export function meta(_args: Route.MetaArgs) {
   return [
-    { title: "New Bill — Splitter" },
+    { title: "New Bill | Splitter" },
     {
       name: "description",
       content: "Split bills with friends, no login required.",

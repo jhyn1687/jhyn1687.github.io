@@ -4,7 +4,7 @@ import type { Route } from "./+types/splitter.settings";
 import type { SplitterLayoutContext } from "~/splitter/routes/splitter.layout";
 
 export function meta(_args: Route.MetaArgs) {
-  return [{ title: "Settings — Splitter" }];
+  return [{ title: "Settings | Splitter" }];
 }
 
 export function clientLoader() {

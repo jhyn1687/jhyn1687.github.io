@@ -4,7 +4,7 @@ import type { LocalBill } from "~/splitter/types";
 
 export function meta(_args: Route.MetaArgs) {
   return [
-    { title: "Splitter — Tony Yuan" },
+    { title: "Splitter" },
     {
       name: "description",
       content: "Split bills with friends, no login required.",
