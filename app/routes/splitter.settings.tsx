@@ -37,7 +37,7 @@ export default function SplitterSettingsPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-ctp-base font-mono">
+    <div className="flex h-screen overflow-hidden bg-ctp-base font-nunito">
       <BillSidebar
         localBills={store.localBills}
         sharedBills={store.sharedBills}

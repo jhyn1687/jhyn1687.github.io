@@ -247,7 +247,7 @@ export function SplitterShell({
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-ctp-base/95 font-mono">
+      <div className="flex min-h-screen items-center justify-center bg-ctp-base/95 font-nunito">
         <div className="max-w-sm rounded-2xl border border-ctp-surface1/50 bg-ctp-mantle p-8 text-center shadow-2xl">
           <p className="text-lg font-bold text-ctp-text">Bill not found</p>
           <p className="mt-2 text-sm text-ctp-subtext0">{error}</p>
@@ -264,7 +264,7 @@ export function SplitterShell({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-ctp-base font-mono">
+    <div className="flex h-screen overflow-hidden bg-ctp-base font-nunito">
       {store.toast && (
         <Toast
           text={store.toast.text}

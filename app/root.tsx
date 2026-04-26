@@ -19,7 +19,7 @@ export const links: Route.LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Chivo+Mono:ital,wght@0,200;0,400;0,600;1,200;1,400;1,600&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Chivo+Mono:ital,wght@0,200;0,400;0,600;1,200;1,400;1,600&family=Nunito:wght@300;400;600;700;800&display=swap",
   },
   { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
 ];
