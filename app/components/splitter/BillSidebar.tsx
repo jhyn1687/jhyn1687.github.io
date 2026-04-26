@@ -1,23 +1,27 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { MdAdd, MdChevronRight, MdSettings } from "react-icons/md";
-import type { SavedBill } from "./types";
+import type { LocalBill, SharedBill } from "./types";
 
 interface BillSidebarProps {
-  myBills: SavedBill[];
-  sharedBills: SavedBill[];
+  localBills: LocalBill[];
+  sharedBills: SharedBill[];
   mobileOpen: boolean;
   onClose: () => void;
 }
 
-function SidebarSection({
+function SidebarSection<T extends { bill: { title: string } }>({
   label,
   bills,
-  activeBillId,
+  getKey,
+  getLink,
+  isActive,
 }: {
   label: string;
-  bills: SavedBill[];
-  activeBillId: string | null;
+  bills: T[];
+  getKey: (b: T) => string;
+  getLink: (b: T) => string;
+  isActive: (b: T) => boolean;
 }) {
   const [expanded, setExpanded] = useState(true);
 
@@ -48,25 +52,25 @@ function SidebarSection({
             <p className="px-4 pb-2 text-xs italic text-ctp-overlay0">None yet</p>
           ) : (
             bills.map((b) => {
-              const isActive = b.id === activeBillId;
+              const active = isActive(b);
               return (
                 <Link
-                  key={b.id}
-                  to={`/splitter/${b.id}`}
+                  key={getKey(b)}
+                  to={getLink(b)}
                   className={[
                     "relative flex items-center gap-2 overflow-hidden px-4 py-1.5 text-[13px] transition-colors",
-                    isActive
+                    active
                       ? "bg-ctp-surface0 font-semibold text-ctp-text"
                       : "text-ctp-subtext0 hover:bg-ctp-surface0/50 hover:text-ctp-text",
                   ].join(" ")}
                 >
-                  {isActive && (
+                  {active && (
                     <span className="absolute left-0 top-1/2 h-[55%] w-[3px] -translate-y-1/2 rounded-r bg-ctp-teal" />
                   )}
                   <span
                     className={[
                       "h-1.5 w-1.5 shrink-0 rounded-full",
-                      isActive ? "bg-ctp-teal" : "bg-ctp-surface2",
+                      active ? "bg-ctp-teal" : "bg-ctp-surface2",
                     ].join(" ")}
                   />
                   <span className="truncate">
@@ -83,7 +87,7 @@ function SidebarSection({
 }
 
 export function BillSidebar({
-  myBills,
+  localBills,
   sharedBills,
   mobileOpen,
   onClose,
@@ -91,9 +95,13 @@ export function BillSidebar({
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Derive active bill ID from URL
-  const match = location.pathname.match(/^\/splitter\/([^/]+)$/);
-  const activeBillId = match ? match[1] : null;
+  const localMatch = location.pathname.match(/^\/splitter\/([^/]+)$/);
+  const shareMatch = location.pathname.match(/^\/splitter\/share\/([^/]+)$/);
+  const activeBillId = localMatch ? localMatch[1] : null;
+  const activeShareCode = shareMatch ? shareMatch[1] : null;
+
+  const sortedLocal = [...localBills].sort((a, b) => b.updatedAt - a.updatedAt);
+  const sortedShared = [...sharedBills].sort((a, b) => b.cachedAt - a.cachedAt);
 
   return (
     <>
@@ -135,14 +143,18 @@ export function BillSidebar({
         <div className="flex flex-1 flex-col gap-1 overflow-y-auto py-2">
           <SidebarSection
             label="Shared"
-            bills={sharedBills}
-            activeBillId={activeBillId}
+            bills={sortedShared}
+            getKey={(b) => b.shareCode}
+            getLink={(b) => `/splitter/share/${b.shareCode}`}
+            isActive={(b) => b.shareCode === activeShareCode}
           />
           <div className="h-px bg-ctp-surface1/50" />
           <SidebarSection
             label="My Bills"
-            bills={myBills}
-            activeBillId={activeBillId}
+            bills={sortedLocal}
+            getKey={(b) => b.id}
+            getLink={(b) => `/splitter/${b.id}`}
+            isActive={(b) => b.id === activeBillId}
           />
         </div>
 

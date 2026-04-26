@@ -21,5 +21,5 @@ export function HydrateFallback() {
 }
 
 export default function SplitterNewPage() {
-  return <SplitterShell initialSavedBill={null} isNew />;
+  return <SplitterShell initialLocalBill={null} isNew />;
 }

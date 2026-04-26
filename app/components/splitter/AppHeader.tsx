@@ -7,7 +7,8 @@ interface AppHeaderProps {
   onMobileMenu: () => void;
   onMobileScan: () => void;
   sharing: boolean;
-  shareBlocker?: string; // set when Share should be disabled; describes what's missing
+  shareBlocker?: string;
+  titleError?: boolean;
   readOnly?: boolean;
 }
 
@@ -19,10 +20,9 @@ export function AppHeader({
   onMobileScan,
   sharing,
   shareBlocker,
+  titleError = false,
   readOnly = false,
 }: AppHeaderProps) {
-  const shareDisabled = sharing || !!shareBlocker;
-
   return (
     <header className="sticky top-0 z-30 flex h-[60px] items-center gap-3 border-b border-ctp-surface1/50 bg-ctp-base/85 px-4 backdrop-blur-md sm:px-6">
       {/* Hamburger — mobile only */}
@@ -42,7 +42,12 @@ export function AppHeader({
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Untitled Bill"
         readOnly={readOnly}
-        className="min-w-0 flex-1 bg-transparent font-mono text-lg font-bold text-ctp-text placeholder-ctp-overlay0 focus:outline-none"
+        className={[
+          "min-w-0 flex-1 rounded bg-transparent px-1 font-mono text-lg font-bold text-ctp-text placeholder-ctp-overlay0 focus:outline-none",
+          titleError
+            ? "border border-ctp-red/60 bg-ctp-red/5 placeholder-ctp-red/60 focus:border-ctp-red focus:ring-1 focus:ring-ctp-red/30"
+            : "border border-transparent focus:border-ctp-teal focus:ring-1 focus:ring-ctp-teal/30",
+        ].join(" ")}
       />
 
       {/* Actions */}
@@ -59,30 +64,24 @@ export function AppHeader({
           </button>
         )}
 
-        <div className="group relative">
-          <button
-            type="button"
-            onClick={shareDisabled ? undefined : onShare}
-            disabled={shareDisabled}
-            title={shareBlocker ?? "Share bill"}
-            className={[
-              "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
-              shareDisabled
-                ? "cursor-not-allowed border-ctp-surface1/50 bg-ctp-surface0 text-ctp-overlay0 opacity-60"
-                : "border-ctp-surface1/50 bg-ctp-surface0 text-ctp-subtext1 hover:border-ctp-teal/50 hover:bg-ctp-surface1 hover:text-ctp-teal",
-            ].join(" ")}
-          >
-            <MdShare size={14} />
-            <span>{sharing ? "Sharing…" : "Share"}</span>
-          </button>
-
-          {/* Tooltip shown when blocked */}
-          {shareBlocker && !sharing && (
-            <div className="pointer-events-none absolute right-0 top-full mt-2 w-max max-w-[180px] rounded-lg border border-ctp-surface1/50 bg-ctp-surface0 px-3 py-2 text-xs text-ctp-subtext1 opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
-              {shareBlocker}
-            </div>
-          )}
-        </div>
+        {!readOnly && (
+          <div className="group relative">
+            <button
+              type="button"
+              onClick={onShare}
+              title={shareBlocker ?? "Share bill"}
+              className={[
+                "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
+                sharing
+                  ? "cursor-not-allowed border-ctp-surface1/50 bg-ctp-surface0 text-ctp-overlay0 opacity-60"
+                  : "border-ctp-surface1/50 bg-ctp-surface0 text-ctp-subtext1 hover:border-ctp-teal/50 hover:bg-ctp-surface1 hover:text-ctp-teal",
+              ].join(" ")}
+            >
+              <MdShare size={14} />
+              <span>{sharing ? "Sharing…" : "Share"}</span>
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );

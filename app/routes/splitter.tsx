@@ -1,6 +1,6 @@
 import { redirect } from "react-router";
 import type { Route } from "./+types/splitter";
-import type { SavedBill } from "~/components/splitter/types";
+import type { LocalBill } from "~/components/splitter/types";
 
 export function meta(_args: Route.MetaArgs) {
   return [
@@ -11,11 +11,9 @@ export function meta(_args: Route.MetaArgs) {
 
 export function clientLoader(): Response {
   try {
-    const raw = localStorage.getItem("splitter_bills");
-    const bills: SavedBill[] = raw ? JSON.parse(raw) : [];
-    const latest = bills
-      .filter((b) => !b.isShared)
-      .sort((a, b) => b.updatedAt - a.updatedAt)[0];
+    const raw = localStorage.getItem("splitter_local_bills");
+    const bills: LocalBill[] = raw ? JSON.parse(raw) : [];
+    const latest = bills.sort((a, b) => b.updatedAt - a.updatedAt)[0];
     if (latest) {
       return redirect(`/splitter/${latest.id}`);
     }

@@ -11,7 +11,7 @@ import { ReceiptUpload } from "./ReceiptUpload";
 import { ShareDialog } from "./ShareDialog";
 import { TaxTip } from "./TaxTip";
 import { useBillsStore } from "./useBillsStore";
-import type { Bill, Item, Participant, SavedBill } from "./types";
+import type { Bill, Item, LocalBill, SharedBill } from "./types";
 import type { OcrItem } from "./parseReceiptText";
 
 export type Toast = { text: string; type: "success" | "error" };
@@ -71,27 +71,33 @@ function SharedBanner({
 }
 
 interface SplitterShellProps {
-  initialSavedBill: SavedBill | null;
-  isSharedView?: boolean;
+  // Editable local bill (/splitter/:billId or /splitter/new)
+  initialLocalBill: LocalBill | null;
   isNew?: boolean;
+  // Read-only shared bill (/splitter/share/:code)
+  sharedBill?: SharedBill | null;
   error?: string;
 }
 
 export function SplitterShell({
-  initialSavedBill,
-  isSharedView = false,
+  initialLocalBill,
   isNew = false,
+  sharedBill,
   error,
 }: SplitterShellProps) {
   const navigate = useNavigate();
   const store = useBillsStore();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileScanOpen, setMobileScanOpen] = useState(false);
+  const [shareAttempted, setShareAttempted] = useState(false);
 
+  const isSharedView = !!sharedBill;
   const emptyBill: Bill = { title: "", participants: [], items: [], tax: 0, tip: 0 };
-  const [bill, setBill] = useState<Bill>(initialSavedBill?.bill ?? emptyBill);
+  const [bill, setBill] = useState<Bill>(
+    sharedBill?.bill ?? initialLocalBill?.bill ?? emptyBill,
+  );
   const [savedBillId, setSavedBillId] = useState<string | null>(
-    initialSavedBill?.id ?? null,
+    initialLocalBill?.id ?? null,
   );
   const isFirstMutation = useRef(!savedBillId && isNew);
 
@@ -102,31 +108,20 @@ export function SplitterShell({
     setBill(updated);
 
     if (isFirstMutation.current) {
-      // First edit on /splitter/new: generate UUID + navigate
       isFirstMutation.current = false;
       const id = crypto.randomUUID();
       setSavedBillId(id);
-      const saved: SavedBill = {
-        id,
-        bill: updated,
-        updatedAt: Date.now(),
-        isShared: false,
-      };
-      store.saveBill(saved);
+      const saved: LocalBill = { id, bill: updated, updatedAt: Date.now() };
+      store.saveLocalBill(saved);
       navigate(`/splitter/${id}`, { replace: true });
     } else if (savedBillId) {
-      const existing = store.bills.find((b) => b.id === savedBillId);
-      const saved: SavedBill = {
-        ...(existing ?? {
-          id: savedBillId,
-          isShared: false,
-          shareCode: undefined,
-          shareUrl: undefined,
-        }),
+      const existing = store.localBills.find((b) => b.id === savedBillId);
+      const saved: LocalBill = {
+        ...(existing ?? { id: savedBillId }),
         bill: updated,
         updatedAt: Date.now(),
       };
-      store.saveBill(saved);
+      store.saveLocalBill(saved);
     }
   }
 
@@ -193,13 +188,13 @@ export function SplitterShell({
 
   const importItems = useCallback(
     (ocrItems: OcrItem[]) => {
-      const newItems: Item[] = ocrItems
+      const newItems = ocrItems
         .filter((oi) => oi.description && oi.total_amount > 0)
         .map((oi) => ({
           id: crypto.randomUUID(),
           name: oi.description,
           price: oi.total_amount,
-          splitBetween: [],
+          splitBetween: [] as string[],
         }));
       mutate({ items: [...items, ...newItems] });
     },
@@ -207,30 +202,30 @@ export function SplitterShell({
   );
 
   const handleFork = useCallback(() => {
+    const sourceBill = sharedBill?.bill ?? bill;
     const forked: Bill = {
-      title: bill.title,
-      participants: bill.participants.map((p) => ({
+      title: sourceBill.title,
+      participants: sourceBill.participants.map((p) => ({
         ...p,
         id: crypto.randomUUID(),
       })),
-      items: bill.items.map((i) => ({
+      items: sourceBill.items.map((i) => ({
         ...i,
         id: crypto.randomUUID(),
         splitBetween: [...i.splitBetween],
       })),
-      tax: bill.tax,
-      tip: bill.tip,
+      tax: sourceBill.tax,
+      tip: sourceBill.tip,
     };
     const id = crypto.randomUUID();
-    store.saveBill({ id, bill: forked, updatedAt: Date.now(), isShared: false });
+    store.saveLocalBill({ id, bill: forked, updatedAt: Date.now() });
     navigate(`/splitter/${id}`);
-  }, [bill, store, navigate]);
+  }, [bill, sharedBill, store, navigate]);
 
-  const activeSavedBill = savedBillId
-    ? store.bills.find((b) => b.id === savedBillId) ?? null
+  const activeLocalBill = savedBillId
+    ? store.localBills.find((b) => b.id === savedBillId) ?? null
     : null;
 
-  // Compute what's blocking the Share button (null = nothing, share is allowed)
   function getShareBlocker(): string | undefined {
     if (isSharedView) return undefined;
     if (!title.trim()) return "Add a bill title first";
@@ -244,11 +239,16 @@ export function SplitterShell({
   const shareBlocker = getShareBlocker();
 
   function handleShare() {
-    if (shareBlocker) return;
-    if (!activeSavedBill) return;
-    const result = store.initiateShare(activeSavedBill);
+    if (isSharedView) return;
+    if (shareBlocker) {
+      setShareAttempted(true);
+      return;
+    }
+    if (!activeLocalBill) return;
+    setShareAttempted(false);
+    const result = store.initiateShare(activeLocalBill);
     if (result === "confirm") {
-      store.confirmShare(activeSavedBill);
+      store.confirmShare(activeLocalBill);
     }
   }
 
@@ -261,13 +261,14 @@ export function SplitterShell({
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-ctp-base font-mono">
-        <div className="text-center">
-          <p className="text-ctp-red">{error}</p>
+      <div className="flex min-h-screen items-center justify-center bg-ctp-base/95 font-mono">
+        <div className="max-w-sm rounded-2xl border border-ctp-surface1/50 bg-ctp-mantle p-8 text-center shadow-2xl">
+          <p className="text-lg font-bold text-ctp-text">Bill not found</p>
+          <p className="mt-2 text-sm text-ctp-subtext0">{error}</p>
           <button
             type="button"
             onClick={() => navigate("/splitter/new")}
-            className="mt-4 rounded-lg bg-ctp-surface0 px-4 py-2 text-sm text-ctp-subtext1 hover:text-ctp-text"
+            className="mt-6 rounded-lg bg-ctp-teal px-4 py-2 text-sm font-semibold text-ctp-base transition-opacity hover:opacity-90"
           >
             Start a new bill
           </button>
@@ -291,7 +292,7 @@ export function SplitterShell({
         sharing={store.sharing}
         skipShareDialog={store.settings.skipShareDialog}
         onUpdateSkip={(skip) => store.updateSettings({ skipShareDialog: skip })}
-        onConfirm={() => activeSavedBill && store.confirmShare(activeSavedBill)}
+        onConfirm={() => activeLocalBill && store.confirmShare(activeLocalBill)}
         onCancel={() => store.setShareDialogOpen(false)}
       />
 
@@ -319,7 +320,7 @@ export function SplitterShell({
 
       {/* Sidebar */}
       <BillSidebar
-        myBills={store.myBills}
+        localBills={store.localBills}
         sharedBills={store.sharedBills}
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}
@@ -335,6 +336,7 @@ export function SplitterShell({
           onMobileScan={() => setMobileScanOpen((o) => !o)}
           sharing={store.sharing}
           shareBlocker={shareBlocker}
+          titleError={shareAttempted && !title.trim()}
           readOnly={isSharedView}
         />
 
@@ -343,13 +345,14 @@ export function SplitterShell({
             {/* Left col */}
             <div className="flex flex-col gap-8">
               {isSharedView && (
-                <SharedBanner bill={bill} onFork={handleFork} />
+                <SharedBanner bill={sharedBill!.bill} onFork={handleFork} />
               )}
               <ParticipantSection
                 participants={participants}
                 onAdd={addParticipant}
                 onRemove={removeParticipant}
                 readOnly={isSharedView}
+                showError={shareAttempted && participants.length === 0}
               />
               <ItemSection
                 items={items}
@@ -358,6 +361,7 @@ export function SplitterShell({
                 onItemChange={updateItem}
                 onItemRemove={removeItem}
                 readOnly={isSharedView}
+                showError={shareAttempted && (items.length === 0 || items.some((i) => i.splitBetween.length === 0))}
               />
               {!isSharedView && (
                 <TaxTip

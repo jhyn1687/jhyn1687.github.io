@@ -21,13 +21,22 @@ export type Bill = {
   tip: number;
 };
 
-export type SavedBill = {
+// Editable bill stored locally — created by the user
+export type LocalBill = {
   id: string;
   bill: Bill;
   updatedAt: number;
-  shareCode?: string;
+  shareCode?: string; // set once shared; prevents re-generating links
   shareUrl?: string;
-  isShared: boolean;
+};
+
+// Read-only bill received via a share link — stored with expiry
+export type SharedBill = {
+  shareCode: string;
+  shareUrl: string;
+  bill: Bill;
+  cachedAt: number;
+  expiresAt: number;
 };
 
 export type SplitterSettings = {
