@@ -1,66 +1,22 @@
-import { useState } from "react";
-import { MdAddCircle, MdDelete, MdDeleteForever } from "react-icons/md";
+import { useRef, useState } from "react";
+import { MdAddCircle } from "react-icons/md";
 import type { Participant } from "./types";
 
 interface ParticipantSectionProps {
   participants: Participant[];
-  onAdd: () => void;
-  onUpdate: (id: string, name: string) => void;
+  onAdd: (name: string) => void;
   onRemove: (id: string) => void;
   readOnly?: boolean;
 }
 
-function ParticipantCard({
-  participant,
-  onUpdate,
-  onRemove,
-  readOnly,
-}: {
-  participant: Participant;
-  onUpdate: (name: string) => void;
-  onRemove: () => void;
-  readOnly: boolean;
-}) {
-  const [isFirstDelete, setIsFirstDelete] = useState(true);
-
-  const handleDeleteClick = () => {
-    if (isFirstDelete) {
-      setIsFirstDelete(false);
-      setTimeout(() => setIsFirstDelete(true), 3000);
-    } else {
-      onRemove();
-    }
-  };
-
+function Avatar({ name, color }: { name: string; color: { bg: string; fg: string } }) {
+  const initial = name.trim()[0]?.toUpperCase() ?? "?";
   return (
-    <div className="flex flex-row items-center gap-3 rounded-xl border border-ctp-surface1/50 bg-ctp-surface0/40 p-3">
-      <div className="flex min-h-9 min-w-9 items-center justify-center rounded-full border border-ctp-teal/40 bg-ctp-teal/20">
-        <span className="text-sm font-bold text-ctp-teal">
-          {participant.name[0]?.toUpperCase() ?? "?"}
-        </span>
-      </div>
-      <input
-        type="text"
-        value={participant.name}
-        onChange={(e) => onUpdate(e.target.value)}
-        placeholder="Name"
-        readOnly={readOnly}
-        className="flex-1 rounded bg-ctp-surface1 px-2 py-1 font-bold text-ctp-text placeholder-ctp-overlay0 focus:outline-none focus:ring-1 focus:ring-ctp-teal/50"
-      />
-      {!readOnly && (
-        <button
-          type="button"
-          onClick={handleDeleteClick}
-          className={`shrink-0 rounded-lg p-1 transition-colors hover:bg-ctp-surface1 ${isFirstDelete ? "text-ctp-subtext1" : "text-ctp-red"}`}
-          title={isFirstDelete ? "Remove participant" : "Confirm remove"}
-        >
-          {isFirstDelete ? (
-            <MdDelete size={18} />
-          ) : (
-            <MdDeleteForever size={18} />
-          )}
-        </button>
-      )}
+    <div
+      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
+      style={{ background: color.bg, color: color.fg }}
+    >
+      {initial}
     </div>
   );
 }
@@ -68,41 +24,84 @@ function ParticipantCard({
 export function ParticipantSection({
   participants,
   onAdd,
-  onUpdate,
   onRemove,
   readOnly = false,
 }: ParticipantSectionProps) {
+  const [input, setInput] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function handleAdd() {
+    const name = input.trim();
+    if (!name) return;
+    onAdd(name);
+    setInput("");
+    inputRef.current?.focus();
+  }
+
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex flex-row items-center gap-2">
-        <h2 className="text-xl font-bold text-ctp-text">Participants</h2>
-        {!readOnly && (
-          <button
-            type="button"
-            onClick={onAdd}
-            title="Add participant"
-            className="rounded-full p-1 text-ctp-subtext1 transition-colors hover:bg-ctp-teal/20 hover:text-ctp-teal"
-          >
-            <MdAddCircle size={22} />
-          </button>
+      <div className="flex items-center gap-2">
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-ctp-teal text-[11px] font-bold text-ctp-base">
+          1
+        </span>
+        <h2 className="text-lg font-bold text-ctp-text">People</h2>
+        {participants.length > 0 && (
+          <span className="ml-auto rounded-full bg-ctp-surface1/50 px-2.5 py-0.5 text-xs font-semibold text-ctp-subtext0">
+            {participants.length}
+          </span>
         )}
       </div>
-      {participants.length === 0 ? (
-        <p className="text-sm text-ctp-overlay0">
-          {readOnly ? "No participants." : "Add participants to get started."}
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+
+      {participants.length > 0 && (
+        <div className="flex flex-wrap gap-2">
           {participants.map((p) => (
-            <ParticipantCard
+            <div
               key={p.id}
-              participant={p}
-              onUpdate={(name) => onUpdate(p.id, name)}
-              onRemove={() => onRemove(p.id)}
-              readOnly={readOnly}
-            />
+              className="group flex items-center gap-1.5 rounded-full border-2 py-1 pl-1.5 pr-2.5 text-[13px] font-medium transition-all"
+              style={{ borderColor: p.color.bg, background: p.color.bg + "26" }}
+            >
+              <Avatar name={p.name} color={p.color} />
+              <span style={{ color: p.color.fg }}>{p.name}</span>
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => onRemove(p.id)}
+                  className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] opacity-0 transition-opacity group-hover:opacity-100"
+                  style={{ background: p.color.fg + "33", color: p.color.fg }}
+                  aria-label={`Remove ${p.name}`}
+                >
+                  ×
+                </button>
+              )}
+            </div>
           ))}
         </div>
+      )}
+
+      {!readOnly && (
+        <div className="flex gap-2">
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+            placeholder="Add a person…"
+            className="flex-1 rounded-lg border border-ctp-surface1/50 bg-ctp-surface0 px-3 py-2 text-sm text-ctp-text placeholder-ctp-overlay0 focus:border-ctp-teal focus:outline-none focus:ring-1 focus:ring-ctp-teal/30"
+          />
+          <button
+            type="button"
+            onClick={handleAdd}
+            disabled={!input.trim()}
+            className="rounded-lg bg-ctp-teal px-4 py-2 text-sm font-semibold text-ctp-base transition-opacity hover:opacity-90 disabled:opacity-40"
+          >
+            Add
+          </button>
+        </div>
+      )}
+
+      {participants.length === 0 && readOnly && (
+        <p className="text-sm text-ctp-overlay0">No participants.</p>
       )}
     </section>
   );

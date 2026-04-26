@@ -8,7 +8,7 @@ const requestHandler = createRequestHandler(
 type CloudflareEnv = {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
-  MINDEE_API_KEY: string;
+  GOOGLE_CLOUD_VISION_API_KEY: string;
 };
 
 type CloudflareCtx = {

@@ -4,7 +4,6 @@ interface ParticipantTileProps {
   participant: Participant;
   selected?: boolean;
   onClick?: () => void;
-  priceAmount?: number;
   readOnly?: boolean;
 }
 
@@ -12,10 +11,10 @@ export function ParticipantTile({
   participant,
   selected = false,
   onClick,
-  priceAmount,
   readOnly = false,
 }: ParticipantTileProps) {
   const clickable = !!onClick && !readOnly;
+  const { bg, fg } = participant.color;
 
   return (
     <button
@@ -23,29 +22,34 @@ export function ParticipantTile({
       disabled={!clickable}
       onClick={clickable ? onClick : undefined}
       className={[
-        "flex w-full flex-row items-center gap-2 rounded-xl border p-3 text-left transition-colors",
+        "flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-medium transition-all",
         clickable ? "cursor-pointer" : "cursor-default",
         selected
-          ? "border-ctp-teal bg-ctp-teal/10"
-          : "border-ctp-surface1/50 bg-ctp-surface0/40",
-        clickable && !selected ? "hover:border-ctp-teal/50 hover:bg-ctp-teal/5" : "",
+          ? "border-transparent"
+          : "border-ctp-surface1 bg-ctp-surface0/40",
+        clickable && !selected ? "hover:border-transparent" : "",
       ].join(" ")}
+      style={
+        selected
+          ? { background: bg, borderColor: fg + "55", color: fg }
+          : undefined
+      }
       aria-label={participant.name}
       aria-pressed={clickable ? selected : undefined}
     >
-      <div className="flex min-h-8 min-w-8 items-center justify-center rounded-full border border-ctp-teal/40 bg-ctp-teal/20">
-        <span className="text-sm font-bold text-ctp-teal">
-          {participant.name[0]?.toUpperCase() ?? "?"}
-        </span>
+      <div
+        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+        style={
+          selected
+            ? { background: fg, color: "white" }
+            : { background: bg + "66", color: fg }
+        }
+      >
+        {participant.name[0]?.toUpperCase() ?? "?"}
       </div>
-      <span className="flex-grow truncate font-bold text-ctp-text">
-        {participant.name || <span className="text-ctp-overlay0 font-normal">Unnamed</span>}
+      <span className={selected ? "" : "text-ctp-subtext0"}>
+        {participant.name.split(" ")[0] || "?"}
       </span>
-      {priceAmount !== undefined && (
-        <span className="shrink-0 font-bold text-ctp-teal">
-          ${priceAmount.toFixed(2)}
-        </span>
-      )}
     </button>
   );
 }

@@ -32,7 +32,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     if (!error) {
       const origin = new URL(request.url).origin;
-      return Response.json({ url: `${origin}/splitter?share=${code}`, code });
+      return Response.json({ url: `${origin}/splitter/share/${code}`, code });
     }
 
     // 23505 = unique_violation; retry with a different code
