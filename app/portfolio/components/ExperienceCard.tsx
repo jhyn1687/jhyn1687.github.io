@@ -1,4 +1,4 @@
-import type { Action } from "~/types";
+import type { Action } from "~/portfolio/types";
 
 export interface ExperienceItem {
   job_title: string;

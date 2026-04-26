@@ -1,5 +1,5 @@
-import type { Action } from "~/types";
-import { ActionButton } from "~/components/ui/ActionButton";
+import type { Action } from "~/portfolio/types";
+import { ActionButton } from "~/portfolio/components/ActionButton";
 
 export interface ProjectItem {
   title: string;

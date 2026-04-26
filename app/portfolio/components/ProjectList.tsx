@@ -1,5 +1,8 @@
-import { SectionHeader } from "~/components/ui/SectionHeader";
-import { ProjectCard, type ProjectItem } from "~/components/ui/ProjectCard";
+import { SectionHeader } from "~/portfolio/components/SectionHeader";
+import {
+  ProjectCard,
+  type ProjectItem,
+} from "~/portfolio/components/ProjectCard";
 
 interface ProjectListProps {
   title: string;

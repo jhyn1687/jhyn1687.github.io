@@ -1,9 +1,9 @@
 import type { ComponentType } from "react";
-import type { SectionComponentProps } from "~/types";
+import type { SectionComponentProps } from "~/portfolio/types";
 
-import { Hero } from "./sections/Hero";
-import { ExperienceList } from "./sections/ExperienceList";
-import { ProjectList } from "./sections/ProjectList";
+import { Hero } from "~/portfolio/components/Hero";
+import { ExperienceList } from "~/portfolio/components/ExperienceList";
+import { ProjectList } from "~/portfolio/components/ProjectList";
 
 const registry: Record<string, ComponentType<SectionComponentProps>> = {
   hero: Hero,

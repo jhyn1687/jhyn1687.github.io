@@ -1,5 +1,5 @@
-import type { Action } from "~/types";
-import { Icon } from "./Icon";
+import type { Action } from "~/portfolio/types";
+import { Icon } from "~/portfolio/components/Icon";
 
 function resolveHref(action: Action): string {
   if (action.type === "mailto") {

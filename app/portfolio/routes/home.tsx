@@ -1,8 +1,8 @@
 import type { Route } from "./+types/home";
-import type { Section } from "~/types";
+import type { Section } from "~/portfolio/types";
 import { getSupabaseClient, getImageUrl } from "~/utils/supabase.server";
-import { getSection } from "~/components/registry";
-import { RippleBackground } from "~/components/ui/RippleBackground";
+import { getSection } from "~/portfolio/registry";
+import { RippleBackground } from "~/portfolio/components/RippleBackground";
 
 export function meta(_args: Route.MetaArgs) {
   return [

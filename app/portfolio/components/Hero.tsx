@@ -1,7 +1,7 @@
 import ReactMarkdown from "react-markdown";
-import type { Action } from "~/types";
-import { ActionButton } from "~/components/ui/ActionButton";
-import { Signature } from "~/components/ui/Signature";
+import type { Action } from "~/portfolio/types";
+import { ActionButton } from "~/portfolio/components/ActionButton";
+import { Signature } from "~/portfolio/components/Signature";
 
 interface HeroProps {
   bio: string[];

@@ -1,8 +1,8 @@
-import { SectionHeader } from "~/components/ui/SectionHeader";
+import { SectionHeader } from "~/portfolio/components/SectionHeader";
 import {
   ExperienceCard,
   type ExperienceItem,
-} from "~/components/ui/ExperienceCard";
+} from "~/portfolio/components/ExperienceCard";
 
 interface ExperienceListProps {
   title: string;
