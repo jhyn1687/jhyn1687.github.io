@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MdExpandMore } from "react-icons/md";
+import { MdExpandMore, MdReceipt } from "react-icons/md";
 import type { Item, Participant } from "~/splitter/types";
 
 interface BillSummaryProps {
@@ -30,8 +30,7 @@ function PersonCard({ bd }: { bd: PersonBreakdown }) {
         className="flex w-full items-center gap-2.5 px-4 py-3 text-left"
       >
         <div
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold"
-          style={{ background: p.color.bg, color: p.color.fg }}
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${p.color.avatar}`}
         >
           {p.name[0]?.toUpperCase() ?? "?"}
         </div>
@@ -39,8 +38,7 @@ function PersonCard({ bd }: { bd: PersonBreakdown }) {
           {p.name}
         </span>
         <span
-          className="shrink-0 font-mono text-base font-bold"
-          style={{ color: p.color.fg }}
+          className={`shrink-0 font-mono text-base font-bold ${p.color.text}`}
         >
           ${total.toFixed(2)}
         </span>
@@ -87,10 +85,7 @@ function PersonCard({ bd }: { bd: PersonBreakdown }) {
             </div>
           )}
           <div className="my-1 h-px bg-ctp-surface1/50" />
-          <div
-            className="flex justify-between font-bold"
-            style={{ color: p.color.fg }}
-          >
+          <div className={`flex justify-between font-bold ${p.color.text}`}>
             <span>Total</span>
             <span>${total.toFixed(2)}</span>
           </div>
@@ -183,7 +178,7 @@ export function BillSummary({
       {/* Per-person */}
       {!hasData ? (
         <div className="flex flex-col items-center gap-2 py-8 text-center text-ctp-overlay0">
-          <span className="text-3xl">🍽️</span>
+          <MdReceipt size={32} />
           <span className="text-sm">Your breakdown will appear here</span>
           <span className="text-xs">Start by adding people and items</span>
         </div>

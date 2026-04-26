@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
-import { MdAdd, MdChevronRight, MdSettings } from "react-icons/md";
+import { MdAdd, MdChevronRight, MdClose, MdSettings } from "react-icons/md";
 import type { LocalBill, SharedBill } from "~/splitter/types";
 
 interface BillSidebarProps {
@@ -8,6 +8,8 @@ interface BillSidebarProps {
   sharedBills: SharedBill[];
   mobileOpen: boolean;
   onClose: () => void;
+  onDeleteLocal: (id: string) => void;
+  onDeleteShared: (code: string) => void;
 }
 
 function SidebarSection<T extends { bill: { title: string } }>({
@@ -16,23 +18,25 @@ function SidebarSection<T extends { bill: { title: string } }>({
   getKey,
   getLink,
   isActive,
+  onDelete,
 }: {
   label: string;
   bills: T[];
   getKey: (b: T) => string;
   getLink: (b: T) => string;
   isActive: (b: T) => boolean;
+  onDelete: (b: T) => void;
 }) {
   const [expanded, setExpanded] = useState(true);
 
   return (
-    <div>
+    <div className="px-1">
       <button
         type="button"
         onClick={() => setExpanded((e) => !e)}
-        className="flex w-full items-center gap-1 px-4 py-1.5 text-left"
+        className="flex w-full items-center gap-0.75 px-2 py-1.5 text-left"
       >
-        <span className="flex-1 text-[10.5px] font-bold uppercase tracking-wider text-ctp-overlay0">
+        <span className="flex-1 text-xs font-bold uppercase tracking-wider text-ctp-overlay0">
           {label}
           {bills.length > 0 && (
             <span className="ml-1.5 text-ctp-overlay1">({bills.length})</span>
@@ -47,38 +51,44 @@ function SidebarSection<T extends { bill: { title: string } }>({
         />
       </button>
       {expanded && (
-        <div>
+        <div className="flex flex-col gap-1">
           {bills.length === 0 ? (
-            <p className="px-4 pb-2 text-xs italic text-ctp-overlay0">
+            <p className="px-3 py-1.5 text-xs italic text-ctp-overlay0">
               None yet
             </p>
           ) : (
             bills.map((b) => {
               const active = isActive(b);
               return (
-                <Link
-                  key={getKey(b)}
-                  to={getLink(b)}
-                  className={[
-                    "relative flex items-center gap-2 overflow-hidden px-4 py-1.5 text-[13px] transition-colors",
-                    active
-                      ? "bg-ctp-surface0 font-semibold text-ctp-text"
-                      : "text-ctp-subtext0 hover:bg-ctp-surface0/50 hover:text-ctp-text",
-                  ].join(" ")}
-                >
-                  {active && (
-                    <span className="absolute left-0 top-1/2 h-[55%] w-0.75 -translate-y-1/2 rounded-r bg-ctp-teal" />
-                  )}
-                  <span
+                <div key={getKey(b)} className="group relative">
+                  <Link
+                    to={getLink(b)}
                     className={[
-                      "h-1.5 w-1.5 shrink-0 rounded-full",
-                      active ? "bg-ctp-teal" : "bg-ctp-surface2",
+                      "relative flex items-center gap-2 overflow-hidden px-3 py-1.5 pr-8 text-xs rounded transition-colors",
+                      active
+                        ? "bg-ctp-surface0 font-semibold text-ctp-text"
+                        : "text-ctp-subtext0 hover:bg-ctp-surface0/50 hover:text-ctp-text",
                     ].join(" ")}
-                  />
-                  <span className="truncate">
-                    {b.bill.title || "Untitled Bill"}
-                  </span>
-                </Link>
+                  >
+                    <span
+                      className={[
+                        "absolute left-0 top-1/2 h-[85%] w-0.75 -translate-y-1/2 rounded",
+                        active ? "bg-ctp-teal" : "bg-ctp-surface1",
+                      ].join(" ")}
+                    />
+                    <span className="truncate">
+                      {b.bill.title || "Untitled Bill"}
+                    </span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => onDelete(b)}
+                    aria-label="Delete bill"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-ctp-overlay0 opacity-0 transition-opacity hover:bg-ctp-surface1 hover:text-ctp-text group-hover:opacity-100"
+                  >
+                    <MdClose size={13} />
+                  </button>
+                </div>
               );
             })
           )}
@@ -93,6 +103,8 @@ export function BillSidebar({
   sharedBills,
   mobileOpen,
   onClose,
+  onDeleteLocal,
+  onDeleteShared,
 }: BillSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -117,60 +129,67 @@ export function BillSidebar({
 
       <aside
         className={[
-          "fixed left-0 top-0 z-50 flex h-screen w-55 shrink-0 flex-col border-r border-ctp-surface1/50 bg-ctp-mantle transition-transform duration-250 ease-in-out md:relative md:z-auto md:translate-x-0",
+          "fixed left-0 top-0 z-50 flex h-screen w-75 shrink-0 flex-col border-r border-ctp-surface1/50 bg-ctp-mantle transition-transform duration-250 ease-in-out md:relative md:z-auto md:translate-x-0",
           mobileOpen ? "translate-x-0 shadow-xl" : "-translate-x-full",
         ].join(" ")}
       >
         {/* Logo */}
-        <div className="border-b border-ctp-surface1/50 px-5 py-5 font-mono text-xl font-extrabold tracking-tight text-ctp-text">
-          splitter<span className="text-ctp-teal">.jhyn</span>
+        <div className="border-b border-ctp-surface1/50 px-3 py-3 font-mono text-xl font-extrabold tracking-tight text-ctp-text">
+          <span className="inline-block h-7.5">
+            splitter<span className="text-ctp-teal">.jhyn</span>
+          </span>
         </div>
 
         {/* New Bill */}
-        <button
-          type="button"
-          onClick={() => {
-            navigate("/splitter/new");
-            onClose();
-          }}
-          className="mx-3 my-3 flex items-center gap-2 rounded-lg bg-ctp-teal px-3.5 py-2 text-[13px] font-semibold text-ctp-base transition-opacity hover:opacity-90"
-        >
-          <MdAdd size={15} />
-          New Bill
-        </button>
+        <div className="flex flex-col overflow-y-auto p-0.75 gap-1">
+          <Link
+            to="/splitter/new"
+            onClick={onClose}
+            className="flex items-center gap-2 text-ctp-teal text-xs px-2 py-1.5 pr-8 font-semibold transition-opacity rounded hover:bg-ctp-surface0/50"
+          >
+            <MdAdd size={13} />
+            New Bill
+          </Link>
+          <Link
+            to="/splitter/settings"
+            onClick={onClose}
+            className="flex items-center gap-2 text-ctp-subtext0 text-xs px-2 py-1.5 pr-8 font-semibold transition-opacity rounded hover:bg-ctp-surface0/50"
+          >
+            <MdSettings size={13} />
+            Settings
+          </Link>
+        </div>
 
         <div className="h-px bg-ctp-surface1/50" />
 
         {/* Bill lists */}
-        <div className="flex flex-1 flex-col gap-1 overflow-y-auto py-2">
+        <div className="flex flex-1 flex-col gap-1 overflow-y-auto py-1">
           <SidebarSection
             label="Shared"
             bills={sortedShared}
             getKey={(b) => b.shareCode}
             getLink={(b) => `/splitter/share/${b.shareCode}`}
             isActive={(b) => b.shareCode === activeShareCode}
+            onDelete={(b) => {
+              onDeleteShared(b.shareCode);
+              if (b.shareCode === activeShareCode) navigate("/splitter/new");
+            }}
           />
           <div className="h-px bg-ctp-surface1/50" />
           <SidebarSection
-            label="My Bills"
+            label="Drafts"
             bills={sortedLocal}
             getKey={(b) => b.id}
             getLink={(b) => `/splitter/${b.id}`}
             isActive={(b) => b.id === activeBillId}
+            onDelete={(b) => {
+              onDeleteLocal(b.id);
+              if (b.id === activeBillId) navigate("/splitter/new");
+            }}
           />
         </div>
 
-        {/* Settings footer */}
-        <div className="border-t border-ctp-surface1/50">
-          <Link
-            to="/splitter/settings"
-            onClick={onClose}
-            className="flex items-center gap-2.5 px-4 py-3 text-[13px] text-ctp-subtext0 transition-colors hover:bg-ctp-surface0/50 hover:text-ctp-text"
-          >
-            <MdSettings size={15} />
-            Settings
-          </Link>
-        </div>
+        <div className="h-px bg-ctp-surface1/50" />
       </aside>
     </>
   );

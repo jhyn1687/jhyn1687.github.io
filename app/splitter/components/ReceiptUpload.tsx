@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { MdCameraAlt, MdChevronRight } from "react-icons/md";
+import { MdScanner, MdChevronRight } from "react-icons/md";
 import {
   parseReceiptText,
   type OcrItem,
@@ -88,9 +88,6 @@ export function ReceiptUpload({
         className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-ctp-surface0/60"
         disabled={loading}
       >
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-ctp-teal/20 text-ctp-teal">
-          <MdCameraAlt size={16} />
-        </div>
         <span className="flex-1 text-[15px] font-bold text-ctp-text">
           Scan Receipt
         </span>
@@ -119,15 +116,12 @@ export function ReceiptUpload({
                 onClick={() => inputRef.current?.click()}
                 className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-ctp-surface1 bg-ctp-mantle/50 py-6 text-center transition-colors hover:border-ctp-teal/50 hover:bg-ctp-teal/5"
               >
-                <span className="text-2xl">🧾</span>
+                <MdScanner size={32} />
                 <span className="text-sm font-semibold text-ctp-subtext0">
                   Drop your receipt here
                 </span>
                 <span className="text-xs text-ctp-overlay0">
                   or click to browse · JPG, PNG, HEIC
-                </span>
-                <span className="mt-1 rounded-full bg-gradient-to-r from-ctp-mauve/80 to-ctp-blue/80 px-3 py-0.5 text-[11px] font-semibold text-white">
-                  ✦ AI-powered
                 </span>
               </button>
               {status && (

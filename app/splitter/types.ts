@@ -1,4 +1,9 @@
-export type PersonColor = { bg: string; fg: string };
+export type PersonColor = {
+  chip: string; // border + bg + text — for participant chips
+  avatar: string; // bg + text — for avatar circles
+  text: string; // text only — for amounts and totals
+  button: string; // bg + text — for the remove button
+};
 
 export type Participant = {
   id: string;
@@ -11,6 +16,7 @@ export type Item = {
   name: string;
   price: number;
   splitBetween: string[]; // participant IDs
+  splitEvenly?: boolean; // always split among all participants
 };
 
 export type Bill = {

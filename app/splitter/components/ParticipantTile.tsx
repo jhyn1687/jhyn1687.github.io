@@ -14,7 +14,6 @@ export function ParticipantTile({
   readOnly = false,
 }: ParticipantTileProps) {
   const clickable = !!onClick && !readOnly;
-  const { bg, fg } = participant.color;
 
   return (
     <button
@@ -25,31 +24,24 @@ export function ParticipantTile({
         "flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-medium transition-all",
         clickable ? "cursor-pointer" : "cursor-default",
         selected
-          ? "border-transparent"
-          : "border-ctp-surface1 bg-ctp-surface0/40",
-        clickable && !selected ? "hover:border-transparent" : "",
+          ? participant.color.chip
+          : "border-ctp-surface1 bg-ctp-surface0/40 text-ctp-subtext0",
+        clickable && !selected ? "hover:border-ctp-surface2" : "",
       ].join(" ")}
-      style={
-        selected
-          ? { background: bg, borderColor: fg + "55", color: fg }
-          : undefined
-      }
       aria-label={participant.name}
       aria-pressed={clickable ? selected : undefined}
     >
       <div
-        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
-        style={
+        className={[
+          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
           selected
-            ? { background: fg, color: "white" }
-            : { background: bg + "66", color: fg }
-        }
+            ? participant.color.avatar
+            : "bg-ctp-surface1/50 text-ctp-subtext0",
+        ].join(" ")}
       >
         {participant.name[0]?.toUpperCase() ?? "?"}
       </div>
-      <span className={selected ? "" : "text-ctp-subtext0"}>
-        {participant.name.split(" ")[0] || "?"}
-      </span>
+      <span>{participant.name.split(" ")[0] || "?"}</span>
     </button>
   );
 }

@@ -70,6 +70,8 @@ export default function SplitterLayout() {
         sharedBills={store.sharedBills}
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}
+        onDeleteLocal={store.deleteLocalBill}
+        onDeleteShared={store.removeSharedBill}
       />
       <div className="flex flex-1 flex-col overflow-hidden min-w-0">
         <Outlet

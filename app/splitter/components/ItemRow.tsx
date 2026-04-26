@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MdDelete, MdDeleteForever } from "react-icons/md";
+import { MdDelete, MdDeleteForever, MdGroup } from "react-icons/md";
 import { ParticipantTile } from "./ParticipantTile";
 import type { Item, Participant } from "~/splitter/types";
 
@@ -43,7 +43,14 @@ export function ItemRow({
       : null;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-ctp-surface1/50 transition-colors hover:border-ctp-surface2">
+    <div
+      className={[
+        "overflow-hidden rounded-xl border transition-colors",
+        assignedCount === 0
+          ? "border-ctp-peach/50 hover:border-ctp-peach/80"
+          : "border-ctp-surface1/50 hover:border-ctp-surface2",
+      ].join(" ")}
+    >
       {/* Top row: name | price | delete */}
       <div className="flex items-center gap-2 px-3.5 py-2.5">
         <input
@@ -89,17 +96,43 @@ export function ItemRow({
       </div>
 
       {/* Assignees strip */}
-      <div className="flex flex-wrap items-center gap-2 border-t border-ctp-surface1/50 bg-ctp-mantle/50 px-3.5 py-2">
-        <span className="text-[11px] font-medium text-ctp-overlay0">
-          Split between:
-        </span>
-        {participants.length === 0 ? (
-          <span className="text-[11px] italic text-ctp-overlay0">
-            Add people first
-          </span>
-        ) : (
-          <>
-            {participants.map((p) => (
+      <div className="flex min-h-12 flex-wrap items-center gap-2 border-t border-ctp-surface1/50 bg-ctp-mantle/50 px-3.5 py-2">
+        {(!readOnly || item.splitEvenly) && (
+          <button
+            type="button"
+            onClick={
+              readOnly
+                ? undefined
+                : () =>
+                    onItemChange({ ...item, splitEvenly: !item.splitEvenly })
+            }
+            disabled={readOnly}
+            title={readOnly ? undefined : "Always split among everyone"}
+            className={[
+              "flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-medium transition-all",
+              item.splitEvenly
+                ? "border-ctp-teal/40 bg-ctp-teal/15 text-ctp-teal"
+                : "border-ctp-surface1 bg-ctp-surface0/40 text-ctp-subtext0 hover:border-ctp-surface2",
+            ].join(" ")}
+          >
+            <div
+              className={[
+                "flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
+                item.splitEvenly ? "bg-ctp-teal/30" : "bg-ctp-surface1",
+              ].join(" ")}
+            >
+              <MdGroup size={12} />
+            </div>
+            Everyone
+          </button>
+        )}
+        {!item.splitEvenly &&
+          (participants.length === 0 ? (
+            <span className="text-[11px] italic text-ctp-overlay0">
+              Add people first
+            </span>
+          ) : (
+            participants.map((p) => (
               <ParticipantTile
                 key={p.id}
                 participant={p}
@@ -107,13 +140,12 @@ export function ItemRow({
                 onClick={readOnly ? undefined : () => toggleParticipant(p.id)}
                 readOnly={readOnly}
               />
-            ))}
-            {sharePerPerson !== null && (
-              <span className="ml-auto text-[11px] text-ctp-subtext0">
-                ${sharePerPerson.toFixed(2)} each
-              </span>
-            )}
-          </>
+            ))
+          ))}
+        {sharePerPerson !== null && (
+          <span className="ml-auto text-[11px] text-ctp-subtext0">
+            ${sharePerPerson.toFixed(2)} each
+          </span>
         )}
       </div>
     </div>

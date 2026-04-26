@@ -38,12 +38,13 @@ export function ShareDialog({
         </button>
 
         <h2 className="mb-2 text-lg font-bold text-ctp-text">
-          Share this bill?
+          Finalize &amp; Share
         </h2>
         <p className="mb-5 text-sm text-ctp-subtext1">
           This creates a{" "}
-          <strong className="text-ctp-text">read-only snapshot</strong>. Any
-          edits you make after sharing will not be reflected in the link.
+          <strong className="text-ctp-text">read-only snapshot</strong> and
+          opens the shared view. The bill will no longer appear in your local
+          drafts.
         </p>
 
         <label className="mb-5 flex cursor-pointer items-center gap-2.5 text-sm text-ctp-subtext1">
@@ -70,7 +71,7 @@ export function ShareDialog({
             disabled={sharing}
             className="flex-1 rounded-lg bg-ctp-teal py-2 text-sm font-semibold text-ctp-base transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            {sharing ? "Creating…" : "Create Link"}
+            {sharing ? "Sharing…" : "Finalize & Share"}
           </button>
         </div>
       </div>

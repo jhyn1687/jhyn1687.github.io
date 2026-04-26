@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { MdWarning } from "react-icons/md";
 import { ItemRow } from "./ItemRow";
 import type { Item, Participant } from "~/splitter/types";
 
@@ -23,6 +24,7 @@ export function ItemSection({
 }: ItemSectionProps) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
+  const [warningOpen, setWarningOpen] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
   function handleAdd() {
@@ -40,19 +42,10 @@ export function ItemSection({
   ).length;
 
   const noItemsError = showError && items.length === 0;
-  const unassignedError = showError && unassignedCount > 0 && items.length > 0;
 
   return (
-    <section className="flex flex-col gap-4">
+    <section className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
-        <span
-          className={[
-            "flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold text-ctp-base",
-            noItemsError ? "bg-ctp-red" : "bg-ctp-teal",
-          ].join(" ")}
-        >
-          2
-        </span>
         <h2
           className={[
             "text-lg font-bold",
@@ -61,38 +54,29 @@ export function ItemSection({
         >
           Items
         </h2>
-        {items.length > 0 && (
-          <span className="ml-auto rounded-full bg-ctp-surface1/50 px-2.5 py-0.5 text-xs font-semibold text-ctp-subtext0">
-            {items.length}
-          </span>
+
+        {unassignedCount > 0 && items.length > 0 && (
+          <div className="relative ml-auto">
+            <button
+              type="button"
+              onMouseEnter={() => setWarningOpen(true)}
+              onMouseLeave={() => setWarningOpen(false)}
+              onFocus={() => setWarningOpen(true)}
+              onBlur={() => setWarningOpen(false)}
+              aria-label={`${unassignedCount} item${unassignedCount > 1 ? "s" : ""} not assigned to anyone`}
+              className="flex items-center rounded p-0.5 text-ctp-peach transition-colors"
+            >
+              <MdWarning size={16} />
+            </button>
+            {warningOpen && (
+              <div className="absolute right-0 top-full z-10 mt-1.5 w-max max-w-48 rounded-lg border border-ctp-peach/30 bg-ctp-mantle px-3 py-2 text-[12px] text-ctp-peach shadow-md">
+                {unassignedCount} item{unassignedCount > 1 ? "s" : ""} not
+                assigned to anyone
+              </div>
+            )}
+          </div>
         )}
       </div>
-
-      {/* Unassigned warning — red when shareAttempted, yellow otherwise */}
-      {unassignedCount > 0 && items.length > 0 && (
-        <div
-          className={[
-            "flex items-center gap-2 rounded-lg border px-3.5 py-2.5 text-[12px]",
-            unassignedError
-              ? "border-ctp-red/30 bg-ctp-red/10 text-ctp-red"
-              : "border-ctp-yellow/30 bg-ctp-yellow/10 text-ctp-yellow",
-          ].join(" ")}
-        >
-          ⚠ {unassignedCount} item{unassignedCount > 1 ? "s" : ""} not assigned
-          to anyone
-        </div>
-      )}
-
-      {items.length === 0 && (
-        <p
-          className={[
-            "text-sm",
-            noItemsError ? "text-ctp-red" : "text-ctp-overlay0",
-          ].join(" ")}
-        >
-          {readOnly ? "No items." : "Add items below or upload a receipt."}
-        </p>
-      )}
 
       <div className="flex flex-col gap-3">
         {items.map((item) => (
@@ -105,6 +89,7 @@ export function ItemSection({
                 name: updated.name,
                 price: updated.price,
                 splitBetween: updated.splitBetween,
+                splitEvenly: updated.splitEvenly,
               })
             }
             onItemRemove={() => onItemRemove(item.id)}

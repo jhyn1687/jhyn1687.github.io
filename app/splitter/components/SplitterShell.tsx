@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router";
+import { canShareBill } from "~/splitter/utils/bill";
 import { colorForIndex, nextColorSeed } from "~/splitter/utils/colors";
 import { AppHeader } from "~/splitter/components/AppHeader";
 import { BillSummary } from "~/splitter/components/BillSummary";
@@ -81,8 +82,14 @@ export function SplitterShell({
 
   function addParticipant(name: string) {
     const color = colorForIndex(colorSeed.current++);
+    const newParticipant = { id: crypto.randomUUID(), name, color };
     mutate({
-      participants: [...participants, { id: crypto.randomUUID(), name, color }],
+      participants: [...participants, newParticipant],
+      items: items.map((item) =>
+        item.splitEvenly
+          ? { ...item, splitBetween: [...item.splitBetween, newParticipant.id] }
+          : item,
+      ),
     });
   }
 
@@ -107,9 +114,13 @@ export function SplitterShell({
 
   function updateItem(id: string, patch: Partial<Item>) {
     mutate({
-      items: items.map((item) =>
-        item.id === id ? { ...item, ...patch } : item,
-      ),
+      items: items.map((item) => {
+        if (item.id !== id) return item;
+        const updated = { ...item, ...patch };
+        if (updated.splitEvenly)
+          updated.splitBetween = participants.map((p) => p.id);
+        return updated;
+      }),
     });
   }
 
@@ -131,16 +142,21 @@ export function SplitterShell({
 
   function handleFork() {
     const sourceBill = sharedBill?.bill ?? bill;
+    const idMap = new Map(
+      sourceBill.participants.map((p) => [p.id, crypto.randomUUID()]),
+    );
     const forked: Bill = {
       title: sourceBill.title,
       participants: sourceBill.participants.map((p) => ({
         ...p,
-        id: crypto.randomUUID(),
+        id: idMap.get(p.id)!,
       })),
       items: sourceBill.items.map((i) => ({
         ...i,
         id: crypto.randomUUID(),
-        splitBetween: [...i.splitBetween],
+        splitBetween: i.splitBetween
+          .map((pid) => idMap.get(pid)!)
+          .filter(Boolean),
       })),
       tax: sourceBill.tax,
       tip: sourceBill.tip,
@@ -154,17 +170,7 @@ export function SplitterShell({
     ? (store.localBills.find((b) => b.id === savedBillId) ?? null)
     : null;
 
-  function getShareBlocker(): string | undefined {
-    if (isSharedView) return undefined;
-    if (!title.trim()) return "Add a bill title first";
-    if (participants.length === 0) return "Add at least one person";
-    if (items.length === 0) return "Add at least one item";
-    const unassigned = items.filter((i) => i.splitBetween.length === 0).length;
-    if (unassigned > 0)
-      return `Assign all items — ${unassigned} item${unassigned > 1 ? "s" : ""} unassigned`;
-    return undefined;
-  }
-  const shareBlocker = getShareBlocker();
+  const shareBlocked = !isSharedView && !canShareBill(bill);
 
   function handleShare() {
     if (isSharedView && sharedBill) {
@@ -173,15 +179,17 @@ export function SplitterShell({
       });
       return;
     }
-    if (shareBlocker) {
+    if (shareBlocked) {
       setShareAttempted(true);
       return;
     }
     if (!activeLocalBill) return;
     setShareAttempted(false);
+    const onShareSuccess = (code: string) =>
+      navigate(`/splitter/share/${code}`);
     const result = store.initiateShare(activeLocalBill);
     if (result === "confirm") {
-      store.confirmShare(activeLocalBill);
+      store.confirmShare(activeLocalBill, onShareSuccess);
     }
   }
 
@@ -216,7 +224,12 @@ export function SplitterShell({
         sharing={store.sharing}
         skipShareDialog={store.settings.skipShareDialog}
         onUpdateSkip={(skip) => store.updateSettings({ skipShareDialog: skip })}
-        onConfirm={() => activeLocalBill && store.confirmShare(activeLocalBill)}
+        onConfirm={() =>
+          activeLocalBill &&
+          store.confirmShare(activeLocalBill, (code) =>
+            navigate(`/splitter/share/${code}`),
+          )
+        }
         onCancel={() => store.setShareDialogOpen(false)}
       />
 
@@ -249,7 +262,7 @@ export function SplitterShell({
         onMobileMenu={onMobileMenu}
         onMobileScan={() => setMobileScanOpen((o) => !o)}
         sharing={store.sharing}
-        shareBlocker={isSharedView ? undefined : shareBlocker}
+        shareBlocked={shareBlocked}
         titleError={shareAttempted && !title.trim()}
         readOnly={isSharedView}
       />

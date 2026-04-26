@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MdCameraAlt, MdForkRight, MdMenu, MdShare } from "react-icons/md";
+import { MdScanner, MdForkRight, MdMenu, MdShare } from "react-icons/md";
 
 interface AppHeaderProps {
   title: string;
@@ -9,7 +9,7 @@ interface AppHeaderProps {
   onMobileMenu: () => void;
   onMobileScan: () => void;
   sharing: boolean;
-  shareBlocker?: string;
+  shareBlocked?: boolean;
   titleError?: boolean;
   readOnly?: boolean;
 }
@@ -22,7 +22,7 @@ export function AppHeader({
   onMobileMenu,
   onMobileScan,
   sharing,
-  shareBlocker,
+  shareBlocked = false,
   titleError = false,
   readOnly = false,
 }: AppHeaderProps) {
@@ -30,7 +30,7 @@ export function AppHeader({
   const showTitleError = titleError && !localTitle.trim();
 
   return (
-    <header className="sticky top-0 z-30 flex h-15 items-center gap-3 border-b border-ctp-surface1/50 bg-ctp-base/85 px-4 backdrop-blur-md sm:px-6">
+    <header className="sticky top-0 z-30 flex p-3 items-center gap-3 border-b border-ctp-surface1/50 bg-ctp-base/85 px-4 backdrop-blur-md sm:px-6">
       {/* Hamburger — mobile only */}
       <button
         type="button"
@@ -68,8 +68,8 @@ export function AppHeader({
             onClick={onMobileScan}
             className="flex items-center gap-1.5 rounded-full border border-ctp-surface1/50 bg-ctp-surface0 px-3 py-1.5 text-xs font-bold text-ctp-subtext1 transition-colors hover:border-ctp-teal/50 hover:text-ctp-teal md:hidden"
           >
-            <MdCameraAlt size={14} />
-            Scan
+            <MdScanner size={14} />
+            Scan Receipt
           </button>
         )}
 
@@ -89,16 +89,20 @@ export function AppHeader({
         <button
           type="button"
           onClick={onShare}
-          title={shareBlocker ?? "Share bill"}
+          title="Share bill"
           className={[
             "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
             sharing
               ? "cursor-not-allowed border-ctp-surface1/50 bg-ctp-surface0 text-ctp-overlay0 opacity-60"
-              : "border-ctp-surface1/50 bg-ctp-surface0 text-ctp-subtext1 hover:border-ctp-teal/50 hover:bg-ctp-surface1 hover:text-ctp-teal",
+              : shareBlocked
+                ? "border-ctp-surface1/30 bg-ctp-surface0 text-ctp-overlay0 hover:border-ctp-surface1/50 hover:text-ctp-subtext0"
+                : "border-ctp-surface1/50 bg-ctp-surface0 text-ctp-subtext1 hover:border-ctp-teal/50 hover:bg-ctp-surface1 hover:text-ctp-teal",
           ].join(" ")}
         >
           <MdShare size={14} />
-          <span>{sharing ? "Sharing…" : "Share"}</span>
+          <span>
+            {sharing ? "Sharing…" : readOnly ? "Share" : "Finalize & Share"}
+          </span>
         </button>
       </div>
     </header>

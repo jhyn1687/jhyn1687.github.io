@@ -24,17 +24,12 @@ export function TaxTip({
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-ctp-teal text-[11px] font-bold text-ctp-base">
-          3
-        </span>
         <h2 className="text-lg font-bold text-ctp-text">Tax &amp; Tip</h2>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-ctp-subtext0">
-            Tax ($)
-          </label>
+          <label className="text-xs font-semibold text-ctp-subtext0">Tax</label>
           <div className="flex items-center rounded-lg border border-ctp-surface1/50 bg-ctp-surface0 px-3 focus-within:border-ctp-teal focus-within:ring-1 focus-within:ring-ctp-teal/30">
             <span className="text-xs font-semibold text-ctp-overlay0">$</span>
             <input
@@ -51,9 +46,7 @@ export function TaxTip({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-ctp-subtext0">
-            Tip ($)
-          </label>
+          <label className="text-xs font-semibold text-ctp-subtext0">Tip</label>
           <div className="flex items-center rounded-lg border border-ctp-surface1/50 bg-ctp-surface0 px-3 focus-within:border-ctp-teal focus-within:ring-1 focus-within:ring-ctp-teal/30">
             <span className="text-xs font-semibold text-ctp-overlay0">$</span>
             <input

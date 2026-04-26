@@ -207,7 +207,7 @@ export function useBillsStore() {
   );
 
   const confirmShare = useCallback(
-    async (activeBill: LocalBill) => {
+    async (activeBill: LocalBill, onSuccess?: (code: string) => void) => {
       if (sharing) return;
       setSharing(true);
       setShareDialogOpen(false);
@@ -222,22 +222,23 @@ export function useBillsStore() {
           url: string;
           code: string;
         };
-        const updated: LocalBill = {
-          ...activeBill,
+        const now = Date.now();
+        saveSharedBill({
           shareCode: code,
           shareUrl: url,
-          updatedAt: Date.now(),
-        };
-        saveLocalBill(updated);
-        await navigator.clipboard.writeText(url);
-        showToast("Link copied to clipboard!", "success");
+          bill: activeBill.bill,
+          cachedAt: now,
+          expiresAt: now + SHARED_TTL,
+        });
+        deleteLocalBill(activeBill.id);
+        onSuccess?.(code);
       } catch {
         showToast("Failed to create share link.", "error");
       } finally {
         setSharing(false);
       }
     },
-    [sharing, saveLocalBill, showToast],
+    [sharing, saveSharedBill, deleteLocalBill, showToast],
   );
 
   const updateSettings = useCallback((patch: Partial<SplitterSettings>) => {
