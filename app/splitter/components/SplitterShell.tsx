@@ -1,0 +1,311 @@
+import { useRef, useState } from "react";
+import { useNavigate, useOutletContext } from "react-router";
+import { colorForIndex, nextColorSeed } from "~/splitter/utils/colors";
+import { AppHeader } from "~/splitter/components/AppHeader";
+import { BillSummary } from "~/splitter/components/BillSummary";
+import { ItemSection } from "~/splitter/components/ItemSection";
+import { ParticipantSection } from "~/splitter/components/ParticipantSection";
+import { ReceiptUpload } from "~/splitter/components/ReceiptUpload";
+import { ShareDialog } from "~/splitter/components/ShareDialog";
+import { TaxTip } from "~/splitter/components/TaxTip";
+import type { SplitterLayoutContext } from "~/splitter/routes/splitter.layout";
+import type { Bill, Item, LocalBill, SharedBill } from "~/splitter/types";
+import type { OcrItem } from "~/splitter/utils/parseReceiptText";
+
+interface SplitterShellProps {
+  initialLocalBill: LocalBill | null;
+  isNew?: boolean;
+  sharedBill?: SharedBill | null;
+  error?: string;
+}
+
+export function SplitterShell({
+  initialLocalBill,
+  isNew = false,
+  sharedBill,
+  error,
+}: SplitterShellProps) {
+  const navigate = useNavigate();
+  const { store, onMobileMenu } = useOutletContext<SplitterLayoutContext>();
+  const [mobileScanOpen, setMobileScanOpen] = useState(false);
+  const [shareAttempted, setShareAttempted] = useState(false);
+
+  const isSharedView = !!sharedBill;
+  const emptyBill: Bill = {
+    title: "",
+    participants: [],
+    items: [],
+    tax: 0,
+    tip: 0,
+  };
+  const [bill, setBill] = useState<Bill>(
+    sharedBill?.bill ?? initialLocalBill?.bill ?? emptyBill,
+  );
+  const [savedBillId, setSavedBillId] = useState<string | null>(
+    initialLocalBill?.id ?? null,
+  );
+  const isFirstMutation = useRef(!savedBillId && isNew);
+  // Only ever increments — never decremented on removal — so re-adds after
+  // removals always get a fresh color rather than colliding with an existing one.
+  const colorSeed = useRef(
+    nextColorSeed(initialLocalBill?.bill.participants ?? []),
+  );
+
+  const { title, participants, items, tax, tip } = bill;
+
+  function mutate(patch: Partial<Bill>) {
+    const updated = { ...bill, ...patch };
+    setBill(updated);
+
+    if (isFirstMutation.current) {
+      isFirstMutation.current = false;
+      const id = crypto.randomUUID();
+      setSavedBillId(id);
+      const saved: LocalBill = { id, bill: updated, updatedAt: Date.now() };
+      store.saveLocalBill(saved);
+      navigate(`/splitter/${id}`, { replace: true });
+    } else if (savedBillId) {
+      const existing = store.localBills.find((b) => b.id === savedBillId);
+      const saved: LocalBill = {
+        ...(existing ?? { id: savedBillId }),
+        bill: updated,
+        updatedAt: Date.now(),
+      };
+      store.saveLocalBill(saved);
+    }
+  }
+
+  function setTitle(t: string) {
+    mutate({ title: t });
+  }
+
+  function addParticipant(name: string) {
+    const color = colorForIndex(colorSeed.current++);
+    mutate({
+      participants: [...participants, { id: crypto.randomUUID(), name, color }],
+    });
+  }
+
+  function removeParticipant(id: string) {
+    mutate({
+      participants: participants.filter((p) => p.id !== id),
+      items: items.map((item) => ({
+        ...item,
+        splitBetween: item.splitBetween.filter((pid) => pid !== id),
+      })),
+    });
+  }
+
+  function addItem(name: string, price: number) {
+    mutate({
+      items: [
+        ...items,
+        { id: crypto.randomUUID(), name, price, splitBetween: [] },
+      ],
+    });
+  }
+
+  function updateItem(id: string, patch: Partial<Item>) {
+    mutate({
+      items: items.map((item) =>
+        item.id === id ? { ...item, ...patch } : item,
+      ),
+    });
+  }
+
+  function removeItem(id: string) {
+    mutate({ items: items.filter((item) => item.id !== id) });
+  }
+
+  function importItems(ocrItems: OcrItem[]) {
+    const newItems = ocrItems
+      .filter((oi) => oi.description && oi.total_amount > 0)
+      .map((oi) => ({
+        id: crypto.randomUUID(),
+        name: oi.description,
+        price: oi.total_amount,
+        splitBetween: [] as string[],
+      }));
+    mutate({ items: [...items, ...newItems] });
+  }
+
+  function handleFork() {
+    const sourceBill = sharedBill?.bill ?? bill;
+    const forked: Bill = {
+      title: sourceBill.title,
+      participants: sourceBill.participants.map((p) => ({
+        ...p,
+        id: crypto.randomUUID(),
+      })),
+      items: sourceBill.items.map((i) => ({
+        ...i,
+        id: crypto.randomUUID(),
+        splitBetween: [...i.splitBetween],
+      })),
+      tax: sourceBill.tax,
+      tip: sourceBill.tip,
+    };
+    const id = crypto.randomUUID();
+    store.saveLocalBill({ id, bill: forked, updatedAt: Date.now() });
+    navigate(`/splitter/${id}`);
+  }
+
+  const activeLocalBill = savedBillId
+    ? (store.localBills.find((b) => b.id === savedBillId) ?? null)
+    : null;
+
+  function getShareBlocker(): string | undefined {
+    if (isSharedView) return undefined;
+    if (!title.trim()) return "Add a bill title first";
+    if (participants.length === 0) return "Add at least one person";
+    if (items.length === 0) return "Add at least one item";
+    const unassigned = items.filter((i) => i.splitBetween.length === 0).length;
+    if (unassigned > 0)
+      return `Assign all items — ${unassigned} item${unassigned > 1 ? "s" : ""} unassigned`;
+    return undefined;
+  }
+  const shareBlocker = getShareBlocker();
+
+  function handleShare() {
+    if (isSharedView && sharedBill) {
+      navigator.clipboard.writeText(sharedBill.shareUrl).then(() => {
+        store.showToast("Link copied!", "success");
+      });
+      return;
+    }
+    if (shareBlocker) {
+      setShareAttempted(true);
+      return;
+    }
+    if (!activeLocalBill) return;
+    setShareAttempted(false);
+    const result = store.initiateShare(activeLocalBill);
+    if (result === "confirm") {
+      store.confirmShare(activeLocalBill);
+    }
+  }
+
+  const subtotal = items.reduce(
+    (sum, item) => sum + (isNaN(item.price) ? 0 : item.price),
+    0,
+  );
+  const hasContent = participants.length > 0 || items.length > 0;
+
+  if (error) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <div className="max-w-sm rounded-2xl border border-ctp-surface1/50 bg-ctp-mantle p-8 text-center shadow-2xl">
+          <p className="text-lg font-bold text-ctp-text">Bill not found</p>
+          <p className="mt-2 text-sm text-ctp-subtext0">{error}</p>
+          <button
+            type="button"
+            onClick={() => navigate("/splitter/new")}
+            className="mt-6 rounded-lg bg-ctp-teal px-4 py-2 text-sm font-semibold text-ctp-base transition-opacity hover:opacity-90"
+          >
+            Start a new bill
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <ShareDialog
+        open={store.shareDialogOpen}
+        sharing={store.sharing}
+        skipShareDialog={store.settings.skipShareDialog}
+        onUpdateSkip={(skip) => store.updateSettings({ skipShareDialog: skip })}
+        onConfirm={() => activeLocalBill && store.confirmShare(activeLocalBill)}
+        onCancel={() => store.setShareDialogOpen(false)}
+      />
+
+      {mobileScanOpen && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col justify-end"
+          onClick={() => setMobileScanOpen(false)}
+        >
+          <div
+            className="rounded-t-2xl bg-ctp-surface0 p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-ctp-surface2" />
+            <ReceiptUpload
+              onItemsImported={(oi) => {
+                importItems(oi);
+                setMobileScanOpen(false);
+              }}
+              hasContent={hasContent}
+            />
+          </div>
+        </div>
+      )}
+
+      <AppHeader
+        title={title}
+        setTitle={setTitle}
+        onShare={handleShare}
+        onFork={isSharedView ? handleFork : undefined}
+        onMobileMenu={onMobileMenu}
+        onMobileScan={() => setMobileScanOpen((o) => !o)}
+        sharing={store.sharing}
+        shareBlocker={isSharedView ? undefined : shareBlocker}
+        titleError={shareAttempted && !title.trim()}
+        readOnly={isSharedView}
+      />
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto grid max-w-300 grid-cols-1 gap-7 px-5 py-8 md:grid-cols-[1fr_360px] lg:px-8">
+          <div className="flex flex-col gap-8">
+            <ParticipantSection
+              participants={participants}
+              onAdd={addParticipant}
+              onRemove={removeParticipant}
+              readOnly={isSharedView}
+              showError={shareAttempted && participants.length === 0}
+            />
+            <ItemSection
+              items={items}
+              participants={participants}
+              onAdd={addItem}
+              onItemChange={updateItem}
+              onItemRemove={removeItem}
+              readOnly={isSharedView}
+              showError={
+                shareAttempted &&
+                (items.length === 0 ||
+                  items.some((i) => i.splitBetween.length === 0))
+              }
+            />
+            {!isSharedView && (
+              <TaxTip
+                tax={tax}
+                tip={tip}
+                subtotal={subtotal}
+                onTaxChange={(v) => mutate({ tax: v })}
+                onTipChange={(v) => mutate({ tip: v })}
+              />
+            )}
+          </div>
+
+          <div className="flex flex-col gap-5 md:sticky md:top-4 md:self-start">
+            {!isSharedView && (
+              <div className="hidden md:block">
+                <ReceiptUpload
+                  onItemsImported={importItems}
+                  hasContent={hasContent}
+                />
+              </div>
+            )}
+            <BillSummary
+              items={items}
+              participants={participants}
+              tax={tax}
+              tip={tip}
+            />
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
