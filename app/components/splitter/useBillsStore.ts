@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import type { Bill, SavedBill, SplitterSettings } from "./types";
 
 export type Toast = { text: string; type: "success" | "error" };
@@ -64,27 +64,31 @@ export function useBillsStore() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const myBills = bills.filter((b) => !b.isShared).sort((a, b) => b.updatedAt - a.updatedAt);
   const sharedBills = bills.filter((b) => b.isShared).sort((a, b) => b.updatedAt - a.updatedAt);
 
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      localStorage.setItem(BILLS_KEY, JSON.stringify(bills));
-    }, 500);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [bills]);
-
+  // Synchronous write — no debounce, so navigation never loses data on unmount
   const saveBill = useCallback((saved: SavedBill) => {
-    setBills((prev) => upsert(prev, saved));
+    setBills((prev) => {
+      const next = upsert(prev, saved);
+      try {
+        localStorage.setItem(BILLS_KEY, JSON.stringify(next));
+      } catch {
+        // storage full — not fatal
+      }
+      return next;
+    });
   }, []);
 
   const deleteBill = useCallback((id: string) => {
-    setBills((prev) => prev.filter((b) => b.id !== id));
+    setBills((prev) => {
+      const next = prev.filter((b) => b.id !== id);
+      try {
+        localStorage.setItem(BILLS_KEY, JSON.stringify(next));
+      } catch { /* storage full */ }
+      return next;
+    });
   }, []);
 
   const clearToast = useCallback(() => setToast(null), []);
@@ -122,11 +126,12 @@ export function useBillsStore() {
         });
         if (!res.ok) throw new Error("Server error");
         const { url, code } = (await res.json()) as { url: string; code: string };
+        // Don't set isShared — the bill stays in "My Bills" and remains editable.
+        // Only bills opened via a share link get isShared: true (set in splitter.share.$code.tsx).
         const updated: SavedBill = {
           ...activeBill,
           shareCode: code,
           shareUrl: url,
-          isShared: true,
           updatedAt: Date.now(),
         };
         saveBill(updated);

@@ -230,7 +230,21 @@ export function SplitterShell({
     ? store.bills.find((b) => b.id === savedBillId) ?? null
     : null;
 
+  // Compute what's blocking the Share button (null = nothing, share is allowed)
+  function getShareBlocker(): string | undefined {
+    if (isSharedView) return undefined;
+    if (!title.trim()) return "Add a bill title first";
+    if (participants.length === 0) return "Add at least one person";
+    if (items.length === 0) return "Add at least one item";
+    const unassigned = items.filter((i) => i.splitBetween.length === 0).length;
+    if (unassigned > 0)
+      return `Assign all items — ${unassigned} item${unassigned > 1 ? "s" : ""} unassigned`;
+    return undefined;
+  }
+  const shareBlocker = getShareBlocker();
+
   function handleShare() {
+    if (shareBlocker) return;
     if (!activeSavedBill) return;
     const result = store.initiateShare(activeSavedBill);
     if (result === "confirm") {
@@ -320,6 +334,7 @@ export function SplitterShell({
           onMobileMenu={() => setMobileOpen((o) => !o)}
           onMobileScan={() => setMobileScanOpen((o) => !o)}
           sharing={store.sharing}
+          shareBlocker={shareBlocker}
           readOnly={isSharedView}
         />
 
