@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MdForkRight } from "react-icons/md";
 import { useNavigate } from "react-router";
 import { colorForIndex, nextColorSeed } from "./colors";
 import { AppHeader } from "./AppHeader";
@@ -48,27 +47,6 @@ function Toast({
   );
 }
 
-function SharedBanner({
-  bill,
-  onFork,
-}: {
-  bill: Bill;
-  onFork: () => void;
-}) {
-  return (
-    <div className="flex items-center justify-between rounded-xl border border-ctp-teal/30 bg-ctp-teal/10 px-4 py-3">
-      <span className="text-sm text-ctp-teal">Viewing a shared bill — read only</span>
-      <button
-        type="button"
-        onClick={onFork}
-        className="flex items-center gap-1.5 rounded-lg border border-ctp-teal/40 bg-ctp-teal/20 px-3 py-1.5 text-sm font-medium text-ctp-teal transition-colors hover:bg-ctp-teal/30"
-      >
-        <MdForkRight size={18} />
-        Fork &amp; Edit
-      </button>
-    </div>
-  );
-}
 
 interface SplitterShellProps {
   // Editable local bill (/splitter/:billId or /splitter/new)
@@ -242,7 +220,12 @@ export function SplitterShell({
   const shareBlocker = getShareBlocker();
 
   function handleShare() {
-    if (isSharedView) return;
+    if (isSharedView && sharedBill) {
+      navigator.clipboard.writeText(sharedBill.shareUrl).then(() => {
+        store.showToast("Link copied!", "success");
+      });
+      return;
+    }
     if (shareBlocker) {
       setShareAttempted(true);
       return;
@@ -335,10 +318,11 @@ export function SplitterShell({
           title={title}
           setTitle={setTitle}
           onShare={handleShare}
+          onFork={isSharedView ? handleFork : undefined}
           onMobileMenu={() => setMobileOpen((o) => !o)}
           onMobileScan={() => setMobileScanOpen((o) => !o)}
           sharing={store.sharing}
-          shareBlocker={shareBlocker}
+          shareBlocker={isSharedView ? undefined : shareBlocker}
           titleError={shareAttempted && !title.trim()}
           readOnly={isSharedView}
         />
@@ -347,9 +331,6 @@ export function SplitterShell({
           <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-7 px-5 py-8 md:grid-cols-[1fr_360px] lg:px-8">
             {/* Left col */}
             <div className="flex flex-col gap-8">
-              {isSharedView && (
-                <SharedBanner bill={sharedBill!.bill} onFork={handleFork} />
-              )}
               <ParticipantSection
                 participants={participants}
                 onAdd={addParticipant}
