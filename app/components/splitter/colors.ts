@@ -15,3 +15,17 @@ const PALETTE: PersonColor[] = [
 export function colorForIndex(index: number): PersonColor {
   return PALETTE[index % PALETTE.length];
 }
+
+// Returns the index to start from when adding new participants, based on the
+// highest palette index already in use. This ensures the ref-based counter
+// never re-issues a color that's currently assigned — even after a page reload
+// where removals happened in a prior session.
+export function nextColorSeed(participants: Array<{ color?: PersonColor }>): number {
+  let max = -1;
+  for (const p of participants) {
+    if (!p.color) continue;
+    const idx = PALETTE.findIndex((c) => c.bg === p.color!.bg);
+    if (idx > max) max = idx;
+  }
+  return max + 1;
+}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MdForkRight } from "react-icons/md";
 import { useNavigate } from "react-router";
-import { colorForIndex } from "./colors";
+import { colorForIndex, nextColorSeed } from "./colors";
 import { AppHeader } from "./AppHeader";
 import { BillSidebar } from "./BillSidebar";
 import { BillSummary } from "./BillSummary";
@@ -100,6 +100,9 @@ export function SplitterShell({
     initialLocalBill?.id ?? null,
   );
   const isFirstMutation = useRef(!savedBillId && isNew);
+  // Only ever increments — never decremented on removal — so re-adds after
+  // removals always get a fresh color rather than colliding with an existing one.
+  const colorSeed = useRef(nextColorSeed(initialLocalBill?.bill.participants ?? []));
 
   const { title, participants, items, tax, tip } = bill;
 
@@ -132,7 +135,7 @@ export function SplitterShell({
 
   const addParticipant = useCallback(
     (name: string) => {
-      const color = colorForIndex(participants.length);
+      const color = colorForIndex(colorSeed.current++);
       mutate({
         participants: [
           ...participants,
