@@ -8,6 +8,12 @@
   --font-nunito: "Nunito", ui-sans-serif, system-ui, sans-serif;
 }
 
+*,
+*::before,
+*::after {
+  font-variant-ligatures: none;
+}
+
 html {
   /* Fallback before the canvas mounts */
   background-color: var(--catppuccin-color-crust);

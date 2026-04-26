@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { MdCameraAlt, MdForkRight, MdMenu, MdShare } from "react-icons/md";
 
 interface AppHeaderProps {
@@ -25,6 +26,9 @@ export function AppHeader({
   titleError = false,
   readOnly = false,
 }: AppHeaderProps) {
+  const [localTitle, setLocalTitle] = useState(title);
+  const showTitleError = titleError && !localTitle.trim();
+
   return (
     <header className="sticky top-0 z-30 flex h-15 items-center gap-3 border-b border-ctp-surface1/50 bg-ctp-base/85 px-4 backdrop-blur-md sm:px-6">
       {/* Hamburger — mobile only */}
@@ -40,14 +44,16 @@ export function AppHeader({
       {/* Bill title */}
       <input
         type="text"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
+        value={localTitle}
+        onChange={(e) => setLocalTitle(e.target.value)}
+        onBlur={(e) => setTitle(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && setTitle(localTitle)}
         placeholder="Untitled Bill"
         readOnly={readOnly}
         className={[
           "min-w-0 flex-1 rounded bg-transparent px-1 font-mono text-lg font-bold text-ctp-text placeholder-ctp-overlay0 focus:outline-none",
           readOnly ? "cursor-default" : "",
-          titleError
+          showTitleError
             ? "border border-ctp-red/60 bg-ctp-red/5 placeholder-ctp-red/60 focus:border-ctp-red focus:ring-1 focus:ring-ctp-red/30"
             : "border border-transparent focus:border-ctp-teal focus:ring-1 focus:ring-ctp-teal/30",
         ].join(" ")}
