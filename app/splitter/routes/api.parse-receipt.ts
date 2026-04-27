@@ -11,10 +11,58 @@ async function sha256hex(input: string): Promise<string> {
     .slice(0, 16);
 }
 
+// Llama 3.2 license prohibits use for EU-domiciled individuals
+const EU_COUNTRIES = new Set([
+  "AT",
+  "BE",
+  "BG",
+  "CY",
+  "CZ",
+  "DE",
+  "DK",
+  "EE",
+  "ES",
+  "FI",
+  "FR",
+  "GR",
+  "HR",
+  "HU",
+  "IE",
+  "IT",
+  "LT",
+  "LU",
+  "LV",
+  "MT",
+  "NL",
+  "PL",
+  "PT",
+  "RO",
+  "SE",
+  "SI",
+  "SK",
+]);
+
+const PROMPT = `You are reading a receipt image. Output one entry per line using this exact format:
+  <name>  <price>
+
+Rules:
+- Include purchased items and discounts (discounts as negative prices, e.g. "Promo  -5.00")
+- Include tax on its own line as "Tax  <amount>"
+- Include tip or gratuity on its own line as "Tip  <amount>"
+- Exclude totals, subtotals, balance due, change, and any row that sums up other rows — even if labelled AMT, TOTAL AMT, DUE, BALANCE, etc.
+- No currency symbols, no explanations, no blank lines
+
+Example output:
+Burger  12.99
+Fries  4.99
+Promo  -5.00
+Tax  1.50
+Tip  3.00`;
+
 export async function action({ request, context }: Route.ActionArgs) {
-  const apiKey = context.cloudflare.env.GOOGLE_CLOUD_VISION_API_KEY;
-  if (!apiKey) {
-    return Response.json({ error: "GCV not configured" }, { status: 503 });
+  const country = request.headers.get("CF-IPCountry") ?? "";
+  if (EU_COUNTRIES.has(country)) {
+    return Response.json({ error: "EU region" }, { status: 451 });
   }
 
   const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
@@ -43,33 +91,33 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
 
   const buffer = await (file as File).arrayBuffer();
-  const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
-
-  const res = await fetch(
-    `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        requests: [
-          {
-            image: { content: base64 },
-            features: [{ type: "DOCUMENT_TEXT_DETECTION" }],
-          },
-        ],
-      }),
-    },
-  );
-
-  if (!res.ok) {
-    return Response.json({ error: "GCV error" }, { status: res.status });
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
   }
+  const base64 = btoa(binary);
+  const mimeType = (file as File).type || "image/jpeg";
 
-  const json = (await res.json()) as {
-    responses?: Array<{
-      textAnnotations?: Array<{ description?: string }>;
-    }>;
-  };
-  const text = json.responses?.[0]?.textAnnotations?.[0]?.description ?? "";
-  return Response.json({ items: parseReceiptText(text) });
+  const aiResponse = (await context.cloudflare.env.AI.run(
+    "@cf/meta/llama-3.2-11b-vision-instruct",
+    {
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: PROMPT },
+            {
+              type: "image_url",
+              image_url: { url: `data:${mimeType};base64,${base64}` },
+            },
+          ],
+        },
+      ],
+      max_tokens: 1024,
+    },
+  )) as { response: string };
+
+  const { items, tax, tip } = parseReceiptText(aiResponse.response);
+  return Response.json({ items, tax, tip });
 }

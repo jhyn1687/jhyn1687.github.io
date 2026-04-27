@@ -6,10 +6,12 @@ import { AppHeader } from "~/splitter/components/AppHeader";
 import { BillSummary } from "~/splitter/components/BillSummary";
 import { ItemSection } from "~/splitter/components/ItemSection";
 import { ParticipantSection } from "~/splitter/components/ParticipantSection";
+import { ReceiptUpload } from "~/splitter/components/ReceiptUpload";
 import { ShareDialog } from "~/splitter/components/ShareDialog";
 import { TaxTip } from "~/splitter/components/TaxTip";
 import type { SplitterLayoutContext } from "~/splitter/routes/splitter.layout";
 import type { Bill, Item, LocalBill, SharedBill } from "~/splitter/types";
+import type { OcrItem } from "~/splitter/utils/parseReceiptText";
 
 interface SplitterShellProps {
   initialLocalBill: LocalBill | null;
@@ -123,6 +125,20 @@ export function SplitterShell({
 
   function removeItem(id: string) {
     mutate({ items: items.filter((item) => item.id !== id) });
+  }
+
+  function handleImport(ocrItems: OcrItem[], ocrTax?: number, ocrTip?: number) {
+    const newItems: Item[] = ocrItems.map(({ description, total_amount }) => ({
+      id: crypto.randomUUID(),
+      name: description,
+      price: total_amount,
+      splitBetween: [],
+    }));
+    mutate({
+      items: [...items, ...newItems],
+      ...(ocrTax !== undefined ? { tax: ocrTax } : {}),
+      ...(ocrTip !== undefined ? { tip: ocrTip } : {}),
+    });
   }
 
   function handleFork() {
@@ -239,6 +255,12 @@ export function SplitterShell({
               readOnly={isSharedView}
               showError={shareAttempted && participants.length === 0}
             />
+            {!isSharedView && (
+              <ReceiptUpload
+                onImport={handleImport}
+                hasContent={items.length > 0}
+              />
+            )}
             <ItemSection
               items={items}
               participants={participants}

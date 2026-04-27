@@ -1,4 +1,5 @@
 import { createRequestHandler } from "react-router";
+import type { Ai } from "@cloudflare/workers-types";
 
 const requestHandler = createRequestHandler(
   () => import("virtual:react-router/server-build"),
@@ -8,7 +9,7 @@ const requestHandler = createRequestHandler(
 type CloudflareEnv = {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
-  GOOGLE_CLOUD_VISION_API_KEY: string;
+  AI: Ai;
 };
 
 type CloudflareCtx = {

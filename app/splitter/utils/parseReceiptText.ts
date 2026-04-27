@@ -1,22 +1,38 @@
 export type OcrItem = { description: string; total_amount: number };
 
-const pricePattern = /^(.+?)\s+\$?([\d]+\.[\d]{2})\s*$/;
-const skipWords =
-  /total|tax|tip|subtotal|gratuity|discount|change|balance|amount|due/i;
+export type ParsedReceipt = {
+  items: OcrItem[];
+  tax?: number;
+  tip?: number;
+};
 
-export function parseReceiptText(text: string): OcrItem[] {
+const pricePattern = /^(.+?)\s+(-?\$?[\d]+\.[\d]{2})\s*$/;
+const skipWords = /total|subtotal|change|balance|amount|due/i;
+const taxPattern = /\btax\b/i;
+const tipPattern = /\btip\b|\bgratuity\b/i;
+
+export function parseReceiptText(text: string): ParsedReceipt {
   const items: OcrItem[] = [];
+  let tax: number | undefined;
+  let tip: number | undefined;
+
   for (const line of text.split("\n")) {
     const trimmed = line.trim();
     if (!trimmed || skipWords.test(trimmed)) continue;
     const match = trimmed.match(pricePattern);
-    if (match) {
-      const description = match[1].trim();
-      const total_amount = parseFloat(match[2]);
-      if (description.length > 1 && total_amount > 0 && total_amount < 10000) {
-        items.push({ description, total_amount });
-      }
+    if (!match) continue;
+    const description = match[1].trim();
+    const amount = parseFloat(match[2].replace("$", ""));
+    if (isNaN(amount) || Math.abs(amount) >= 10000) continue;
+
+    if (taxPattern.test(trimmed) && amount > 0) {
+      tax = amount;
+    } else if (tipPattern.test(trimmed) && amount > 0) {
+      tip = amount;
+    } else if (description.length > 1 && amount !== 0) {
+      items.push({ description, total_amount: amount });
     }
   }
-  return items;
+
+  return { items, tax, tip };
 }

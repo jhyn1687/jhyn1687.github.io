@@ -6,14 +6,11 @@ import {
 } from "~/splitter/utils/parseReceiptText";
 
 interface ReceiptUploadProps {
-  onItemsImported: (items: OcrItem[]) => void;
+  onImport: (items: OcrItem[], tax?: number, tip?: number) => void;
   hasContent: boolean;
 }
 
-export function ReceiptUpload({
-  onItemsImported,
-  hasContent,
-}: ReceiptUploadProps) {
+export function ReceiptUpload({ onImport, hasContent }: ReceiptUploadProps) {
   const [expanded, setExpanded] = useState(!hasContent);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -37,9 +34,13 @@ export function ReceiptUpload({
         body: form,
       });
       if (res.ok) {
-        const data = (await res.json()) as { items: OcrItem[] };
+        const data = (await res.json()) as {
+          items: OcrItem[];
+          tax?: number | null;
+          tip?: number | null;
+        };
         if (data.items.length > 0) {
-          onItemsImported(data.items);
+          onImport(data.items, data.tax ?? undefined, data.tip ?? undefined);
           setStatus(`Imported ${data.items.length} item(s). Please review.`);
           setLoading(false);
           setExpanded(false);
@@ -47,7 +48,9 @@ export function ReceiptUpload({
         }
       }
       if (res.status === 429) {
-        setStatus("GCV quota reached — running local OCR…");
+        setStatus("Server quota reached — running local OCR…");
+      } else if (res.status === 451) {
+        setStatus("Running local OCR…");
       }
     } catch {
       // fall through
@@ -62,9 +65,9 @@ export function ReceiptUpload({
         data: { text },
       } = await worker.recognize(file);
       await worker.terminate();
-      const parsed = parseReceiptText(text);
+      const { items: parsed, tax, tip } = parseReceiptText(text);
       if (parsed.length > 0) {
-        onItemsImported(parsed);
+        onImport(parsed, tax, tip);
         setStatus(
           `Imported ${parsed.length} item(s) via OCR — results are best-effort, please review.`,
         );

@@ -91,6 +91,7 @@ export default function SplitterSharePage({
 }: Route.ComponentProps) {
   return (
     <SplitterShell
+      key={loaderData.sharedBill?.shareCode ?? "error"}
       initialLocalBill={null}
       sharedBill={loaderData.sharedBill}
       error={loaderData.error}
