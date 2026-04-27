@@ -1,5 +1,10 @@
 import { useRef, useState } from "react";
-import { useNavigate, useOutletContext } from "react-router";
+import {
+  useLocation,
+  useNavigate,
+  useOutletContext,
+  useSearchParams,
+} from "react-router";
 import { canShareBill } from "~/splitter/utils/bill";
 import { colorForIndex, nextColorSeed } from "~/splitter/utils/colors";
 import { AppHeader } from "~/splitter/components/AppHeader";
@@ -28,6 +33,8 @@ export function SplitterShell({
   error,
 }: SplitterShellProps) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { store, onMobileMenu } = useOutletContext<SplitterLayoutContext>();
   const [shareAttempted, setShareAttempted] = useState(false);
 
@@ -45,7 +52,9 @@ export function SplitterShell({
   const [savedBillId, setSavedBillId] = useState<string | null>(
     initialLocalBill?.id ?? null,
   );
-  const [scanModalOpen, setScanModalOpen] = useState(false);
+  const [scanModalOpen, setScanModalOpen] = useState(
+    () => searchParams.get("scan") === "1",
+  );
   const isFirstMutation = useRef(!savedBillId && isNew);
   // Only ever increments — never decremented on removal — so re-adds after
   // removals always get a fresh color rather than colliding with an existing one.
@@ -224,7 +233,12 @@ export function SplitterShell({
       {scanModalOpen && (
         <ScanReceiptModal
           onImport={handleImport}
-          onClose={() => setScanModalOpen(false)}
+          onClose={() => {
+            setScanModalOpen(false);
+            if (searchParams.get("scan") === "1") {
+              navigate(location.pathname, { replace: true });
+            }
+          }}
         />
       )}
       <ShareDialog
