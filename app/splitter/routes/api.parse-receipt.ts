@@ -77,7 +77,6 @@ export async function action({ request, context }: Route.ActionArgs) {
   const { data } = await supabase.rpc("check_and_increment_ocr", {
     p_month: month,
     p_ip_key: ipHash,
-    p_global_cap: 900,
     p_ip_cap: 10,
   });
   if (!data?.[0]?.allowed) {
