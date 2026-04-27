@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "@catppuccin/tailwindcss/mocha.css";
 
+.mocha {
+  color-scheme: dark;
+}
+
 @theme {
   --font-mono:
     "Chivo Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,

@@ -135,9 +135,13 @@ export function BillSidebar({
       >
         {/* Logo */}
         <div className="border-b border-ctp-surface1/50 px-3 py-3 font-mono text-xl font-extrabold tracking-tight text-ctp-text">
-          <span className="inline-block h-7.5">
+          <Link
+            to="/splitter"
+            onClick={onClose}
+            className="inline-block h-7.5 transition hover:drop-shadow-[0_0_8px_#94e2d5]"
+          >
             splitter<span className="text-ctp-teal">.jhyn</span>
-          </span>
+          </Link>
         </div>
 
         {/* New Bill */}

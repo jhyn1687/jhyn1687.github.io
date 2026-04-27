@@ -104,15 +104,18 @@ export function BillSummary({
   // Compute per-participant subtotals
   const subtotals: Record<string, number> = {};
   let totalSubtotal = 0;
+  let assignedSubtotal = 0;
 
   for (const item of items) {
+    if (isNaN(item.price)) continue;
+    totalSubtotal += item.price;
     const assigned = item.splitBetween;
-    if (assigned.length === 0 || isNaN(item.price)) continue;
+    if (assigned.length === 0) continue;
     const share = item.price / assigned.length;
     for (const pid of assigned) {
       subtotals[pid] = (subtotals[pid] ?? 0) + share;
     }
-    totalSubtotal += item.price;
+    assignedSubtotal += item.price;
   }
 
   const grandTotal = totalSubtotal + tax + tip;
@@ -121,7 +124,7 @@ export function BillSummary({
   const breakdowns: PersonBreakdown[] = participants.map((p) => {
     const sub = subtotals[p.id] ?? 0;
     const proportion =
-      totalSubtotal > 0 ? sub / totalSubtotal : 1 / participants.length;
+      assignedSubtotal > 0 ? sub / assignedSubtotal : 1 / participants.length;
     const myItems = items
       .filter((i) => i.splitBetween.includes(p.id) && !isNaN(i.price))
       .map((i) => ({

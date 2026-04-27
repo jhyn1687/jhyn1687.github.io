@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router";
 import type { Route } from "./+types/splitter.settings";
+import { Toggle } from "~/splitter/components/Toggle";
 import type { SplitterLayoutContext } from "~/splitter/routes/splitter.layout";
 
 export function meta(_args: Route.MetaArgs) {
@@ -58,41 +59,12 @@ export default function SplitterSettingsPage() {
         <div className="mx-auto max-w-xl px-5 py-8 lg:px-8">
           <div className="flex flex-col gap-6">
             <div className="rounded-2xl border border-ctp-surface1/50 bg-ctp-surface0/40 p-5">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <div className="font-semibold text-ctp-text">
-                    Skip share confirmation
-                  </div>
-                  <div className="mt-0.5 text-sm text-ctp-subtext0">
-                    Share links without showing the warning dialog each time.
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    store.updateSettings({
-                      skipShareDialog: !store.settings.skipShareDialog,
-                    })
-                  }
-                  className={[
-                    "relative h-6 w-11 shrink-0 rounded-full transition-colors",
-                    store.settings.skipShareDialog
-                      ? "bg-ctp-teal"
-                      : "bg-ctp-surface2",
-                  ].join(" ")}
-                  role="switch"
-                  aria-checked={store.settings.skipShareDialog}
-                >
-                  <span
-                    className={[
-                      "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
-                      store.settings.skipShareDialog
-                        ? "translate-x-5"
-                        : "translate-x-0.5",
-                    ].join(" ")}
-                  />
-                </button>
-              </div>
+              <Toggle
+                checked={store.settings.skipShareDialog}
+                onChange={(v) => store.updateSettings({ skipShareDialog: v })}
+                label="Skip share confirmation"
+                description="Share links without showing the warning dialog each time."
+              />
             </div>
 
             <div className="rounded-2xl border border-ctp-surface1/50 bg-ctp-surface0/40 p-5">

@@ -8,6 +8,7 @@ export function meta(_args: Route.MetaArgs) {
   return [
     { title: "Tony Yuan" },
     { name: "description", content: "Tony Yuan's Portfolio" },
+    { name: "color-scheme", content: "dark" },
   ];
 }
 

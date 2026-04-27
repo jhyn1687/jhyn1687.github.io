@@ -1,15 +1,23 @@
 import { useRef, useState } from "react";
-import { useNavigate, useOutletContext } from "react-router";
+import {
+  useLocation,
+  useNavigate,
+  useOutletContext,
+  useSearchParams,
+} from "react-router";
 import { canShareBill } from "~/splitter/utils/bill";
 import { colorForIndex, nextColorSeed } from "~/splitter/utils/colors";
 import { AppHeader } from "~/splitter/components/AppHeader";
 import { BillSummary } from "~/splitter/components/BillSummary";
 import { ItemSection } from "~/splitter/components/ItemSection";
 import { ParticipantSection } from "~/splitter/components/ParticipantSection";
+import { ReceiptUpload } from "~/splitter/components/ReceiptUpload";
+import { ScanReceiptModal } from "~/splitter/components/ScanReceiptModal";
 import { ShareDialog } from "~/splitter/components/ShareDialog";
 import { TaxTip } from "~/splitter/components/TaxTip";
 import type { SplitterLayoutContext } from "~/splitter/routes/splitter.layout";
 import type { Bill, Item, LocalBill, SharedBill } from "~/splitter/types";
+import type { OcrItem } from "~/splitter/utils/parseReceiptText";
 
 interface SplitterShellProps {
   initialLocalBill: LocalBill | null;
@@ -25,6 +33,8 @@ export function SplitterShell({
   error,
 }: SplitterShellProps) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { store, onMobileMenu } = useOutletContext<SplitterLayoutContext>();
   const [shareAttempted, setShareAttempted] = useState(false);
 
@@ -41,6 +51,9 @@ export function SplitterShell({
   );
   const [savedBillId, setSavedBillId] = useState<string | null>(
     initialLocalBill?.id ?? null,
+  );
+  const [scanModalOpen, setScanModalOpen] = useState(
+    () => searchParams.get("scan") === "1",
   );
   const isFirstMutation = useRef(!savedBillId && isNew);
   // Only ever increments — never decremented on removal — so re-adds after
@@ -125,6 +138,20 @@ export function SplitterShell({
     mutate({ items: items.filter((item) => item.id !== id) });
   }
 
+  function handleImport(ocrItems: OcrItem[], ocrTax?: number, ocrTip?: number) {
+    const newItems: Item[] = ocrItems.map(({ description, total_amount }) => ({
+      id: crypto.randomUUID(),
+      name: description,
+      price: total_amount,
+      splitBetween: [],
+    }));
+    mutate({
+      items: [...items, ...newItems],
+      ...(ocrTax !== undefined ? { tax: ocrTax } : {}),
+      ...(ocrTip !== undefined ? { tip: ocrTip } : {}),
+    });
+  }
+
   function handleFork() {
     const sourceBill = sharedBill?.bill ?? bill;
     const idMap = new Map(
@@ -203,6 +230,17 @@ export function SplitterShell({
 
   return (
     <>
+      {scanModalOpen && (
+        <ScanReceiptModal
+          onImport={handleImport}
+          onClose={() => {
+            setScanModalOpen(false);
+            if (searchParams.get("scan") === "1") {
+              navigate(location.pathname, { replace: true });
+            }
+          }}
+        />
+      )}
       <ShareDialog
         open={store.shareDialogOpen}
         sharing={store.sharing}
@@ -223,6 +261,7 @@ export function SplitterShell({
         onShare={handleShare}
         onFork={isSharedView ? handleFork : undefined}
         onMobileMenu={onMobileMenu}
+        onScanReceipt={!isSharedView ? () => setScanModalOpen(true) : undefined}
         sharing={store.sharing}
         shareBlocked={shareBlocked}
         titleError={shareAttempted && !title.trim()}
@@ -230,8 +269,8 @@ export function SplitterShell({
       />
 
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto grid max-w-300 grid-cols-1 gap-7 px-5 py-8 md:grid-cols-[1fr_360px] lg:px-8">
-          <div className="flex flex-col gap-8">
+        <div className="mx-auto grid max-w-300 grid-cols-1 gap-7 px-5 py-8 lg:px-8 min-[1160px]:grid-cols-[1fr_360px]">
+          <div className="flex min-w-0 flex-col gap-8">
             <ParticipantSection
               participants={participants}
               onAdd={addParticipant}
@@ -263,7 +302,15 @@ export function SplitterShell({
             )}
           </div>
 
-          <div className="flex flex-col gap-5 md:sticky md:top-4 md:self-start">
+          <div className="flex min-w-0 flex-col gap-5 min-[1160px]:sticky min-[1160px]:top-4 min-[1160px]:self-start">
+            {!isSharedView && (
+              <div className="hidden min-[1160px]:block">
+                <ReceiptUpload
+                  onImport={handleImport}
+                  hasContent={items.length > 0}
+                />
+              </div>
+            )}
             <BillSummary
               items={items}
               participants={participants}
