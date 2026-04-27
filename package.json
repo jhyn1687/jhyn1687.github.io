@@ -28,7 +28,7 @@
   "dependencies": {
     "@catppuccin/palette": "^1.8.0",
     "@catppuccin/tailwindcss": "^1.0.0",
-    "@chenglou/pretext": "^0.0.4",
+    "@chenglou/pretext": "^0.0.5",
     "@react-router/cloudflare": "7.14.0",
     "@supabase/supabase-js": "^2.2.2",
     "lorem-ipsum": "^2.0.8",
