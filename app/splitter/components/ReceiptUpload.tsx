@@ -1,9 +1,7 @@
 import { useRef, useState } from "react";
 import { MdScanner, MdChevronRight } from "react-icons/md";
-import {
-  parseReceiptText,
-  type OcrItem,
-} from "~/splitter/utils/parseReceiptText";
+import { useReceiptOcr } from "~/splitter/hooks/useReceiptOcr";
+import type { OcrItem } from "~/splitter/utils/parseReceiptText";
 
 interface ReceiptUploadProps {
   onImport: (items: OcrItem[], tax?: number, tip?: number) => void;
@@ -12,79 +10,13 @@ interface ReceiptUploadProps {
 
 export function ReceiptUpload({ onImport, hasContent }: ReceiptUploadProps) {
   const [expanded, setExpanded] = useState(!hasContent);
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Auto-collapse once content is added
-  if (hasContent && expanded && !loading) {
-    // Use a ref-free check — will collapse on next render after content added
-  }
-
-  async function handleFile(file: File) {
-    setLoading(true);
-    setStatus(null);
-
-    // Try GCV first
-    try {
-      const form = new FormData();
-      form.append("document", file);
-      const res = await fetch("/api/parse-receipt", {
-        method: "POST",
-        body: form,
-      });
-      if (res.ok) {
-        const data = (await res.json()) as {
-          items: OcrItem[];
-          tax?: number | null;
-          tip?: number | null;
-        };
-        if (data.items.length > 0) {
-          onImport(data.items, data.tax ?? undefined, data.tip ?? undefined);
-          setStatus(`Imported ${data.items.length} item(s). Please review.`);
-          setLoading(false);
-          setExpanded(false);
-          return;
-        }
-      }
-      if (res.status === 429) {
-        setStatus("Server quota reached — running local OCR…");
-      } else if (res.status === 451) {
-        setStatus("Running local OCR…");
-      }
-    } catch {
-      // fall through
-    }
-
-    // Tesseract.js fallback
-    try {
-      setStatus("Running local OCR (may take a moment)…");
-      const { createWorker } = await import("tesseract.js");
-      const worker = await createWorker("eng");
-      const {
-        data: { text },
-      } = await worker.recognize(file);
-      await worker.terminate();
-      const { items: parsed, tax, tip } = parseReceiptText(text);
-      if (parsed.length > 0) {
-        onImport(parsed, tax, tip);
-        setStatus(
-          `Imported ${parsed.length} item(s) via OCR — results are best-effort, please review.`,
-        );
-        setExpanded(false);
-      } else {
-        setStatus("Could not extract items. Try a clearer image.");
-      }
-    } catch {
-      setStatus("OCR failed. Please enter items manually.");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const { loading, status, handleFile } = useReceiptOcr(onImport, () =>
+    setExpanded(false),
+  );
 
   return (
     <div className="overflow-hidden rounded-2xl border border-ctp-surface1/50 bg-ctp-surface0/40">
-      {/* Collapsible header */}
       <button
         type="button"
         onClick={() => !loading && setExpanded((e) => !e)}

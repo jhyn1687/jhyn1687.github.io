@@ -7,6 +7,7 @@ import { BillSummary } from "~/splitter/components/BillSummary";
 import { ItemSection } from "~/splitter/components/ItemSection";
 import { ParticipantSection } from "~/splitter/components/ParticipantSection";
 import { ReceiptUpload } from "~/splitter/components/ReceiptUpload";
+import { ScanReceiptModal } from "~/splitter/components/ScanReceiptModal";
 import { ShareDialog } from "~/splitter/components/ShareDialog";
 import { TaxTip } from "~/splitter/components/TaxTip";
 import type { SplitterLayoutContext } from "~/splitter/routes/splitter.layout";
@@ -44,6 +45,7 @@ export function SplitterShell({
   const [savedBillId, setSavedBillId] = useState<string | null>(
     initialLocalBill?.id ?? null,
   );
+  const [scanModalOpen, setScanModalOpen] = useState(false);
   const isFirstMutation = useRef(!savedBillId && isNew);
   // Only ever increments — never decremented on removal — so re-adds after
   // removals always get a fresh color rather than colliding with an existing one.
@@ -219,6 +221,12 @@ export function SplitterShell({
 
   return (
     <>
+      {scanModalOpen && (
+        <ScanReceiptModal
+          onImport={handleImport}
+          onClose={() => setScanModalOpen(false)}
+        />
+      )}
       <ShareDialog
         open={store.shareDialogOpen}
         sharing={store.sharing}
@@ -239,6 +247,7 @@ export function SplitterShell({
         onShare={handleShare}
         onFork={isSharedView ? handleFork : undefined}
         onMobileMenu={onMobileMenu}
+        onScanReceipt={!isSharedView ? () => setScanModalOpen(true) : undefined}
         sharing={store.sharing}
         shareBlocked={shareBlocked}
         titleError={shareAttempted && !title.trim()}
@@ -246,8 +255,8 @@ export function SplitterShell({
       />
 
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto grid max-w-300 grid-cols-1 gap-7 px-5 py-8 md:grid-cols-[1fr_360px] lg:px-8">
-          <div className="flex flex-col gap-8">
+        <div className="mx-auto grid max-w-300 grid-cols-1 gap-7 px-5 py-8 lg:px-8 min-[1160px]:grid-cols-[1fr_360px]">
+          <div className="flex min-w-0 flex-col gap-8">
             <ParticipantSection
               participants={participants}
               onAdd={addParticipant}
@@ -255,12 +264,6 @@ export function SplitterShell({
               readOnly={isSharedView}
               showError={shareAttempted && participants.length === 0}
             />
-            {!isSharedView && (
-              <ReceiptUpload
-                onImport={handleImport}
-                hasContent={items.length > 0}
-              />
-            )}
             <ItemSection
               items={items}
               participants={participants}
@@ -285,7 +288,15 @@ export function SplitterShell({
             )}
           </div>
 
-          <div className="flex flex-col gap-5 md:sticky md:top-4 md:self-start">
+          <div className="flex min-w-0 flex-col gap-5 min-[1160px]:sticky min-[1160px]:top-4 min-[1160px]:self-start">
+            {!isSharedView && (
+              <div className="hidden min-[1160px]:block">
+                <ReceiptUpload
+                  onImport={handleImport}
+                  hasContent={items.length > 0}
+                />
+              </div>
+            )}
             <BillSummary
               items={items}
               participants={participants}
