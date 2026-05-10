@@ -1,6 +1,6 @@
 import type { Route } from "./+types/home";
 import type { Section } from "~/portfolio/types";
-import { getSupabaseClient, getImageUrl } from "~/utils/supabase.server";
+import { getSupabaseClient, getPublicUrl } from "~/utils/supabase.server";
 import { getSection } from "~/portfolio/registry";
 import { RippleBackground } from "~/portfolio/components/RippleBackground";
 
@@ -31,7 +31,7 @@ export async function loader({ context }: Route.LoaderArgs) {
           if (typeof child.image_path !== "string") return child;
           return {
             ...child,
-            image_url: getImageUrl(supabase, "images", child.image_path),
+            image_url: getPublicUrl(supabase, "images", child.image_path),
           };
         }),
       },
