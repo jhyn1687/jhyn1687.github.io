@@ -1,12 +1,12 @@
 import type { Route } from "./+types/resume.pdf";
 import { getSupabaseClient, getPublicUrl } from "~/utils/supabase.server";
 
-const RESUME_PATH = "jhyn_resume.pdf"
+const RESUME_PATH = "jhyn_resume.pdf";
 
 export async function loader({ context }: Route.LoaderArgs) {
   const supabase = getSupabaseClient(context.cloudflare.env);
 
-  const publicUrl = getPublicUrl(supabase, "files", RESUME_PATH)
+  const publicUrl = getPublicUrl(supabase, "files", RESUME_PATH);
 
   const res = await fetch(publicUrl);
 
