@@ -17,4 +17,5 @@ export default [
   route("api/parse-receipt", "splitter/routes/api.parse-receipt.ts"),
   route("api/share-bill", "splitter/routes/api.share-bill.ts"),
   route("api/bill/:code", "splitter/routes/api.bill.$code.ts"),
+  route("files/resume.pdf", "files/routes/resume.pdf.ts"),
 ] satisfies RouteConfig;
