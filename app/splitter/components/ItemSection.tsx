@@ -126,7 +126,6 @@ export function ItemSection({
               <span className="text-xs font-semibold text-ctp-overlay0">$</span>
               <input
                 type="number"
-                min="0"
                 step="0.01"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}

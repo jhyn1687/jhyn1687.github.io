@@ -37,8 +37,10 @@ export function ItemRow({
   };
 
   const assignedCount = item.splitBetween.length;
+  // Order-level discounts are negative items, and splitting one is as
+  // meaningful as splitting a charge — only a zero price has nothing to show.
   const sharePerPerson =
-    assignedCount > 1 && !isNaN(item.price) && item.price > 0
+    assignedCount > 1 && !isNaN(item.price) && item.price !== 0
       ? item.price / assignedCount
       : null;
 
@@ -66,7 +68,6 @@ export function ItemRow({
           <input
             className="w-16 bg-transparent text-right text-[13px] font-semibold text-ctp-text placeholder-ctp-overlay0 focus:outline-none"
             type="number"
-            min="0"
             step="0.01"
             value={isNaN(item.price) ? "" : item.price}
             onChange={(e) =>
@@ -144,7 +145,8 @@ export function ItemRow({
           ))}
         {sharePerPerson !== null && (
           <span className="ml-auto text-[11px] text-ctp-subtext0">
-            ${sharePerPerson.toFixed(2)} each
+            {sharePerPerson < 0 ? "−" : ""}$
+            {Math.abs(sharePerPerson).toFixed(2)} each
           </span>
         )}
       </div>

@@ -103,8 +103,14 @@ export function BillSummary({
 }: BillSummaryProps) {
   // Compute per-participant subtotals
   const subtotals: Record<string, number> = {};
+  // Tax and tip are apportioned by what each person actually bought, counting
+  // only positively priced items. Weighting by the net instead breaks once
+  // discounts are involved: a group total at or below zero has no meaningful
+  // proportion, and one person's positive share against a negative group total
+  // inverts, handing them a negative share of the tax.
+  const weights: Record<string, number> = {};
   let totalSubtotal = 0;
-  let assignedSubtotal = 0;
+  let totalWeight = 0;
 
   for (const item of items) {
     if (isNaN(item.price)) continue;
@@ -114,8 +120,9 @@ export function BillSummary({
     const share = item.price / assigned.length;
     for (const pid of assigned) {
       subtotals[pid] = (subtotals[pid] ?? 0) + share;
+      if (item.price > 0) weights[pid] = (weights[pid] ?? 0) + share;
     }
-    assignedSubtotal += item.price;
+    if (item.price > 0) totalWeight += item.price;
   }
 
   const grandTotal = totalSubtotal + tax + tip;
@@ -123,8 +130,12 @@ export function BillSummary({
 
   const breakdowns: PersonBreakdown[] = participants.map((p) => {
     const sub = subtotals[p.id] ?? 0;
+    // Falls back to an even split only when nobody has been assigned a charge
+    // yet, which is the one case with nothing to proportion by.
     const proportion =
-      assignedSubtotal > 0 ? sub / assignedSubtotal : 1 / participants.length;
+      totalWeight > 0
+        ? (weights[p.id] ?? 0) / totalWeight
+        : 1 / participants.length;
     const myItems = items
       .filter((i) => i.splitBetween.includes(p.id) && !isNaN(i.price))
       .map((i) => ({
