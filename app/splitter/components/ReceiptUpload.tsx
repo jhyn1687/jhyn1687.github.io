@@ -1,12 +1,11 @@
 import { useRef, useState } from "react";
 import { MdScanner, MdChevronRight } from "react-icons/md";
-import { useReceiptOcr } from "~/splitter/hooks/useReceiptOcr";
-import type { OcrItem } from "~/splitter/utils/parseReceiptText";
+import { useReceiptOcr, type ScanResult } from "~/splitter/hooks/useReceiptOcr";
 import { RECEIPT_ACCEPT } from "~/splitter/utils/prepareReceipt";
 import { ReplaceScanDialog } from "~/splitter/components/ReplaceScanDialog";
 
 interface ReceiptUploadProps {
-  onImport: (items: OcrItem[], tax?: number, tip?: number) => void;
+  onImport: (result: ScanResult) => void;
   hasContent: boolean;
 }
 

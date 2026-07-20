@@ -11,13 +11,15 @@ import { AppHeader } from "~/splitter/components/AppHeader";
 import { BillSummary } from "~/splitter/components/BillSummary";
 import { ItemSection } from "~/splitter/components/ItemSection";
 import { ParticipantSection } from "~/splitter/components/ParticipantSection";
+import { ReceiptPreview } from "~/splitter/components/ReceiptPreview";
 import { ReceiptUpload } from "~/splitter/components/ReceiptUpload";
 import { ScanReceiptModal } from "~/splitter/components/ScanReceiptModal";
 import { ShareDialog } from "~/splitter/components/ShareDialog";
 import { TaxTip } from "~/splitter/components/TaxTip";
 import type { SplitterLayoutContext } from "~/splitter/routes/splitter.layout";
+import type { ScanResult } from "~/splitter/hooks/useReceiptOcr";
 import type { Bill, Item, LocalBill, SharedBill } from "~/splitter/types";
-import type { OcrItem } from "~/splitter/utils/parseReceiptText";
+import { saveReceipt } from "~/splitter/utils/receiptStore";
 
 interface SplitterShellProps {
   initialLocalBill: LocalBill | null;
@@ -55,6 +57,8 @@ export function SplitterShell({
   const [scanModalOpen, setScanModalOpen] = useState(
     () => searchParams.get("scan") === "1",
   );
+  // Bumped on each import so the preview re-reads a rescan, whose bill id is unchanged.
+  const [receiptVersion, setReceiptVersion] = useState(0);
   const isFirstMutation = useRef(!savedBillId && isNew);
   // Only ever increments — never decremented on removal — so re-adds after
   // removals always get a fresh color rather than colliding with an existing one.
@@ -64,7 +68,8 @@ export function SplitterShell({
 
   const { title, participants, items, tax, tip } = bill;
 
-  function mutate(patch: Partial<Bill>) {
+  /** Returns the bill's id, which for a brand new bill is only minted here. */
+  function mutate(patch: Partial<Bill>): string | null {
     const updated = { ...bill, ...patch };
     setBill(updated);
 
@@ -75,6 +80,7 @@ export function SplitterShell({
       const saved: LocalBill = { id, bill: updated, updatedAt: Date.now() };
       store.saveLocalBill(saved);
       navigate(`/splitter/${id}`, { replace: true });
+      return id;
     } else if (savedBillId) {
       const existing = store.localBills.find((b) => b.id === savedBillId);
       const saved: LocalBill = {
@@ -84,6 +90,7 @@ export function SplitterShell({
       };
       store.saveLocalBill(saved);
     }
+    return savedBillId;
   }
 
   function setTitle(t: string) {
@@ -138,7 +145,7 @@ export function SplitterShell({
     mutate({ items: items.filter((item) => item.id !== id) });
   }
 
-  function handleImport(ocrItems: OcrItem[], ocrTax?: number, ocrTip?: number) {
+  function handleImport({ items: ocrItems, tax, tip, image }: ScanResult) {
     const newItems: Item[] = ocrItems.map(({ description, total_amount }) => ({
       id: crypto.randomUUID(),
       name: description,
@@ -148,11 +155,15 @@ export function SplitterShell({
     // A bill holds one receipt, so a scan replaces rather than accumulates —
     // appending items while overwriting tax would silently mix two receipts and
     // drop the first one's tax. ReplaceScanDialog confirms this first.
-    mutate({
+    const billId = mutate({
       items: newItems,
-      tax: ocrTax ?? 0,
-      tip: ocrTip ?? 0,
+      tax: tax ?? 0,
+      tip: tip ?? 0,
     });
+    // Best-effort: the receipt is for cross-checking, so a storage failure
+    // shouldn't surface as an error on an otherwise successful scan.
+    if (billId) void saveReceipt(billId, image);
+    setReceiptVersion((v) => v + 1);
   }
 
   function handleFork() {
@@ -314,6 +325,9 @@ export function SplitterShell({
                   hasContent={items.length > 0}
                 />
               </div>
+            )}
+            {!isSharedView && (
+              <ReceiptPreview key={receiptVersion} billId={savedBillId} />
             )}
             <BillSummary
               items={items}

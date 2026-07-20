@@ -5,6 +5,7 @@ import type {
   SharedBill,
   SplitterSettings,
 } from "~/splitter/types";
+import { clearReceipts, deleteReceipt } from "~/splitter/utils/receiptStore";
 
 export type Toast = { text: string; type: "success" | "error" };
 
@@ -148,7 +149,11 @@ export function useBillsStore() {
     });
   }, []);
 
-  const deleteLocalBill = useCallback((id: string) => {
+  /**
+   * Drops the local record only. Sharing uses this because the bill graduates
+   * to a shared one rather than going away — its receipt should survive.
+   */
+  const forgetLocalBill = useCallback((id: string) => {
     setLocalBills((prev) => {
       const next = prev.filter((b) => b.id !== id);
       try {
@@ -159,6 +164,15 @@ export function useBillsStore() {
       return next;
     });
   }, []);
+
+  /** The user deleting a bill outright — its receipt goes too. */
+  const deleteLocalBill = useCallback(
+    (id: string) => {
+      void deleteReceipt(id);
+      forgetLocalBill(id);
+    },
+    [forgetLocalBill],
+  );
 
   const saveSharedBill = useCallback((bill: SharedBill) => {
     setSharedBills((prev) => {
@@ -230,7 +244,7 @@ export function useBillsStore() {
           cachedAt: now,
           expiresAt: now + SHARED_TTL,
         });
-        deleteLocalBill(activeBill.id);
+        forgetLocalBill(activeBill.id);
         onSuccess?.(code);
       } catch {
         showToast("Failed to create share link.", "error");
@@ -238,7 +252,7 @@ export function useBillsStore() {
         setSharing(false);
       }
     },
-    [sharing, saveSharedBill, deleteLocalBill, showToast],
+    [sharing, saveSharedBill, forgetLocalBill, showToast],
   );
 
   const updateSettings = useCallback((patch: Partial<SplitterSettings>) => {
@@ -250,6 +264,7 @@ export function useBillsStore() {
   }, []);
 
   const clearAllData = useCallback(() => {
+    void clearReceipts();
     localStorage.removeItem(LOCAL_KEY);
     localStorage.removeItem(SHARED_KEY);
     setLocalBills([]);

@@ -30,8 +30,20 @@ function reviewNote(taxLineCount: number) {
     : "";
 }
 
+/**
+ * The normalized JPEG rides along with the parsed items so the caller can store
+ * it against the bill — only the caller knows the bill id, which for a brand
+ * new bill doesn't exist until the import itself creates it.
+ */
+export type ScanResult = {
+  items: OcrItem[];
+  tax?: number;
+  tip?: number;
+  image: Blob;
+};
+
 export function useReceiptOcr(
-  onImport: (items: OcrItem[], tax?: number, tip?: number) => void,
+  onImport: (result: ScanResult) => void,
   onSuccess?: () => void,
   /**
    * True when the bill already holds a scan. A bill maps to exactly one
@@ -97,7 +109,12 @@ export function useReceiptOcr(
           taxLineCount?: number;
         };
         if (data.items.length > 0) {
-          onImport(data.items, data.tax ?? undefined, data.tip ?? undefined);
+          onImport({
+            items: data.items,
+            tax: data.tax ?? undefined,
+            tip: data.tip ?? undefined,
+            image: upload,
+          });
           setStatus(
             `Imported ${data.items.length} item(s). Please review.` +
               reviewNote(data.taxLineCount ?? 0),
@@ -126,7 +143,7 @@ export function useReceiptOcr(
       await worker.terminate();
       const { items: parsed, tax, tip, taxLineCount } = parseReceiptText(text);
       if (parsed.length > 0) {
-        onImport(parsed, tax, tip);
+        onImport({ items: parsed, tax, tip, image: upload });
         setStatus(
           `Imported ${parsed.length} item(s) via OCR — results are best-effort, please review.` +
             reviewNote(taxLineCount),
