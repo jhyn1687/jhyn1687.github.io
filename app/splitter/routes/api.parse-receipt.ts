@@ -125,6 +125,14 @@ export async function action({ request, context }: Route.ActionArgs) {
         },
       ],
       guided_json: RECEIPT_SCHEMA,
+      /*
+       * Transcription, not writing, so sampling is pure downside. Left at the
+       * default the same receipt gave different answers run to run — one pass
+       * found an item the next missed, and a discount attached correctly in
+       * one was dropped in the next. Prompt changes can't be judged against a
+       * target that moves.
+       */
+      temperature: 0,
       // A long warehouse receipt with adjustments runs well past 2048, and
       // being cut off costs the tax and tip the schema emits after the items.
       max_tokens: 4096,
