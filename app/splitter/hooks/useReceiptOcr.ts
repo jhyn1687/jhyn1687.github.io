@@ -33,11 +33,38 @@ function reviewNote(taxLineCount: number) {
 export function useReceiptOcr(
   onImport: (items: OcrItem[], tax?: number, tip?: number) => void,
   onSuccess?: () => void,
+  /**
+   * True when the bill already holds a scan. A bill maps to exactly one
+   * receipt, so a second scan replaces the first — worth confirming before
+   * we spend an OCR call on something the user may not want.
+   */
+  replacesExistingScan = false,
 ) {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
-  async function handleFile(file: File) {
+  function handleFile(file: File) {
+    // Hold the file and ask first — the model is only called once confirmed.
+    if (replacesExistingScan) {
+      setPendingFile(file);
+      return;
+    }
+    return scan(file);
+  }
+
+  function cancelReplace() {
+    setPendingFile(null);
+    setStatus(null);
+  }
+
+  function confirmReplace() {
+    const file = pendingFile;
+    setPendingFile(null);
+    if (file) return scan(file);
+  }
+
+  async function scan(file: File) {
     setLoading(true);
     setStatus(null);
 
@@ -115,5 +142,12 @@ export function useReceiptOcr(
     }
   }
 
-  return { loading, status, handleFile };
+  return {
+    loading,
+    status,
+    handleFile,
+    replacePending: pendingFile !== null,
+    confirmReplace,
+    cancelReplace,
+  };
 }

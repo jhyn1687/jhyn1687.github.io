@@ -3,21 +3,39 @@ import { MdClose, MdScanner } from "react-icons/md";
 import { useReceiptOcr } from "~/splitter/hooks/useReceiptOcr";
 import type { OcrItem } from "~/splitter/utils/parseReceiptText";
 import { RECEIPT_ACCEPT } from "~/splitter/utils/prepareReceipt";
+import { ReplaceScanDialog } from "~/splitter/components/ReplaceScanDialog";
 
 interface ScanReceiptModalProps {
   onImport: (items: OcrItem[], tax?: number, tip?: number) => void;
   onClose: () => void;
+  hasContent: boolean;
 }
 
-export function ScanReceiptModal({ onImport, onClose }: ScanReceiptModalProps) {
+export function ScanReceiptModal({
+  onImport,
+  onClose,
+  hasContent,
+}: ScanReceiptModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const { loading, status, handleFile } = useReceiptOcr(onImport, onClose);
+  const {
+    loading,
+    status,
+    handleFile,
+    replacePending,
+    confirmReplace,
+    cancelReplace,
+  } = useReceiptOcr(onImport, onClose, hasContent);
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={(e) => e.target === e.currentTarget && !loading && onClose()}
     >
+      <ReplaceScanDialog
+        open={replacePending}
+        onConfirm={confirmReplace}
+        onCancel={cancelReplace}
+      />
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={() => !loading && onClose()}

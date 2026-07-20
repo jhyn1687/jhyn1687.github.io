@@ -3,6 +3,7 @@ import { MdScanner, MdChevronRight } from "react-icons/md";
 import { useReceiptOcr } from "~/splitter/hooks/useReceiptOcr";
 import type { OcrItem } from "~/splitter/utils/parseReceiptText";
 import { RECEIPT_ACCEPT } from "~/splitter/utils/prepareReceipt";
+import { ReplaceScanDialog } from "~/splitter/components/ReplaceScanDialog";
 
 interface ReceiptUploadProps {
   onImport: (items: OcrItem[], tax?: number, tip?: number) => void;
@@ -12,12 +13,22 @@ interface ReceiptUploadProps {
 export function ReceiptUpload({ onImport, hasContent }: ReceiptUploadProps) {
   const [expanded, setExpanded] = useState(!hasContent);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { loading, status, handleFile } = useReceiptOcr(onImport, () =>
-    setExpanded(false),
-  );
+  const {
+    loading,
+    status,
+    handleFile,
+    replacePending,
+    confirmReplace,
+    cancelReplace,
+  } = useReceiptOcr(onImport, () => setExpanded(false), hasContent);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-ctp-surface1/50 bg-ctp-surface0/40">
+      <ReplaceScanDialog
+        open={replacePending}
+        onConfirm={confirmReplace}
+        onCancel={cancelReplace}
+      />
       <button
         type="button"
         onClick={() => !loading && setExpanded((e) => !e)}

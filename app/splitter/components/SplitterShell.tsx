@@ -145,10 +145,13 @@ export function SplitterShell({
       price: total_amount,
       splitBetween: [],
     }));
+    // A bill holds one receipt, so a scan replaces rather than accumulates —
+    // appending items while overwriting tax would silently mix two receipts and
+    // drop the first one's tax. ReplaceScanDialog confirms this first.
     mutate({
-      items: [...items, ...newItems],
-      ...(ocrTax !== undefined ? { tax: ocrTax } : {}),
-      ...(ocrTip !== undefined ? { tip: ocrTip } : {}),
+      items: newItems,
+      tax: ocrTax ?? 0,
+      tip: ocrTip ?? 0,
     });
   }
 
@@ -233,6 +236,7 @@ export function SplitterShell({
       {scanModalOpen && (
         <ScanReceiptModal
           onImport={handleImport}
+          hasContent={items.length > 0}
           onClose={() => {
             setScanModalOpen(false);
             if (searchParams.get("scan") === "1") {
