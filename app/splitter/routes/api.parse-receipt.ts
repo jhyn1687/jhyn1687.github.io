@@ -104,24 +104,39 @@ export async function action({ request, context }: Route.ActionArgs) {
   const base64 = btoa(binary);
   const mimeType = (file as File).type || "image/jpeg";
 
-  const aiResponse = (await context.cloudflare.env.AI.run(MODEL, {
-    messages: [
-      {
-        role: "user",
-        content: [
-          { type: "text", text: PROMPT },
-          {
-            type: "image_url",
-            image_url: { url: `data:${mimeType};base64,${base64}` },
-          },
-        ],
-      },
-    ],
-    guided_json: RECEIPT_SCHEMA,
-    // A long warehouse receipt with adjustments runs well past 2048, and being
-    // cut off costs the tax and tip that the schema emits after the items.
-    max_tokens: 4096,
-  })) as { response: string };
+  /*
+   * A throw here used to surface as an opaque 500, which the client treats the
+   * same as any other failure: it quietly runs Tesseract instead. That makes a
+   * model error indistinguishable from a bad scan, so name it in the response.
+   */
+  let aiResponse: { response: string };
+  try {
+    aiResponse = (await context.cloudflare.env.AI.run(MODEL, {
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: PROMPT },
+            {
+              type: "image_url",
+              image_url: { url: `data:${mimeType};base64,${base64}` },
+            },
+          ],
+        },
+      ],
+      guided_json: RECEIPT_SCHEMA,
+      // A long warehouse receipt with adjustments runs well past 2048, and
+      // being cut off costs the tax and tip the schema emits after the items.
+      max_tokens: 4096,
+    })) as { response: string };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("parse-receipt: model call failed", message);
+    return Response.json(
+      { items: [], taxLineCount: 0, debugError: message },
+      { status: 502 },
+    );
+  }
 
   const reply = aiResponse.response ?? "";
   const parsed = fromSchema(reply);
@@ -157,7 +172,16 @@ export async function action({ request, context }: Route.ActionArgs) {
     }),
   );
 
-  if (parsed) return Response.json(parsed);
+  /*
+   * The same reply, returned to the caller so it can be read straight from the
+   * Network tab. Cloudflare's logs need the right version to be live and the
+   * dashboard to agree; this needs neither, and its presence in the response
+   * doubles as proof of which build answered — the question that has muddied
+   * every attempt at reading this endpoint's behaviour so far.
+   *
+   * Debugging aid only. Remove with the verbose logging above before merge.
+   */
+  if (parsed) return Response.json({ ...parsed, debugReply: reply });
 
   // The text parser reads "NAME  12.34" rows, and pretty-printed JSON matches
   // that shape: `  "price": -3.00` becomes an item named `"price":`, indented
@@ -165,7 +189,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   // real. So it may only see a reply that was never meant to be structured.
   if (reply.includes("{")) {
     // Empty items sends the client to its local OCR fallback.
-    return Response.json({ items: [], taxLineCount: 0 });
+    return Response.json({ items: [], taxLineCount: 0, debugReply: reply });
   }
-  return Response.json(parseReceiptText(reply));
+  return Response.json({ ...parseReceiptText(reply), debugReply: reply });
 }
