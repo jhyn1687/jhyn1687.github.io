@@ -25,7 +25,17 @@ export type ParsedReceipt = {
  * so trailing-minus discount lines were dropped silently.
  */
 const pricePattern = /^(.+?)\s+(-?\$?[\d]+\.[\d]{2}-?)\s*$/;
-const skipWords = /total|subtotal|change|balance|amount|due/i;
+/**
+ * Rows that carry no charge of their own: summaries, and the tender line naming
+ * how it was paid. A card line repeats the total, so without this it lands in
+ * the bill as an item worth the whole receipt.
+ *
+ * Word boundaries matter more than they look — unanchored, "change" matches
+ * EXCHANGE, "cash" matches CASHEWS and "due" matches FONDUE, quietly dropping
+ * real items.
+ */
+const skipWords =
+  /\b(total|subtotal|balance|amount|due|change|visa|mastercard|amex|discover|debit|tender)\b/i;
 const taxPattern = /\btax\b/i;
 const tipPattern = /\btip\b|\bgratuity\b/i;
 

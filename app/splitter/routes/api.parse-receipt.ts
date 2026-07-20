@@ -48,11 +48,14 @@ const PROMPT = `You are reading a receipt image. Output one entry per line using
 Rules:
 - Keep the receipt's original order. Never move a line
 - Write negative amounts with the minus in front, e.g. "2.00-" becomes "-2.00"
-- If a discount or modification belongs to the item printed directly above it, indent it by two spaces, e.g. "  Instant savings  -3.00". A modification that costs nothing still gets a line, priced 0.00
+- When an item's name and its price are printed on separate lines — the name by itself, then a quantity line such as "2 @ 3.99" carrying the extended total — output one line using the item's name and that total. Never output a quantity as a name
+- If a discount or modification belongs to the item printed directly above it, or names or references that item, indent it by two spaces, e.g. "  Instant savings  -3.00". A modification that costs nothing still gets a line, priced 0.00
 - If a discount applies to the whole order, or you cannot tell which item it belongs to, leave it unindented as its own line. Never guess an item to attach it to
-- Copy every tax line separately, exactly as it is labelled, e.g. "State Tax  1.00". Never merge them into one line and never add them together
+- Copy every tax line separately, exactly as it is labelled, e.g. "State Tax  1.00". Tax is never a total: include it even where it is printed among the totals. Never merge tax lines and never add them together
 - Copy every tip or gratuity line the same way, e.g. "Tip  3.00"
-- Exclude totals, subtotals, balance due, change, and any row that sums up other rows — even if labelled AMT, TOTAL AMT, DUE, BALANCE, etc.
+- Exclude totals, subtotals, balance due and change — even if labelled AMT, TOTAL AMT, DUE, BALANCE, etc.
+- Exclude the payment line naming a card or tender type (VISA, MASTERCARD, DEBIT, CASH); it only repeats the total
+- Exclude any row that adds up other rows, including a savings or discount total printed at the end — keep the individual discount lines instead
 - Transcribe only. Never add, subtract, or reconcile amounts
 - No currency symbols, no explanations, no blank lines
 
@@ -60,7 +63,7 @@ Example output:
 Burger  12.99
   Extra bacon  2.00
   No onions  0.00
-Fries  4.99
+Bottled water  7.98
   Instant savings  -3.00
 Member savings  -5.00
 State Tax  1.00
