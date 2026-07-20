@@ -104,11 +104,6 @@ export async function action({ request, context }: Route.ActionArgs) {
   const base64 = btoa(binary);
   const mimeType = (file as File).type || "image/jpeg";
 
-  /*
-   * A throw here used to surface as an opaque 500, which the client treats the
-   * same as any other failure: it quietly runs Tesseract instead. That makes a
-   * model error indistinguishable from a bad scan, so name it in the response.
-   */
   // `response` is a string when the schema is ignored, an object when enforced.
   let aiResponse: { response: string | object };
   try {
@@ -147,16 +142,15 @@ export async function action({ request, context }: Route.ActionArgs) {
       max_tokens: 4096,
     })) as { response: string | object };
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error("parse-receipt: model call failed", message);
-    return Response.json(
-      { items: [], taxLineCount: 0, debugError: message },
-      { status: 502 },
-    );
+    // A throw here otherwise surfaces as an opaque 500, which the client treats
+    // like any bad scan and quietly falls back to Tesseract. Return an empty
+    // result so that fallback still runs, without masking the cause in logs.
+    console.error("parse-receipt: model call failed", err);
+    return Response.json({ items: [], taxLineCount: 0 }, { status: 502 });
   }
 
   /*
-   * When guided_json is actually enforced, Workers AI returns `response` as an
+   * When guided_json is enforced, Workers AI returns `response` as an
    * already-parsed object, not the JSON string it sends when the schema is
    * ignored. Stringify that back so the one downstream reader handles both —
    * a clean object round-trips through recoverJson untouched.
@@ -169,76 +163,19 @@ export async function action({ request, context }: Route.ActionArgs) {
         ? JSON.stringify(raw)
         : "";
   if (!reply) {
-    return Response.json(
-      {
-        items: [],
-        taxLineCount: 0,
-        debugRaw: JSON.stringify(aiResponse ?? null),
-      },
-      { status: 502 },
-    );
+    return Response.json({ items: [], taxLineCount: 0 }, { status: 502 });
   }
 
-  let parsed: ReturnType<typeof fromSchema>;
-  try {
-    parsed = fromSchema(reply);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return Response.json(
-      { items: [], taxLineCount: 0, debugError: message, debugReply: reply },
-      { status: 500 },
-    );
-  }
-
-  /*
-   * `observability` is enabled in wrangler.jsonc, so this reaches the dashboard
-   * under Workers -> jhyn1687-github-io -> Logs, and `npx wrangler tail`.
-   *
-   * The raw reply is logged whole and on both paths deliberately. Nothing
-   * downstream distinguishes a fenced reply from one truncated at max_tokens,
-   * and a plausible-looking parse is exactly the failure worth catching — so
-   * the parsed shape alone can't be trusted to tell us what happened.
-   *
-   * This logs receipt contents to Cloudflare. Fine while the branch is being
-   * verified against Tony's own receipts; cut it back to the failure path
-   * before this reaches other people's.
-   */
-  console.log(
-    "parse-receipt",
-    JSON.stringify({
-      model: MODEL,
-      replyLength: reply.length,
-      parsed: parsed && {
-        items: parsed.items.length,
-        children: parsed.items.reduce(
-          (n, i) => n + (i.children?.length ?? 0),
-          0,
-        ),
-        tax: parsed.tax,
-        tip: parsed.tip,
-      },
-      reply,
-    }),
-  );
-
-  /*
-   * The same reply, returned to the caller so it can be read straight from the
-   * Network tab. Cloudflare's logs need the right version to be live and the
-   * dashboard to agree; this needs neither, and its presence in the response
-   * doubles as proof of which build answered — the question that has muddied
-   * every attempt at reading this endpoint's behaviour so far.
-   *
-   * Debugging aid only. Remove with the verbose logging above before merge.
-   */
-  if (parsed) return Response.json({ ...parsed, debugReply: reply });
+  const parsed = fromSchema(reply);
+  if (parsed) return Response.json(parsed);
 
   // The text parser reads "NAME  12.34" rows, and pretty-printed JSON matches
   // that shape: `  "price": -3.00` becomes an item named `"price":`, indented
   // enough to be adopted as a child. It produced a bill of nonsense that looked
-  // real. So it may only see a reply that was never meant to be structured.
+  // real, so never let it see a reply that was meant to be structured — empty
+  // items sends the client to its local OCR fallback instead.
   if (reply.includes("{")) {
-    // Empty items sends the client to its local OCR fallback.
-    return Response.json({ items: [], taxLineCount: 0, debugReply: reply });
+    return Response.json({ items: [], taxLineCount: 0 });
   }
-  return Response.json({ ...parseReceiptText(reply), debugReply: reply });
+  return Response.json(parseReceiptText(reply));
 }
