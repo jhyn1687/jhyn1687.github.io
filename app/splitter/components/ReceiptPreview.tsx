@@ -1,11 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  MdAdd,
-  MdChevronRight,
-  MdClose,
-  MdRefresh,
-  MdRemove,
-} from "react-icons/md";
+import { MdAdd, MdChevronRight, MdRefresh, MdRemove } from "react-icons/md";
 import { getReceipt } from "~/splitter/utils/receiptStore";
 import { trimReceiptWhitespace } from "~/splitter/utils/trimReceipt";
 
@@ -21,7 +15,6 @@ const ZOOM_STEP = 0.5;
 export function ReceiptPreview({ billId }: ReceiptPreviewProps) {
   const [url, setUrl] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(true);
-  const [zoomed, setZoomed] = useState(false);
   const [zoom, setZoom] = useState(1);
 
   useEffect(() => {
@@ -54,18 +47,6 @@ export function ReceiptPreview({ billId }: ReceiptPreviewProps) {
     setZoom(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, next)));
   }
 
-  // Reset the scale as the view opens and closes so it never inherits a stale
-  // zoom from a previous inspection.
-  function openZoom() {
-    setZoom(1);
-    setZoomed(true);
-  }
-
-  function closeZoom() {
-    setZoom(1);
-    setZoomed(false);
-  }
-
   return (
     <div className="overflow-hidden rounded-2xl border border-ctp-surface1/50 bg-ctp-surface0/40">
       <button
@@ -87,95 +68,58 @@ export function ReceiptPreview({ billId }: ReceiptPreviewProps) {
 
       {expanded && (
         <div className="border-t border-ctp-surface1/50 p-4">
-          <button
-            type="button"
-            onClick={openZoom}
-            className="block w-full overflow-y-auto rounded-xl border border-ctp-surface1/50 bg-white"
-            title="Tap to enlarge"
-          >
-            {/* On a wide screen the rail is tall and narrow, so let the receipt
-                fill the viewport height and scroll rather than capping it short.
-                The trimmed image fills the width, which is what makes the
-                side-by-side actually legible. */}
-            <img
-              src={url}
-              alt="Scanned receipt"
-              className="w-full object-contain object-top max-h-80 min-[1160px]:max-h-[calc(100vh-13rem)]"
-            />
-          </button>
+          {/* Positioning context so the zoom pill can float over the frame
+              without scrolling away with the image. */}
+          <div className="relative">
+            {/* The frame scrolls; zooming widens the image past it so panning is
+                just scrolling. On a wide screen the rail is tall and narrow, so
+                let it fill the viewport height rather than capping it short. */}
+            <div className="max-h-80 overflow-auto rounded-xl border border-ctp-surface1/50 bg-white min-[1160px]:max-h-[calc(100vh-11rem)]">
+              <img
+                src={url}
+                alt="Scanned receipt"
+                style={{ width: `${zoom * 100}%` }}
+                className="block h-auto max-w-none"
+              />
+            </div>
+
+            {/* Zoom controls, overlaid top-right of the image. */}
+            <div className="absolute right-2 top-2 flex items-center gap-0.5 rounded-lg border border-ctp-surface1/50 bg-ctp-base/90 p-0.5 shadow-md backdrop-blur-sm">
+              <button
+                type="button"
+                onClick={() => changeZoom(zoom - ZOOM_STEP)}
+                disabled={zoom <= MIN_ZOOM}
+                className="rounded-md p-1.5 text-ctp-subtext0 transition-colors hover:bg-ctp-surface1 hover:text-ctp-text disabled:opacity-40 disabled:hover:bg-transparent"
+                title="Zoom out"
+              >
+                <MdRemove size={16} />
+              </button>
+              <span className="w-10 text-center text-xs tabular-nums text-ctp-subtext0">
+                {Math.round(zoom * 100)}%
+              </span>
+              <button
+                type="button"
+                onClick={() => changeZoom(zoom + ZOOM_STEP)}
+                disabled={zoom >= MAX_ZOOM}
+                className="rounded-md p-1.5 text-ctp-subtext0 transition-colors hover:bg-ctp-surface1 hover:text-ctp-text disabled:opacity-40 disabled:hover:bg-transparent"
+                title="Zoom in"
+              >
+                <MdAdd size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => changeZoom(1)}
+                disabled={zoom === 1}
+                className="rounded-md p-1.5 text-ctp-subtext0 transition-colors hover:bg-ctp-surface1 hover:text-ctp-text disabled:opacity-40 disabled:hover:bg-transparent"
+                title="Reset zoom"
+              >
+                <MdRefresh size={16} />
+              </button>
+            </div>
+          </div>
           <p className="mt-2 text-center text-xs text-ctp-overlay0">
-            Tap to enlarge and compare with the items
+            Zoom in to compare with the items
           </p>
-        </div>
-      )}
-
-      {zoomed && (
-        <div
-          className="fixed inset-0 z-[70] flex items-center justify-center p-4"
-          onClick={closeZoom}
-        >
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-
-          <button
-            type="button"
-            onClick={closeZoom}
-            className="absolute right-4 top-4 z-20 rounded-lg bg-ctp-surface0 p-2 text-ctp-text transition-colors hover:bg-ctp-surface1"
-            title="Close"
-          >
-            <MdClose size={20} />
-          </button>
-
-          {/* Zoom controls stay pinned while the image pans beneath them. */}
-          <div
-            className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-xl bg-ctp-surface0 p-1 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={() => changeZoom(zoom - ZOOM_STEP)}
-              disabled={zoom <= MIN_ZOOM}
-              className="rounded-lg p-2 text-ctp-text transition-colors hover:bg-ctp-surface1 disabled:opacity-40"
-              title="Zoom out"
-            >
-              <MdRemove size={20} />
-            </button>
-            <span className="w-12 text-center text-sm tabular-nums text-ctp-subtext0">
-              {Math.round(zoom * 100)}%
-            </span>
-            <button
-              type="button"
-              onClick={() => changeZoom(zoom + ZOOM_STEP)}
-              disabled={zoom >= MAX_ZOOM}
-              className="rounded-lg p-2 text-ctp-text transition-colors hover:bg-ctp-surface1 disabled:opacity-40"
-              title="Zoom in"
-            >
-              <MdAdd size={20} />
-            </button>
-            <button
-              type="button"
-              onClick={() => changeZoom(1)}
-              disabled={zoom === 1}
-              className="rounded-lg p-2 text-ctp-text transition-colors hover:bg-ctp-surface1 disabled:opacity-40"
-              title="Reset zoom"
-            >
-              <MdRefresh size={20} />
-            </button>
-          </div>
-
-          {/* A fixed frame so zoom is measured against something real. At 100%
-              the whole tall receipt fits the height; higher zoom overflows and
-              scrolls both ways to pan. */}
-          <div
-            className="relative z-10 h-[84vh] w-[92vw] overflow-auto rounded-xl bg-white"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <img
-              src={url}
-              alt="Scanned receipt"
-              style={{ height: `${zoom * 100}%` }}
-              className="mx-auto w-auto max-w-none"
-            />
-          </div>
         </div>
       )}
     </div>
