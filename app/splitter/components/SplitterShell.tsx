@@ -145,6 +145,23 @@ export function SplitterShell({
     mutate({ items: items.filter((item) => item.id !== id) });
   }
 
+  function clearItems() {
+    mutate({ items: [] });
+  }
+
+  // Flip every item to split-evenly at once. splitBetween is filled here too so
+  // the assignment holds even if a later render reads it directly.
+  function splitAllEvenly() {
+    const everyone = participants.map((p) => p.id);
+    mutate({
+      items: items.map((item) => ({
+        ...item,
+        splitEvenly: true,
+        splitBetween: everyone,
+      })),
+    });
+  }
+
   function handleImport({ items: ocrItems, tax, tip, image }: ScanResult) {
     const newItems: Item[] = ocrItems.map(
       ({ description, total_amount, children }) => ({
@@ -306,6 +323,8 @@ export function SplitterShell({
               participants={participants}
               onAdd={addItem}
               onItemChange={updateItem}
+              onClearAll={clearItems}
+              onSplitAllEvenly={splitAllEvenly}
               onItemRemove={removeItem}
               readOnly={isSharedView}
               showError={

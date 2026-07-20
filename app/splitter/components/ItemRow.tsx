@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  MdAddCircleOutline,
-  MdClose,
-  MdDelete,
-  MdDeleteForever,
-  MdGroup,
-} from "react-icons/md";
+import { MdAddCircleOutline, MdClose, MdGroup } from "react-icons/md";
 import { ParticipantTile } from "./ParticipantTile";
 import type { Item, Participant, SubItem } from "~/splitter/types";
 import { itemTotal } from "~/splitter/utils/bill";
@@ -117,16 +111,14 @@ export function ItemRow({
             type="button"
             onClick={handleDeleteClick}
             className={[
-              "shrink-0 rounded-lg p-1.5 transition-colors hover:bg-ctp-surface1",
-              confirmDelete ? "text-ctp-red" : "text-ctp-subtext0",
+              "shrink-0 rounded-lg p-1.5 transition-colors",
+              confirmDelete
+                ? "bg-ctp-red/15 text-ctp-red"
+                : "text-ctp-subtext0 hover:bg-ctp-surface1 hover:text-ctp-red",
             ].join(" ")}
-            title={confirmDelete ? "Confirm delete" : "Delete item"}
+            title={confirmDelete ? "Tap again to delete" : "Delete item"}
           >
-            {confirmDelete ? (
-              <MdDeleteForever size={18} />
-            ) : (
-              <MdDelete size={18} />
-            )}
+            <MdClose size={18} />
           </button>
         )}
       </div>

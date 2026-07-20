@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
-import { MdWarning } from "react-icons/md";
+import { MdGroup, MdWarning } from "react-icons/md";
 import { ItemRow } from "./ItemRow";
+import { ConfirmDialog } from "./ConfirmDialog";
 import type { Item, Participant } from "~/splitter/types";
 
 interface ItemSectionProps {
@@ -9,6 +10,8 @@ interface ItemSectionProps {
   onAdd: (name: string, price: number) => void;
   onItemChange: (id: string, patch: Partial<Item>) => void;
   onItemRemove: (id: string) => void;
+  onClearAll: () => void;
+  onSplitAllEvenly: () => void;
   readOnly?: boolean;
   showError?: boolean;
 }
@@ -19,12 +22,15 @@ export function ItemSection({
   onAdd,
   onItemChange,
   onItemRemove,
+  onClearAll,
+  onSplitAllEvenly,
   readOnly = false,
   showError = false,
 }: ItemSectionProps) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [warningOpen, setWarningOpen] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
   function handleAdd() {
@@ -56,7 +62,7 @@ export function ItemSection({
         </h2>
 
         {unassignedCount > 0 && items.length > 0 && (
-          <div className="relative ml-auto">
+          <div className="relative">
             <button
               type="button"
               onMouseEnter={() => setWarningOpen(true)}
@@ -69,11 +75,33 @@ export function ItemSection({
               <MdWarning size={16} />
             </button>
             {warningOpen && (
-              <div className="absolute right-0 top-full z-10 mt-1.5 w-max max-w-48 rounded-lg border border-ctp-peach/30 bg-ctp-mantle px-3 py-2 text-[12px] text-ctp-peach shadow-md">
+              <div className="absolute left-0 top-full z-10 mt-1.5 w-max max-w-48 rounded-lg border border-ctp-peach/30 bg-ctp-mantle px-3 py-2 text-[12px] text-ctp-peach shadow-md">
                 {unassignedCount} item{unassignedCount > 1 ? "s" : ""} not
                 assigned to anyone
               </div>
             )}
+          </div>
+        )}
+
+        {!readOnly && items.length > 0 && (
+          <div className="ml-auto flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={onSplitAllEvenly}
+              className="flex items-center gap-1.5 rounded-lg border border-ctp-surface1 bg-ctp-surface0/40 px-2.5 py-1 text-xs font-medium text-ctp-subtext0 transition-colors hover:border-ctp-teal/40 hover:text-ctp-teal"
+              title="Split every item among everyone"
+            >
+              <MdGroup size={14} />
+              Split evenly
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmClear(true)}
+              className="rounded-lg border border-ctp-surface1 bg-ctp-surface0/40 px-2.5 py-1 text-xs font-medium text-ctp-subtext0 transition-colors hover:border-ctp-red/40 hover:text-ctp-red"
+              title="Remove all items"
+            >
+              Clear all
+            </button>
           </div>
         )}
       </div>
@@ -84,14 +112,9 @@ export function ItemSection({
             key={item.id}
             item={item}
             participants={participants}
-            onItemChange={(updated) =>
-              onItemChange(updated.id, {
-                name: updated.name,
-                price: updated.price,
-                splitBetween: updated.splitBetween,
-                splitEvenly: updated.splitEvenly,
-              })
-            }
+            // Forward the whole item, not a hand-picked subset — omitting
+            // children here was silently dropping every added sub-item.
+            onItemChange={(updated) => onItemChange(updated.id, updated)}
             onItemRemove={() => onItemRemove(item.id)}
             readOnly={readOnly}
           />
@@ -150,6 +173,19 @@ export function ItemSection({
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmClear}
+        title="Clear all items?"
+        message={`This removes all ${items.length} item${items.length === 1 ? "" : "s"} from the bill. This can't be undone.`}
+        confirmLabel="Clear all"
+        destructive
+        onConfirm={() => {
+          onClearAll();
+          setConfirmClear(false);
+        }}
+        onCancel={() => setConfirmClear(false)}
+      />
     </section>
   );
 }
