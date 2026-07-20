@@ -113,10 +113,18 @@ export async function action({ request, context }: Route.ActionArgs) {
   try {
     aiResponse = (await context.cloudflare.env.AI.run(MODEL, {
       messages: [
+        // The contract lives in the system turn so the model reads it as a
+        // standing instruction rather than one line of a task it can reshape.
+        // The last raw reply invented its own JSON structure over a user-role
+        // prompt; this is the lever worth pulling before blaming the wording.
+        { role: "system", content: PROMPT },
         {
           role: "user",
           content: [
-            { type: "text", text: PROMPT },
+            {
+              type: "text",
+              text: "Transcribe this receipt into the JSON object.",
+            },
             {
               type: "image_url",
               image_url: { url: `data:${mimeType};base64,${base64}` },
