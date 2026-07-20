@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type {
   Bill,
   LocalBill,
@@ -137,33 +137,40 @@ export function useBillsStore() {
   const [sharing, setSharing] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
 
-  const saveLocalBill = useCallback((bill: LocalBill) => {
-    setLocalBills((prev) => {
-      const next = upsertLocal(prev, bill);
-      try {
-        localStorage.setItem(LOCAL_KEY, JSON.stringify(next));
-      } catch {
-        /* storage full */
-      }
-      return next;
-    });
+  // Mirrors localBills so a save can persist synchronously without waiting for
+  // React to run a setState updater. This matters on the first edit of a new
+  // bill: mutate() navigates to /splitter/:id right after saving, and the
+  // route's loader reads localStorage immediately — if the write is deferred
+  // to the updater, the loader finds nothing and bounces back to /new.
+  const localBillsRef = useRef(localBills);
+
+  const persistLocal = useCallback((next: LocalBill[]) => {
+    localBillsRef.current = next;
+    try {
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(next));
+    } catch {
+      /* storage full */
+    }
+    setLocalBills(next);
   }, []);
+
+  const saveLocalBill = useCallback(
+    (bill: LocalBill) => {
+      persistLocal(upsertLocal(localBillsRef.current, bill));
+    },
+    [persistLocal],
+  );
 
   /**
    * Drops the local record only. Sharing uses this because the bill graduates
    * to a shared one rather than going away — its receipt should survive.
    */
-  const forgetLocalBill = useCallback((id: string) => {
-    setLocalBills((prev) => {
-      const next = prev.filter((b) => b.id !== id);
-      try {
-        localStorage.setItem(LOCAL_KEY, JSON.stringify(next));
-      } catch {
-        /* storage full */
-      }
-      return next;
-    });
-  }, []);
+  const forgetLocalBill = useCallback(
+    (id: string) => {
+      persistLocal(localBillsRef.current.filter((b) => b.id !== id));
+    },
+    [persistLocal],
+  );
 
   /** The user deleting a bill outright — its receipt goes too. */
   const deleteLocalBill = useCallback(
@@ -267,6 +274,7 @@ export function useBillsStore() {
     void clearReceipts();
     localStorage.removeItem(LOCAL_KEY);
     localStorage.removeItem(SHARED_KEY);
+    localBillsRef.current = [];
     setLocalBills([]);
     setSharedBills([]);
   }, []);
