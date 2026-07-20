@@ -146,12 +146,23 @@ export function SplitterShell({
   }
 
   function handleImport({ items: ocrItems, tax, tip, image }: ScanResult) {
-    const newItems: Item[] = ocrItems.map(({ description, total_amount }) => ({
-      id: crypto.randomUUID(),
-      name: description,
-      price: total_amount,
-      splitBetween: [],
-    }));
+    const newItems: Item[] = ocrItems.map(
+      ({ description, total_amount, children }) => ({
+        id: crypto.randomUUID(),
+        name: description,
+        price: total_amount,
+        splitBetween: [],
+        ...(children?.length
+          ? {
+              children: children.map((c) => ({
+                id: crypto.randomUUID(),
+                name: c.description,
+                price: c.total_amount,
+              })),
+            }
+          : {}),
+      }),
+    );
     // A bill holds one receipt, so a scan replaces rather than accumulates —
     // appending items while overwriting tax would silently mix two receipts and
     // drop the first one's tax. ReplaceScanDialog confirms this first.

@@ -46,16 +46,23 @@ const PROMPT = `You are reading a receipt image. Output one entry per line using
   <name>  <price>
 
 Rules:
-- Include purchased items and discounts (discounts as negative prices, e.g. "Promo  -5.00")
+- Keep the receipt's original order. Never move a line
+- Write negative amounts with the minus in front, e.g. "2.00-" becomes "-2.00"
+- If a discount or modification belongs to the item printed directly above it, indent it by two spaces, e.g. "  Instant savings  -3.00". A modification that costs nothing still gets a line, priced 0.00
+- If a discount applies to the whole order, or you cannot tell which item it belongs to, leave it unindented as its own line. Never guess an item to attach it to
 - Copy every tax line separately, exactly as it is labelled, e.g. "State Tax  1.00". Never merge them into one line and never add them together
 - Copy every tip or gratuity line the same way, e.g. "Tip  3.00"
 - Exclude totals, subtotals, balance due, change, and any row that sums up other rows — even if labelled AMT, TOTAL AMT, DUE, BALANCE, etc.
+- Transcribe only. Never add, subtract, or reconcile amounts
 - No currency symbols, no explanations, no blank lines
 
 Example output:
 Burger  12.99
+  Extra bacon  2.00
+  No onions  0.00
 Fries  4.99
-Promo  -5.00
+  Instant savings  -3.00
+Member savings  -5.00
 State Tax  1.00
 City Tax  0.50
 Tip  3.00`;
