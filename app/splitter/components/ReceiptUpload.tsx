@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { MdScanner, MdChevronRight } from "react-icons/md";
 import { useReceiptOcr } from "~/splitter/hooks/useReceiptOcr";
 import type { OcrItem } from "~/splitter/utils/parseReceiptText";
+import { RECEIPT_ACCEPT } from "~/splitter/utils/prepareReceipt";
 
 interface ReceiptUploadProps {
   onImport: (items: OcrItem[], tax?: number, tip?: number) => void;
@@ -56,7 +57,7 @@ export function ReceiptUpload({ onImport, hasContent }: ReceiptUploadProps) {
                   Drop your receipt here
                 </span>
                 <span className="text-xs text-ctp-overlay0">
-                  or click to browse · JPG, PNG, HEIC
+                  or click to browse · JPG, PNG, WebP, PDF
                 </span>
               </button>
               {status && (
@@ -69,7 +70,7 @@ export function ReceiptUpload({ onImport, hasContent }: ReceiptUploadProps) {
           <input
             ref={inputRef}
             type="file"
-            accept="image/*"
+            accept={RECEIPT_ACCEPT}
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];

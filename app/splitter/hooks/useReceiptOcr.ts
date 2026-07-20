@@ -3,6 +3,21 @@ import {
   parseReceiptText,
   type OcrItem,
 } from "~/splitter/utils/parseReceiptText";
+import {
+  PdfTooLongError,
+  UnreadableImageError,
+  prepareReceipt,
+} from "~/splitter/utils/prepareReceipt";
+
+function prepareErrorMessage(err: unknown) {
+  if (err instanceof PdfTooLongError) {
+    return `That PDF has ${err.pageCount} pages — please upload a receipt of 3 pages or fewer.`;
+  }
+  if (err instanceof UnreadableImageError) {
+    return "This browser can't open that image. Try a JPG, PNG, or PDF.";
+  }
+  return "Could not read that file. Try a JPG, PNG, or PDF.";
+}
 
 /**
  * Several tax lines can mean split tax (state + city) on one receipt or two
@@ -26,9 +41,23 @@ export function useReceiptOcr(
     setLoading(true);
     setStatus(null);
 
+    // Normalize to JPEG up front so the model and the Tesseract fallback both
+    // get a format they can actually read, whatever the user picked.
+    let upload: Blob;
+    try {
+      setStatus(
+        file.type === "application/pdf" ? "Reading PDF…" : "Preparing image…",
+      );
+      upload = (await prepareReceipt(file)).blob;
+    } catch (err) {
+      setStatus(prepareErrorMessage(err));
+      setLoading(false);
+      return;
+    }
+
     try {
       const form = new FormData();
-      form.append("document", file);
+      form.append("document", upload, "receipt.jpg");
       const res = await fetch("/api/parse-receipt", {
         method: "POST",
         body: form,
@@ -66,7 +95,7 @@ export function useReceiptOcr(
       const worker = await createWorker("eng");
       const {
         data: { text },
-      } = await worker.recognize(file);
+      } = await worker.recognize(upload);
       await worker.terminate();
       const { items: parsed, tax, tip, taxLineCount } = parseReceiptText(text);
       if (parsed.length > 0) {
