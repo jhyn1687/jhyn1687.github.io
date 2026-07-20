@@ -28,6 +28,29 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
+/* A slim, unobtrusive scrollbar for panning inside small framed content like
+   the scanned-receipt preview. Neutral grey rather than a theme colour, since
+   it sits over the white receipt regardless of palette. */
+@utility thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(120 120 120 / 0.55) transparent;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: rgb(120 120 120 / 0.55);
+    border-radius: 9999px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(120 120 120 / 0.85);
+  }
+}
+
 html {
   /* Fallback before the canvas mounts */
   background-color: var(--catppuccin-color-crust);

@@ -74,7 +74,7 @@ export function ReceiptPreview({ billId }: ReceiptPreviewProps) {
             {/* The frame scrolls; zooming widens the image past it so panning is
                 just scrolling. On a wide screen the rail is tall and narrow, so
                 let it fill the viewport height rather than capping it short. */}
-            <div className="max-h-80 overflow-auto rounded-xl border border-ctp-surface1/50 bg-white min-[1160px]:max-h-[calc(100vh-11rem)]">
+            <div className="thin-scrollbar max-h-80 overflow-auto overscroll-contain rounded-xl border border-ctp-surface1/50 bg-white min-[1160px]:max-h-[calc(100vh-11rem)]">
               <img
                 src={url}
                 alt="Scanned receipt"
