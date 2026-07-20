@@ -38,6 +38,25 @@ const skipWords =
   /\b(total|subtotal|balance|amount|due|change|visa|mastercard|amex|discover|debit|tender)\b/i;
 const taxPattern = /\btax\b/i;
 const tipPattern = /\btip\b|\bgratuity\b/i;
+/**
+ * Marks a restatement rather than a charge — "TOTAL TAX" beneath a "TAX" line.
+ * Receipts print either, and some print both for the same money.
+ */
+const restatement = /\b(total|subtotal)\b/i;
+
+/**
+ * A savings line stated as a positive amount is a tally of discounts printed
+ * elsewhere — receipts show "INSTANT SAVINGS  $6.50" without the sign. Taken at
+ * face value it would add money to a bill it was supposed to take off. A real
+ * discount reaches us negative, so the sign is what separates them.
+ */
+function isSavingsTally(line: string, amount: number) {
+  return amount > 0 && /\bsavings?\b/i.test(line);
+}
+
+function sum(values: number[]) {
+  return values.reduce((a, b) => a + b, 0);
+}
 
 function parseAmount(raw: string): number {
   const trailingMinus = raw.endsWith("-");
@@ -47,26 +66,32 @@ function parseAmount(raw: string): number {
 
 export function parseReceiptText(text: string): ParsedReceipt {
   const items: OcrItem[] = [];
-  let tax: number | undefined;
-  let tip: number | undefined;
-  let taxLineCount = 0;
+  // Charges and their restatements are collected separately so a receipt that
+  // prints both "TAX" and "TOTAL TAX" for the same money doesn't double it.
+  const charged = { tax: [] as number[], tip: [] as number[] };
+  const restated = { tax: [] as number[], tip: [] as number[] };
 
   for (const line of text.split("\n")) {
     const trimmed = line.trim();
-    if (!trimmed || skipWords.test(trimmed)) continue;
+    if (!trimmed) continue;
     const match = trimmed.match(pricePattern);
     if (!match) continue;
     const description = match[1].trim();
     const amount = parseAmount(match[2]);
     if (isNaN(amount) || Math.abs(amount) >= 10000) continue;
 
-    if (taxPattern.test(trimmed) && amount > 0) {
-      // Sum rather than overwrite — receipts often split tax across lines, and
-      // a stitched multi-page scan can carry one tax line per receipt.
-      tax = (tax ?? 0) + amount;
-      taxLineCount++;
-    } else if (tipPattern.test(trimmed) && amount > 0) {
-      tip = (tip ?? 0) + amount;
+    const isTax = taxPattern.test(trimmed) && amount > 0;
+    const isTip = tipPattern.test(trimmed) && amount > 0;
+    // Deliberately after the tax and tip checks: skipWords matches "total",
+    // which would otherwise discard a "TOTAL TAX" line and leave a receipt
+    // that only labels it that way reporting no tax at all.
+    if (!isTax && !isTip && skipWords.test(trimmed)) continue;
+    if (isSavingsTally(trimmed, amount)) continue;
+
+    if (isTax) {
+      (restatement.test(trimmed) ? restated : charged).tax.push(amount);
+    } else if (isTip) {
+      (restatement.test(trimmed) ? restated : charged).tip.push(amount);
     } else if (description.length > 1) {
       // Indentation marks a modification or discount belonging to the item
       // above it. The model is asked to preserve it precisely so attribution is
@@ -86,5 +111,16 @@ export function parseReceiptText(text: string): ParsedReceipt {
     }
   }
 
-  return { items, tax, tip, taxLineCount };
+  // Prefer the itemised lines; fall back to a restatement only when that is the
+  // sole place the receipt names the amount. Summing rather than overwriting
+  // still matters within each group — split state and city tax are both real.
+  const taxValues = charged.tax.length ? charged.tax : restated.tax;
+  const tipValues = charged.tip.length ? charged.tip : restated.tip;
+
+  return {
+    items,
+    tax: taxValues.length ? sum(taxValues) : undefined,
+    tip: tipValues.length ? sum(tipValues) : undefined,
+    taxLineCount: taxValues.length,
+  };
 }

@@ -48,10 +48,11 @@ const PROMPT = `You are reading a receipt image. Output one entry per line using
 Rules:
 - Keep the receipt's original order. Never move a line
 - Write negative amounts with the minus in front, e.g. "2.00-" becomes "-2.00"
-- When an item's name and its price are printed on separate lines — the name by itself, then a quantity line such as "2 @ 3.99" carrying the extended total — output one line using the item's name and that total. Never output a quantity as a name
+- Skip any line that shows only a quantity and unit price, such as "2 @ 3.99". It describes the item on a neighbouring line, whose own line already carries the total paid. Never output a quantity as a name, and never pair it with a price from an adjacent row
+- Read each row straight across. A price belongs to the name printed on its own row, never to the row above or below it
 - If a discount or modification belongs to the item printed directly above it, or names or references that item, indent it by two spaces, e.g. "  Instant savings  -3.00". A modification that costs nothing still gets a line, priced 0.00
 - If a discount applies to the whole order, or you cannot tell which item it belongs to, leave it unindented as its own line. Never guess an item to attach it to
-- Copy every tax line separately, exactly as it is labelled, e.g. "State Tax  1.00". Tax is never a total: include it even where it is printed among the totals. Never merge tax lines and never add them together
+- Copy every tax line separately, exactly as it is labelled, e.g. "State Tax  1.00". Tax is never a total: include it even where it is printed among the totals. Never merge tax lines and never add them together. If the same tax is stated twice, once as "TAX" and again as "TOTAL TAX", output only the first
 - Copy every tip or gratuity line the same way, e.g. "Tip  3.00"
 - Exclude totals, subtotals, balance due and change — even if labelled AMT, TOTAL AMT, DUE, BALANCE, etc.
 - Exclude the payment line naming a card or tender type (VISA, MASTERCARD, DEBIT, CASH); it only repeats the total
