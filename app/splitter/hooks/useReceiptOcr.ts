@@ -4,6 +4,17 @@ import {
   type OcrItem,
 } from "~/splitter/utils/parseReceiptText";
 
+/**
+ * Several tax lines can mean split tax (state + city) on one receipt or two
+ * receipts in one image. Both are summed correctly, but the second would also
+ * merge two bills' items, so flag it without guessing which happened.
+ */
+function reviewNote(taxLineCount: number) {
+  return taxLineCount > 1
+    ? " Found more than one tax line — please double-check the tax and tip."
+    : "";
+}
+
 export function useReceiptOcr(
   onImport: (items: OcrItem[], tax?: number, tip?: number) => void,
   onSuccess?: () => void,
@@ -27,10 +38,14 @@ export function useReceiptOcr(
           items: OcrItem[];
           tax?: number | null;
           tip?: number | null;
+          taxLineCount?: number;
         };
         if (data.items.length > 0) {
           onImport(data.items, data.tax ?? undefined, data.tip ?? undefined);
-          setStatus(`Imported ${data.items.length} item(s). Please review.`);
+          setStatus(
+            `Imported ${data.items.length} item(s). Please review.` +
+              reviewNote(data.taxLineCount ?? 0),
+          );
           setLoading(false);
           onSuccess?.();
           return;
@@ -53,11 +68,12 @@ export function useReceiptOcr(
         data: { text },
       } = await worker.recognize(file);
       await worker.terminate();
-      const { items: parsed, tax, tip } = parseReceiptText(text);
+      const { items: parsed, tax, tip, taxLineCount } = parseReceiptText(text);
       if (parsed.length > 0) {
         onImport(parsed, tax, tip);
         setStatus(
-          `Imported ${parsed.length} item(s) via OCR — results are best-effort, please review.`,
+          `Imported ${parsed.length} item(s) via OCR — results are best-effort, please review.` +
+            reviewNote(taxLineCount),
         );
         onSuccess?.();
       } else {

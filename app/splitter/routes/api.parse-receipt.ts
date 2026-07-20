@@ -47,8 +47,8 @@ const PROMPT = `You are reading a receipt image. Output one entry per line using
 
 Rules:
 - Include purchased items and discounts (discounts as negative prices, e.g. "Promo  -5.00")
-- Include tax on its own line as "Tax  <amount>"
-- Include tip or gratuity on its own line as "Tip  <amount>"
+- Copy every tax line separately, exactly as it is labelled, e.g. "State Tax  1.00". Never merge them into one line and never add them together
+- Copy every tip or gratuity line the same way, e.g. "Tip  3.00"
 - Exclude totals, subtotals, balance due, change, and any row that sums up other rows — even if labelled AMT, TOTAL AMT, DUE, BALANCE, etc.
 - No currency symbols, no explanations, no blank lines
 
@@ -56,7 +56,8 @@ Example output:
 Burger  12.99
 Fries  4.99
 Promo  -5.00
-Tax  1.50
+State Tax  1.00
+City Tax  0.50
 Tip  3.00`;
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -117,6 +118,8 @@ export async function action({ request, context }: Route.ActionArgs) {
     },
   )) as { response: string };
 
-  const { items, tax, tip } = parseReceiptText(aiResponse.response);
-  return Response.json({ items, tax, tip });
+  const { items, tax, tip, taxLineCount } = parseReceiptText(
+    aiResponse.response,
+  );
+  return Response.json({ items, tax, tip, taxLineCount });
 }
