@@ -1,6 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Route } from "./+types/api.parse-receipt";
-import { parseReceiptText } from "~/splitter/utils/parseReceiptText";
+import {
+  parseReceiptText,
+  type OcrItem,
+  type ParsedReceipt,
+} from "~/splitter/utils/parseReceiptText";
 
 async function sha256hex(input: string): Promise<string> {
   const encoded = new TextEncoder().encode(input);
@@ -60,34 +64,154 @@ const EU_COUNTRIES = new Set([
   "SK",
 ]);
 
-const PROMPT = `You are reading a receipt image. Output one entry per line using this exact format:
-  <name>  <price>
+/**
+ * Asking for structure directly, rather than for indented text we then parse.
+ * The two-space indent convention was the weakest link: the model had to invent
+ * a layout to express "this discount belongs to that item", and when it wasn't
+ * sure it dropped the line instead. A nested field says the same thing without
+ * relying on whitespace surviving the round trip.
+ *
+ * `taxes` is a list rather than one number so split state and city tax stay
+ * distinct — several tax lines can also mean two receipts in one image, and
+ * that only shows up if they arrive separately.
+ */
+const RECEIPT_SCHEMA = {
+  type: "object",
+  properties: {
+    items: {
+      type: "array",
+      description: "Every purchased item, in the order printed.",
+      items: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "The item's printed name." },
+          price: {
+            type: "number",
+            description: "Total paid for this item, before its adjustments.",
+          },
+          adjustments: {
+            type: "array",
+            description:
+              "Discounts, deposits, fees and modifications belonging to this item. A discount is negative; a deposit or fee is positive; a free modification is 0.",
+            items: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+                price: { type: "number" },
+              },
+              required: ["name", "price"],
+            },
+          },
+        },
+        required: ["name", "price", "adjustments"],
+      },
+    },
+    orderDiscounts: {
+      type: "array",
+      description:
+        "Discounts applying to the whole order rather than one item. Negative amounts.",
+      items: {
+        type: "object",
+        properties: { name: { type: "string" }, price: { type: "number" } },
+        required: ["name", "price"],
+      },
+    },
+    taxes: {
+      type: "array",
+      description:
+        "Each tax line as printed, kept separate. Empty if the receipt shows none.",
+      items: {
+        type: "object",
+        properties: { name: { type: "string" }, amount: { type: "number" } },
+        required: ["name", "amount"],
+      },
+    },
+    tip: {
+      type: "number",
+      description: "Tip or gratuity, 0 if the receipt shows none.",
+    },
+  },
+  required: ["items", "orderDiscounts", "taxes", "tip"],
+};
+
+const PROMPT = `You are reading a receipt image. Fill in the schema from what is printed.
 
 Rules:
-- Keep the receipt's original order. Never move a line
-- Write negative amounts with the minus in front, e.g. "2.00-" becomes "-2.00"
-- Skip any line that shows only a quantity and unit price, such as "2 @ 3.99". It describes the item on a neighbouring line, whose own line already carries the total paid. Never output a quantity as a name, and never pair it with a price from an adjacent row
 - Read each row straight across. A price belongs to the name printed on its own row, never to the row above or below it
-- If a discount or modification belongs to the item printed directly above it, or names or references that item, indent it by two spaces, e.g. "  Instant savings  -3.00". A modification that costs nothing still gets a line, priced 0.00
-- If a discount applies to the whole order, or you cannot tell which item it belongs to, leave it unindented as its own line. Never guess an item to attach it to
-- Copy every tax line separately, exactly as it is labelled, e.g. "State Tax  1.00". Tax is never a total: include it even where it is printed among the totals. Never merge tax lines and never add them together. If the same tax is stated twice, once as "TAX" and again as "TOTAL TAX", output only the first
-- Copy every tip or gratuity line the same way, e.g. "Tip  3.00"
-- Exclude totals, subtotals, balance due and change — even if labelled AMT, TOTAL AMT, DUE, BALANCE, etc.
-- Exclude the payment line naming a card or tender type (VISA, MASTERCARD, DEBIT, CASH); it only repeats the total
-- Exclude any row that adds up other rows, including a savings or discount total printed at the end — keep the individual discount lines instead
-- Transcribe only. Never add, subtract, or reconcile amounts
-- No currency symbols, no explanations, no blank lines
+- Copy every digit exactly. 23.89 is not 2.89
+- A line showing only a quantity and unit price, such as "2 @ 3.99", is not an item. It describes a neighbouring row whose own line already carries the total paid
+- A line that discounts, deposits against, or modifies another item belongs in that item's "adjustments", never as an item of its own. Receipts mark these by printing them directly beneath the item, or by referencing it — a bottle deposit reading "EE/782796" belongs to item 782796, and a discount reading "/1843108" belongs to item 1843108. Name it after what it is, e.g. "Instant savings" or "Bottle deposit"
+- Write a discount as a negative amount: "3.00-" becomes -3.00
+- Put a discount in "orderDiscounts" only when it applies to the whole order. Never guess an item for it
+- Record every tax line in "taxes", even where it is printed among the totals. Tax is never a total. If the same tax appears twice, once as "TAX" and again as "TOTAL TAX", record it once
+- Ignore totals, subtotals, balance due, change, the payment line naming a card or tender type, and any row that adds up other rows — including a savings total printed at the end, whose parts you have already recorded
+- Transcribe only. Never add, subtract, or reconcile amounts`;
 
-Example output:
-Burger  12.99
-  Extra bacon  2.00
-  No onions  0.00
-Bottled water  7.98
-  Instant savings  -3.00
-Member savings  -5.00
-State Tax  1.00
-City Tax  0.50
-Tip  3.00`;
+/** Coerces a value the model may have emitted as a string, rejecting nonsense. */
+function toAmount(value: unknown): number | null {
+  const n = typeof value === "string" ? parseFloat(value) : value;
+  if (typeof n !== "number" || !isFinite(n) || Math.abs(n) >= 10000)
+    return null;
+  return n;
+}
+
+function toEntry(
+  raw: unknown,
+): { description: string; total_amount: number } | null {
+  if (!raw || typeof raw !== "object") return null;
+  const { name, price } = raw as { name?: unknown; price?: unknown };
+  const amount = toAmount(price);
+  if (typeof name !== "string" || !name.trim() || amount === null) return null;
+  return { description: name.trim(), total_amount: amount };
+}
+
+/**
+ * Reads the structured reply. Returns null when it isn't usable at all, which
+ * lets the caller fall back to parsing the response as text.
+ */
+function fromSchema(response: string): ParsedReceipt | null {
+  let data: Record<string, unknown>;
+  try {
+    data = JSON.parse(response) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+  if (!data || !Array.isArray(data.items)) return null;
+
+  const items: OcrItem[] = [];
+  for (const raw of data.items) {
+    const entry = toEntry(raw);
+    if (!entry) continue;
+    const adjustments = (raw as { adjustments?: unknown }).adjustments;
+    const children = Array.isArray(adjustments)
+      ? adjustments.map(toEntry).filter((c) => c !== null)
+      : [];
+    items.push(children.length ? { ...entry, children } : entry);
+  }
+
+  // Order-level discounts sit alongside items: they belong to everyone, so they
+  // can't hang off any one of them.
+  if (Array.isArray(data.orderDiscounts)) {
+    for (const raw of data.orderDiscounts) {
+      const entry = toEntry(raw);
+      if (entry && entry.total_amount !== 0) items.push(entry);
+    }
+  }
+
+  const taxes = Array.isArray(data.taxes)
+    ? data.taxes
+        .map((t) => toAmount((t as { amount?: unknown })?.amount))
+        .filter((n): n is number => n !== null && n > 0)
+    : [];
+  const tip = toAmount(data.tip);
+
+  return {
+    items,
+    tax: taxes.length ? taxes.reduce((a, b) => a + b, 0) : undefined,
+    tip: tip && tip > 0 ? tip : undefined,
+    taxLineCount: taxes.length,
+  };
+}
 
 export async function action({ request, context }: Route.ActionArgs) {
   const country = request.headers.get("CF-IPCountry") ?? "";
@@ -141,11 +265,13 @@ export async function action({ request, context }: Route.ActionArgs) {
         ],
       },
     ],
-    max_tokens: 1024,
+    guided_json: RECEIPT_SCHEMA,
+    max_tokens: 2048,
   })) as { response: string };
 
-  const { items, tax, tip, taxLineCount } = parseReceiptText(
-    aiResponse.response,
-  );
-  return Response.json({ items, tax, tip, taxLineCount });
+  // Falls back to reading the reply as text when the schema isn't honoured, so
+  // a malformed response degrades to the old behaviour rather than to nothing.
+  const parsed =
+    fromSchema(aiResponse.response) ?? parseReceiptText(aiResponse.response);
+  return Response.json(parsed);
 }
