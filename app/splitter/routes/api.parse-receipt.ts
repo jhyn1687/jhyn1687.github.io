@@ -11,7 +11,25 @@ async function sha256hex(input: string): Promise<string> {
     .slice(0, 16);
 }
 
-// Llama 3.2 license prohibits use for EU-domiciled individuals
+/**
+ * llama-3.2-11b-vision-instruct misreads dense multi-column receipts — on a
+ * Costco scan it paired item names with prices from the adjacent row. That is
+ * transcription accuracy rather than prompting, so it needs a larger model.
+ *
+ * Costs roughly 7x its input rate (31,876 vs 4,410 neurons per M input tokens)
+ * and a little less on output. The 11B measured at ~36 neurons a scan, so
+ * expect ~100 — around 95 scans a day inside the free 10,000-neuron allocation.
+ *
+ * Cloudflare's docs class this as text generation and document no image input,
+ * but the binding types declare the same messages/content/image_url shape as
+ * the vision models, which is what this route already sends.
+ *
+ * @cf/meta/llama-4-scout-17b-16e-instruct is the alternative: also vision
+ * capable, same input shape, marginally cheaper per scan (~95 neurons).
+ */
+const MODEL = "@cf/mistralai/mistral-small-3.1-24b-instruct";
+
+// Llama license prohibits use for EU-domiciled individuals
 const EU_COUNTRIES = new Set([
   "AT",
   "BE",
@@ -110,24 +128,21 @@ export async function action({ request, context }: Route.ActionArgs) {
   const base64 = btoa(binary);
   const mimeType = (file as File).type || "image/jpeg";
 
-  const aiResponse = (await context.cloudflare.env.AI.run(
-    "@cf/meta/llama-3.2-11b-vision-instruct",
-    {
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: PROMPT },
-            {
-              type: "image_url",
-              image_url: { url: `data:${mimeType};base64,${base64}` },
-            },
-          ],
-        },
-      ],
-      max_tokens: 1024,
-    },
-  )) as { response: string };
+  const aiResponse = (await context.cloudflare.env.AI.run(MODEL, {
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: PROMPT },
+          {
+            type: "image_url",
+            image_url: { url: `data:${mimeType};base64,${base64}` },
+          },
+        ],
+      },
+    ],
+    max_tokens: 1024,
+  })) as { response: string };
 
   const { items, tax, tip, taxLineCount } = parseReceiptText(
     aiResponse.response,
