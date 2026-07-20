@@ -154,8 +154,34 @@ export async function action({ request, context }: Route.ActionArgs) {
     );
   }
 
-  const reply = aiResponse.response ?? "";
-  const parsed = fromSchema(reply);
+  /*
+   * A system-role message may make the model reply in a shape where `response`
+   * isn't the string we expect. Surface the whole raw object rather than
+   * throwing on `.response`, which was landing as an opaque 500.
+   */
+  const reply =
+    typeof aiResponse?.response === "string" ? aiResponse.response : "";
+  if (!reply) {
+    return Response.json(
+      {
+        items: [],
+        taxLineCount: 0,
+        debugRaw: JSON.stringify(aiResponse ?? null),
+      },
+      { status: 502 },
+    );
+  }
+
+  let parsed: ReturnType<typeof fromSchema>;
+  try {
+    parsed = fromSchema(reply);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return Response.json(
+      { items: [], taxLineCount: 0, debugError: message, debugReply: reply },
+      { status: 500 },
+    );
+  }
 
   /*
    * `observability` is enabled in wrangler.jsonc, so this reaches the dashboard
