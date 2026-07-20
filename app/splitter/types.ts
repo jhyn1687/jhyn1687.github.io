@@ -11,12 +11,29 @@ export type Participant = {
   color: PersonColor;
 };
 
+/**
+ * A modification or discount attached to an item — extra bacon, instant
+ * savings, no onions. Deliberately has no splitBetween: it always follows the
+ * parent's assignment, since whoever bought the burger bought what was done to
+ * it. A zero price is meaningful and kept; it records whose item it is.
+ */
+export type SubItem = {
+  id: string;
+  name: string;
+  price: number;
+};
+
 export type Item = {
   id: string;
   name: string;
   price: number;
   splitBetween: string[]; // participant IDs
   splitEvenly?: boolean; // always split among all participants
+  /**
+   * Optional so bills saved before sub-items existed — including immutable
+   * bill_shares snapshots still inside their 30-day window — keep loading.
+   */
+  children?: SubItem[];
 };
 
 export type Bill = {

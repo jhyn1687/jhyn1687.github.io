@@ -5,7 +5,7 @@ import {
   useOutletContext,
   useSearchParams,
 } from "react-router";
-import { canShareBill } from "~/splitter/utils/bill";
+import { canShareBill, itemTotal } from "~/splitter/utils/bill";
 import { colorForIndex, nextColorSeed } from "~/splitter/utils/colors";
 import { AppHeader } from "~/splitter/components/AppHeader";
 import { BillSummary } from "~/splitter/components/BillSummary";
@@ -219,10 +219,7 @@ export function SplitterShell({
     }
   }
 
-  const subtotal = items.reduce(
-    (sum, item) => sum + (isNaN(item.price) ? 0 : item.price),
-    0,
-  );
+  const subtotal = items.reduce((sum, item) => sum + itemTotal(item), 0);
 
   if (error) {
     return (

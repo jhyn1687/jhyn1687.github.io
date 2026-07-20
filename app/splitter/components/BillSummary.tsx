@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MdExpandMore, MdReceipt } from "react-icons/md";
 import type { Item, Participant } from "~/splitter/types";
+import { itemTotal } from "~/splitter/utils/bill";
 
 interface BillSummaryProps {
   items: Item[];
@@ -15,7 +16,11 @@ interface PersonBreakdown {
   taxShare: number;
   tipShare: number;
   total: number;
-  myItems: Array<{ name: string; amount: number }>;
+  myItems: Array<{
+    name: string;
+    amount: number;
+    children: Array<{ name: string; amount: number }>;
+  }>;
 }
 
 function PersonCard({ bd }: { bd: PersonBreakdown }) {
@@ -54,13 +59,30 @@ function PersonCard({ bd }: { bd: PersonBreakdown }) {
       {open && (
         <div className="flex flex-col gap-1.5 border-t border-ctp-surface1/50 bg-ctp-mantle/50 px-4 py-3 text-[12px]">
           {myItems.map((item, i) => (
-            <div key={i} className="flex justify-between">
-              <span className="truncate text-ctp-subtext1">
-                {item.name || "Unnamed"}
-              </span>
-              <span className="ml-4 shrink-0 font-semibold text-ctp-text">
-                ${item.amount.toFixed(2)}
-              </span>
+            <div key={i} className="flex flex-col gap-0.5">
+              <div className="flex justify-between">
+                <span className="truncate text-ctp-subtext1">
+                  {item.name || "Unnamed"}
+                </span>
+                <span className="ml-4 shrink-0 font-semibold text-ctp-text">
+                  ${item.amount.toFixed(2)}
+                </span>
+              </div>
+              {item.children.map((child, j) => (
+                <div key={j} className="flex justify-between pl-3 text-[11px]">
+                  <span className="truncate text-ctp-overlay0">
+                    {child.name || "Modification"}
+                  </span>
+                  {/* A no-cost modification is worth showing, but a "$0.00"
+                      beside it is just noise. */}
+                  {child.amount !== 0 && (
+                    <span className="ml-4 shrink-0 text-ctp-overlay0">
+                      {child.amount < 0 ? "−" : ""}$
+                      {Math.abs(child.amount).toFixed(2)}
+                    </span>
+                  )}
+                </div>
+              ))}
             </div>
           ))}
 
@@ -113,16 +135,16 @@ export function BillSummary({
   let totalWeight = 0;
 
   for (const item of items) {
-    if (isNaN(item.price)) continue;
-    totalSubtotal += item.price;
+    const price = itemTotal(item);
+    totalSubtotal += price;
     const assigned = item.splitBetween;
     if (assigned.length === 0) continue;
-    const share = item.price / assigned.length;
+    const share = price / assigned.length;
     for (const pid of assigned) {
       subtotals[pid] = (subtotals[pid] ?? 0) + share;
-      if (item.price > 0) weights[pid] = (weights[pid] ?? 0) + share;
+      if (price > 0) weights[pid] = (weights[pid] ?? 0) + share;
     }
-    if (item.price > 0) totalWeight += item.price;
+    if (price > 0) totalWeight += price;
   }
 
   const grandTotal = totalSubtotal + tax + tip;
@@ -137,10 +159,16 @@ export function BillSummary({
         ? (weights[p.id] ?? 0) / totalWeight
         : 1 / participants.length;
     const myItems = items
-      .filter((i) => i.splitBetween.includes(p.id) && !isNaN(i.price))
+      .filter((i) => i.splitBetween.includes(p.id))
       .map((i) => ({
         name: i.name,
-        amount: i.price / i.splitBetween.length,
+        amount: itemTotal(i) / i.splitBetween.length,
+        // Shown under the item so a total that doesn't match the receipt line
+        // is explained by what modified it.
+        children: (i.children ?? []).map((c) => ({
+          name: c.name,
+          amount: isNaN(c.price) ? 0 : c.price / i.splitBetween.length,
+        })),
       }));
     return {
       participant: p,
