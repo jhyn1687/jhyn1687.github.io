@@ -91,12 +91,22 @@ function toAmount(value: unknown): number | null {
   return n;
 }
 
+/**
+ * The model ignores the schema's field names — it emitted a "price" on tax
+ * lines the schema calls "amount", which silently dropped real tax. Read
+ * whichever it used rather than trusting the name we asked for.
+ */
+function readAmount(raw: object): number | null {
+  const r = raw as { price?: unknown; amount?: unknown };
+  return toAmount(r.price ?? r.amount);
+}
+
 function toEntry(
   raw: unknown,
 ): { description: string; total_amount: number } | null {
   if (!raw || typeof raw !== "object") return null;
-  const { name, price } = raw as { name?: unknown; price?: unknown };
-  const amount = toAmount(price);
+  const { name } = raw as { name?: unknown };
+  const amount = readAmount(raw);
   if (typeof name !== "string" || !name.trim() || amount === null) return null;
   return { description: name.trim(), total_amount: amount };
 }
@@ -176,9 +186,12 @@ export function fromSchema(response: string): ParsedReceipt | null {
   }
 
   // Order-level discounts sit alongside items: they belong to everyone, so they
-  // can't hang off any one of them.
-  if (Array.isArray(data.orderDiscounts)) {
-    for (const raw of data.orderDiscounts) {
+  // can't hang off any one of them. The model puts these under "orderDiscounts"
+  // or a flat "adjustments" depending on the run, so read both.
+  for (const key of ["orderDiscounts", "adjustments"] as const) {
+    const list = data[key];
+    if (!Array.isArray(list)) continue;
+    for (const raw of list) {
       const entry = toEntry(raw);
       if (entry && entry.total_amount !== 0) items.push(entry);
     }
@@ -186,7 +199,7 @@ export function fromSchema(response: string): ParsedReceipt | null {
 
   const taxes = Array.isArray(data.taxes)
     ? data.taxes
-        .map((t) => toAmount((t as { amount?: unknown })?.amount))
+        .map((t) => (t && typeof t === "object" ? readAmount(t) : null))
         .filter((n): n is number => n !== null && n > 0)
     : [];
   const tip = toAmount(data.tip);
