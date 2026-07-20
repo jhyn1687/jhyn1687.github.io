@@ -125,6 +125,38 @@ export async function action({ request, context }: Route.ActionArgs) {
 
   const reply = aiResponse.response ?? "";
   const parsed = fromSchema(reply);
+
+  /*
+   * `observability` is enabled in wrangler.jsonc, so this reaches the dashboard
+   * under Workers -> jhyn1687-github-io -> Logs, and `npx wrangler tail`.
+   *
+   * The raw reply is logged whole and on both paths deliberately. Nothing
+   * downstream distinguishes a fenced reply from one truncated at max_tokens,
+   * and a plausible-looking parse is exactly the failure worth catching — so
+   * the parsed shape alone can't be trusted to tell us what happened.
+   *
+   * This logs receipt contents to Cloudflare. Fine while the branch is being
+   * verified against Tony's own receipts; cut it back to the failure path
+   * before this reaches other people's.
+   */
+  console.log(
+    "parse-receipt",
+    JSON.stringify({
+      model: MODEL,
+      replyLength: reply.length,
+      parsed: parsed && {
+        items: parsed.items.length,
+        children: parsed.items.reduce(
+          (n, i) => n + (i.children?.length ?? 0),
+          0,
+        ),
+        tax: parsed.tax,
+        tip: parsed.tip,
+      },
+      reply,
+    }),
+  );
+
   if (parsed) return Response.json(parsed);
 
   // The text parser reads "NAME  12.34" rows, and pretty-printed JSON matches
@@ -132,10 +164,6 @@ export async function action({ request, context }: Route.ActionArgs) {
   // enough to be adopted as a child. It produced a bill of nonsense that looked
   // real. So it may only see a reply that was never meant to be structured.
   if (reply.includes("{")) {
-    console.error(
-      "parse-receipt: unusable structured reply",
-      reply.slice(0, 500),
-    );
     // Empty items sends the client to its local OCR fallback.
     return Response.json({ items: [], taxLineCount: 0 });
   }
