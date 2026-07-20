@@ -60,6 +60,12 @@ export type SharedBill = {
   bill: Bill;
   cachedAt: number;
   expiresAt: number;
+  /**
+   * The sharer opted to include the scanned receipt. Only a flag — the image
+   * itself is streamed on demand from /api/bill/:code/receipt, never cached in
+   * localStorage alongside the bill.
+   */
+  hasReceipt?: boolean;
 };
 
 export type SplitterSettings = {

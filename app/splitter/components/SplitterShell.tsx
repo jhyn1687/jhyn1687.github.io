@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   useLocation,
   useNavigate,
@@ -19,7 +19,7 @@ import { TaxTip } from "~/splitter/components/TaxTip";
 import type { SplitterLayoutContext } from "~/splitter/routes/splitter.layout";
 import type { ScanResult } from "~/splitter/hooks/useReceiptOcr";
 import type { Bill, Item, LocalBill, SharedBill } from "~/splitter/types";
-import { saveReceipt } from "~/splitter/utils/receiptStore";
+import { getReceipt, saveReceipt } from "~/splitter/utils/receiptStore";
 
 interface SplitterShellProps {
   initialLocalBill: LocalBill | null;
@@ -59,12 +59,30 @@ export function SplitterShell({
   );
   // Bumped on each import so the preview re-reads a rescan, whose bill id is unchanged.
   const [receiptVersion, setReceiptVersion] = useState(0);
+  // Whether this draft has a scanned receipt — gates the "include receipt"
+  // option in the share dialog. Read from IndexedDB, re-checked on each scan.
+  const [hasLocalReceipt, setHasLocalReceipt] = useState(false);
   const isFirstMutation = useRef(!savedBillId && isNew);
   // Only ever increments — never decremented on removal — so re-adds after
   // removals always get a fresh color rather than colliding with an existing one.
   const colorSeed = useRef(
     nextColorSeed(initialLocalBill?.bill.participants ?? []),
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    // Resolve to null (no receipt) rather than setting state synchronously in
+    // the effect body, which the react-hooks rule disallows.
+    const lookup = savedBillId
+      ? getReceipt(savedBillId)
+      : Promise.resolve(null);
+    lookup.then((blob) => {
+      if (!cancelled) setHasLocalReceipt(!!blob);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [savedBillId, receiptVersion]);
 
   const { title, participants, items, tax, tip } = bill;
 
@@ -243,7 +261,9 @@ export function SplitterShell({
       navigate(`/splitter/share/${code}`);
     const result = store.initiateShare(activeLocalBill);
     if (result === "confirm") {
-      store.confirmShare(activeLocalBill, onShareSuccess);
+      // The skip-dialog path never shows the opt-in, so a receipt is never
+      // attached here — sharing one is always an explicit, per-share choice.
+      store.confirmShare(activeLocalBill, false, onShareSuccess);
     }
   }
 
@@ -285,10 +305,11 @@ export function SplitterShell({
         open={store.shareDialogOpen}
         sharing={store.sharing}
         skipShareDialog={store.settings.skipShareDialog}
+        hasReceipt={hasLocalReceipt}
         onUpdateSkip={(skip) => store.updateSettings({ skipShareDialog: skip })}
-        onConfirm={() =>
+        onConfirm={(includeReceipt) =>
           activeLocalBill &&
-          store.confirmShare(activeLocalBill, (code) =>
+          store.confirmShare(activeLocalBill, includeReceipt, (code) =>
             navigate(`/splitter/share/${code}`),
           )
         }
@@ -355,6 +376,13 @@ export function SplitterShell({
             )}
             {!isSharedView && (
               <ReceiptPreview key={receiptVersion} billId={savedBillId} />
+            )}
+            {/* A shared receipt streams from the server rather than IndexedDB,
+                shown only when the sharer opted to include it. */}
+            {isSharedView && sharedBill?.hasReceipt && (
+              <ReceiptPreview
+                imageUrl={`/api/bill/${sharedBill.shareCode}/receipt`}
+              />
             )}
             <BillSummary
               items={items}

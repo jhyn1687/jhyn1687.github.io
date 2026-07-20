@@ -52,7 +52,10 @@ export async function clientLoader({
         error: "This share link has expired or doesn't exist.",
       };
     }
-    const { bill } = (await res.json()) as { bill: Bill };
+    const { bill, hasReceipt } = (await res.json()) as {
+      bill: Bill;
+      hasReceipt?: boolean;
+    };
     const now = Date.now();
     const sharedBill: SharedBill = {
       shareCode: code,
@@ -60,6 +63,7 @@ export async function clientLoader({
       bill: { ...bill, tax: bill.tax ?? 0, tip: bill.tip ?? 0 },
       cachedAt: now,
       expiresAt: now + SHARED_TTL,
+      hasReceipt: !!hasReceipt,
     };
     try {
       const raw = localStorage.getItem(SHARED_KEY);

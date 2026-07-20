@@ -5,7 +5,11 @@ import type {
   SharedBill,
   SplitterSettings,
 } from "~/splitter/types";
-import { clearReceipts, deleteReceipt } from "~/splitter/utils/receiptStore";
+import {
+  clearReceipts,
+  deleteReceipt,
+  getReceipt,
+} from "~/splitter/utils/receiptStore";
 
 export type Toast = { text: string; type: "success" | "error" };
 
@@ -228,16 +232,32 @@ export function useBillsStore() {
   );
 
   const confirmShare = useCallback(
-    async (activeBill: LocalBill, onSuccess?: (code: string) => void) => {
+    async (
+      activeBill: LocalBill,
+      includeReceipt: boolean,
+      onSuccess?: (code: string) => void,
+    ) => {
       if (sharing) return;
       setSharing(true);
       setShareDialogOpen(false);
       try {
-        const res = await fetch("/api/share-bill", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ bill: activeBill.bill }),
-        });
+        // Attach the receipt only when opted in and one actually exists.
+        // Multipart is used solely for that case; the common share stays JSON.
+        const receipt = includeReceipt ? await getReceipt(activeBill.id) : null;
+
+        let res: Response;
+        if (receipt) {
+          const form = new FormData();
+          form.append("bill", JSON.stringify(activeBill.bill));
+          form.append("receipt", receipt, "receipt.jpg");
+          res = await fetch("/api/share-bill", { method: "POST", body: form });
+        } else {
+          res = await fetch("/api/share-bill", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ bill: activeBill.bill }),
+          });
+        }
         if (!res.ok) throw new Error("Server error");
         const { url, code } = (await res.json()) as {
           url: string;

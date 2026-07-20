@@ -14,7 +14,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 
   const { data, error } = await supabase
     .from("bill_shares")
-    .select("bill_json")
+    .select("bill_json, receipt_path")
     .eq("id", code)
     .single();
 
@@ -25,5 +25,11 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     );
   }
 
-  return Response.json({ bill: data.bill_json });
+  // Only a flag — the image is streamed separately from the receipt route, so
+  // the bill payload every viewer loads stays small and the image is fetched
+  // only if actually shown.
+  return Response.json({
+    bill: data.bill_json,
+    hasReceipt: !!data.receipt_path,
+  });
 }

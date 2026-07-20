@@ -4,15 +4,28 @@ import { getReceipt } from "~/splitter/utils/receiptStore";
 import { trimReceiptWhitespace } from "~/splitter/utils/trimReceipt";
 
 interface ReceiptPreviewProps {
-  billId: string | null;
+  /** Local draft: the receipt lives in IndexedDB under this bill id. */
+  billId?: string | null;
+  /** Shared view: the receipt is streamed from this URL instead. */
+  imageUrl?: string | null;
 }
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 4;
 const ZOOM_STEP = 0.5;
 
+/** Fetches a same-origin URL to a Blob so it can go through the same trim path. */
+async function fetchBlob(url: string): Promise<Blob | null> {
+  try {
+    const res = await fetch(url);
+    return res.ok ? await res.blob() : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Shows the scanned receipt beside the parsed items so totals can be checked against it. */
-export function ReceiptPreview({ billId }: ReceiptPreviewProps) {
+export function ReceiptPreview({ billId, imageUrl }: ReceiptPreviewProps) {
   const [url, setUrl] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(true);
   const [zoom, setZoom] = useState(1);
@@ -20,13 +33,20 @@ export function ReceiptPreview({ billId }: ReceiptPreviewProps) {
   useEffect(() => {
     // No synchronous setUrl(null) here — the previous run's cleanup already
     // cleared it, and setting state in the effect body trips react-hooks rules.
-    if (!billId) return;
+    if (!billId && !imageUrl) return;
     let cancelled = false;
     let objectUrl: string | null = null;
 
-    getReceipt(billId)
-      // Trim whitespace for display only; the stored blob the model read is
-      // untouched. Falls back to the original inside the util on any failure.
+    // Both sources resolve to a Blob, so a shared receipt gets the same
+    // whitespace trim as a local one. The proxy URL is same-origin, so the
+    // canvas the trim uses isn't tainted.
+    const source: Promise<Blob | null> = imageUrl
+      ? fetchBlob(imageUrl)
+      : getReceipt(billId as string);
+
+    source
+      // Trim whitespace for display only; the stored blob is untouched. Falls
+      // back to the original inside the util on any failure.
       .then((blob) => (blob ? trimReceiptWhitespace(blob) : null))
       .then((blob) => {
         if (!blob || cancelled) return;
@@ -39,7 +59,7 @@ export function ReceiptPreview({ billId }: ReceiptPreviewProps) {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
       setUrl(null);
     };
-  }, [billId]);
+  }, [billId, imageUrl]);
 
   if (!url) return null;
 
