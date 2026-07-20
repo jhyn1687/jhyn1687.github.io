@@ -70,17 +70,40 @@ export const RECEIPT_SCHEMA = {
   required: ["items", "orderDiscounts", "taxes", "tip"],
 };
 
-export const PROMPT = `You are reading a receipt image. Fill in the schema from what is printed.
+export const PROMPT = `You transcribe receipt images into one JSON object.
+
+Output the object and nothing else. No markdown fences, no explanation, no fields beyond the ones shown here. This exact shape:
+
+{
+  "items": [
+    { "name": "KS FRZ GAL", "price": 13.99, "adjustments": [
+      { "name": "Instant savings", "price": -3.00 }
+    ] },
+    { "name": "KS WTR 40PK", "price": 7.98, "adjustments": [
+      { "name": "Bottle deposit", "price": 4.00 }
+    ] },
+    { "name": "BEEF ROLLS", "price": 14.99, "adjustments": [] }
+  ],
+  "orderDiscounts": [
+    { "name": "Member savings", "price": -6.50 }
+  ],
+  "taxes": [
+    { "name": "TAX", "price": 7.17 }
+  ],
+  "tip": 0
+}
+
+Every item has an "adjustments" array — empty when it has none. The example shows the one structure that matters: a discount, deposit, or modification is NOT its own item. It goes in the "adjustments" of the item it belongs to.
+
+How to tell what an adjustment belongs to: receipts print it directly beneath its item, or reference the item by number — a "CA REDEMP VAL" or bottle deposit, an "Instant savings" discount, a "no onions" modification. The line beneath "KS WTR 40PK" reading "CA REDEMP VAL 4.00" is that water's deposit; it becomes an adjustment on the water, never a separate item. If you genuinely cannot tell which item an adjustment belongs to, and only then, put it in "orderDiscounts".
 
 Rules:
-- Read each row straight across. A price belongs to the name printed on its own row, never to the row above or below it
+- Read each row straight across. A price belongs to the name on its own row, never the row above or below
 - Copy every digit exactly. 23.89 is not 2.89
-- A line showing only a quantity and unit price, such as "2 @ 3.99", is not an item. It describes a neighbouring row whose own line already carries the total paid
-- A line that discounts, deposits against, or modifies another item belongs in that item's "adjustments", never as an item of its own. Receipts mark these by printing them directly beneath the item, or by referencing it — a bottle deposit reading "EE/782796" belongs to item 782796, and a discount reading "/1843108" belongs to item 1843108. Name it after what it is, e.g. "Instant savings" or "Bottle deposit"
-- Write a discount as a negative amount: "3.00-" becomes -3.00
-- Put a discount in "orderDiscounts" only when it applies to the whole order. Never guess an item for it
-- Record every tax line in "taxes", even where it is printed among the totals. Tax is never a total. If the same tax appears twice, once as "TAX" and again as "TOTAL TAX", record it once
-- Ignore totals, subtotals, balance due, change, the payment line naming a card or tender type, and any row that adds up other rows — including a savings total printed at the end, whose parts you have already recorded
+- A line showing only a quantity and unit price, "2 @ 3.99", is not an item. It describes a neighbouring row that already carries the total
+- A discount is negative: "3.00-" becomes -3.00. A deposit or fee is positive. A free modification is 0
+- Record every tax line in "taxes", even printed among the totals. If the same tax appears twice, as "TAX" and "TOTAL TAX", record it once
+- Ignore totals, subtotals, balance due, change, the card or tender line, and any row that sums other rows — including a savings total at the end whose parts you already recorded as adjustments
 - Transcribe only. Never add, subtract, or reconcile amounts`;
 
 /** Coerces a value the model may have emitted as a string, rejecting nonsense. */
