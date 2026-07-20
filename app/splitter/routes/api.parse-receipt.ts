@@ -109,7 +109,8 @@ export async function action({ request, context }: Route.ActionArgs) {
    * same as any other failure: it quietly runs Tesseract instead. That makes a
    * model error indistinguishable from a bad scan, so name it in the response.
    */
-  let aiResponse: { response: string };
+  // `response` is a string when the schema is ignored, an object when enforced.
+  let aiResponse: { response: string | object };
   try {
     aiResponse = (await context.cloudflare.env.AI.run(MODEL, {
       messages: [
@@ -144,7 +145,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       // A long warehouse receipt with adjustments runs well past 2048, and
       // being cut off costs the tax and tip the schema emits after the items.
       max_tokens: 4096,
-    })) as { response: string };
+    })) as { response: string | object };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("parse-receipt: model call failed", message);
@@ -155,12 +156,18 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
 
   /*
-   * A system-role message may make the model reply in a shape where `response`
-   * isn't the string we expect. Surface the whole raw object rather than
-   * throwing on `.response`, which was landing as an opaque 500.
+   * When guided_json is actually enforced, Workers AI returns `response` as an
+   * already-parsed object, not the JSON string it sends when the schema is
+   * ignored. Stringify that back so the one downstream reader handles both —
+   * a clean object round-trips through recoverJson untouched.
    */
+  const raw = (aiResponse as { response?: unknown })?.response;
   const reply =
-    typeof aiResponse?.response === "string" ? aiResponse.response : "";
+    typeof raw === "string"
+      ? raw
+      : raw && typeof raw === "object"
+        ? JSON.stringify(raw)
+        : "";
   if (!reply) {
     return Response.json(
       {
