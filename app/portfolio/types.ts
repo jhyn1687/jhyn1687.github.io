@@ -1,6 +1,6 @@
 /** Unified action type for buttons/links across all sections */
 export interface Action {
-  type: "link" | "download" | "mailto";
+  type: "link" |  "mailto";
   label: string;
   href: string;
   icon: string | null;
