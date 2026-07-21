@@ -1,0 +1,20 @@
+-- Drop the 4-argument overload of check_and_increment_ocr.
+--
+-- Two overloads ended up coexisting:
+--   20260426033132_ocr_rate_limit.sql created the global-cap version
+--     check_and_increment_ocr(p_month TEXT, p_ip_key TEXT, p_global_cap INT, p_ip_cap INT)
+--   20260426184331_ocr_rate_limit_drop_global.sql added the per-IP-only version
+--     check_and_increment_ocr(p_month TEXT, p_ip_key TEXT, p_ip_cap INT)
+-- with CREATE OR REPLACE, which does not replace a function of a different
+-- signature — so both remained. (Applying the migrations via the branching
+-- integration re-created the 4-arg one even where it had been dropped by hand.)
+--
+-- The app calls it with three named args (p_month, p_ip_key, p_ip_cap). That
+-- matches the 3-arg version directly AND the 4-arg version, whose p_global_cap
+-- falls to its default — so Postgres rejects the call as ambiguous ("function
+-- ... is not unique"). api.parse-receipt.ts reads only `data` from the RPC, so
+-- the error surfaces as a null result and every scan returns a spurious 429.
+--
+-- Dropping the 4-arg overload leaves a single unambiguous function. Ordered
+-- after both 20260426 migrations so a from-scratch replay ends in this state.
+DROP FUNCTION IF EXISTS check_and_increment_ocr(TEXT, TEXT, INT, INT);
