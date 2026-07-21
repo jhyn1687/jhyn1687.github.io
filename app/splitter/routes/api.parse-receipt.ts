@@ -1,6 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Route } from "./+types/api.parse-receipt";
 import { parseReceiptText } from "~/splitter/utils/parseReceiptText";
+import {
+  PROMPT,
+  RECEIPT_SCHEMA,
+  fromSchema,
+} from "~/splitter/utils/receiptSchema";
 
 async function sha256hex(input: string): Promise<string> {
   const encoded = new TextEncoder().encode(input);
@@ -11,7 +16,25 @@ async function sha256hex(input: string): Promise<string> {
     .slice(0, 16);
 }
 
-// Llama 3.2 license prohibits use for EU-domiciled individuals
+/**
+ * llama-3.2-11b-vision-instruct misreads dense multi-column receipts — on a
+ * Costco scan it paired item names with prices from the adjacent row. That is
+ * transcription accuracy rather than prompting, so it needs a larger model.
+ *
+ * Costs roughly 7x its input rate (31,876 vs 4,410 neurons per M input tokens)
+ * and a little less on output. The 11B measured at ~36 neurons a scan, so
+ * expect ~100 — around 95 scans a day inside the free 10,000-neuron allocation.
+ *
+ * Cloudflare's docs class this as text generation and document no image input,
+ * but the binding types declare the same messages/content/image_url shape as
+ * the vision models, which is what this route already sends.
+ *
+ * @cf/meta/llama-4-scout-17b-16e-instruct is the alternative: also vision
+ * capable, same input shape, marginally cheaper per scan (~95 neurons).
+ */
+const MODEL = "@cf/mistralai/mistral-small-3.1-24b-instruct";
+
+// Llama license prohibits use for EU-domiciled individuals
 const EU_COUNTRIES = new Set([
   "AT",
   "BE",
@@ -41,23 +64,6 @@ const EU_COUNTRIES = new Set([
   "SI",
   "SK",
 ]);
-
-const PROMPT = `You are reading a receipt image. Output one entry per line using this exact format:
-  <name>  <price>
-
-Rules:
-- Include purchased items and discounts (discounts as negative prices, e.g. "Promo  -5.00")
-- Include tax on its own line as "Tax  <amount>"
-- Include tip or gratuity on its own line as "Tip  <amount>"
-- Exclude totals, subtotals, balance due, change, and any row that sums up other rows — even if labelled AMT, TOTAL AMT, DUE, BALANCE, etc.
-- No currency symbols, no explanations, no blank lines
-
-Example output:
-Burger  12.99
-Fries  4.99
-Promo  -5.00
-Tax  1.50
-Tip  3.00`;
 
 export async function action({ request, context }: Route.ActionArgs) {
   const country = request.headers.get("CF-IPCountry") ?? "";
@@ -98,14 +104,23 @@ export async function action({ request, context }: Route.ActionArgs) {
   const base64 = btoa(binary);
   const mimeType = (file as File).type || "image/jpeg";
 
-  const aiResponse = (await context.cloudflare.env.AI.run(
-    "@cf/meta/llama-3.2-11b-vision-instruct",
-    {
+  // `response` is a string when the schema is ignored, an object when enforced.
+  let aiResponse: { response: string | object };
+  try {
+    aiResponse = (await context.cloudflare.env.AI.run(MODEL, {
       messages: [
+        // The contract lives in the system turn so the model reads it as a
+        // standing instruction rather than one line of a task it can reshape.
+        // The last raw reply invented its own JSON structure over a user-role
+        // prompt; this is the lever worth pulling before blaming the wording.
+        { role: "system", content: PROMPT },
         {
           role: "user",
           content: [
-            { type: "text", text: PROMPT },
+            {
+              type: "text",
+              text: "Transcribe this receipt into the JSON object.",
+            },
             {
               type: "image_url",
               image_url: { url: `data:${mimeType};base64,${base64}` },
@@ -113,10 +128,54 @@ export async function action({ request, context }: Route.ActionArgs) {
           ],
         },
       ],
-      max_tokens: 1024,
-    },
-  )) as { response: string };
+      guided_json: RECEIPT_SCHEMA,
+      /*
+       * Transcription, not writing, so sampling is pure downside. Left at the
+       * default the same receipt gave different answers run to run — one pass
+       * found an item the next missed, and a discount attached correctly in
+       * one was dropped in the next. Prompt changes can't be judged against a
+       * target that moves.
+       */
+      temperature: 0,
+      // A long warehouse receipt with adjustments runs well past 2048, and
+      // being cut off costs the tax and tip the schema emits after the items.
+      max_tokens: 4096,
+    })) as { response: string | object };
+  } catch (err) {
+    // A throw here otherwise surfaces as an opaque 500, which the client treats
+    // like any bad scan and quietly falls back to Tesseract. Return an empty
+    // result so that fallback still runs, without masking the cause in logs.
+    console.error("parse-receipt: model call failed", err);
+    return Response.json({ items: [], taxLineCount: 0 }, { status: 502 });
+  }
 
-  const { items, tax, tip } = parseReceiptText(aiResponse.response);
-  return Response.json({ items, tax, tip });
+  /*
+   * When guided_json is enforced, Workers AI returns `response` as an
+   * already-parsed object, not the JSON string it sends when the schema is
+   * ignored. Stringify that back so the one downstream reader handles both —
+   * a clean object round-trips through recoverJson untouched.
+   */
+  const raw = (aiResponse as { response?: unknown })?.response;
+  const reply =
+    typeof raw === "string"
+      ? raw
+      : raw && typeof raw === "object"
+        ? JSON.stringify(raw)
+        : "";
+  if (!reply) {
+    return Response.json({ items: [], taxLineCount: 0 }, { status: 502 });
+  }
+
+  const parsed = fromSchema(reply);
+  if (parsed) return Response.json(parsed);
+
+  // The text parser reads "NAME  12.34" rows, and pretty-printed JSON matches
+  // that shape: `  "price": -3.00` becomes an item named `"price":`, indented
+  // enough to be adopted as a child. It produced a bill of nonsense that looked
+  // real, so never let it see a reply that was meant to be structured — empty
+  // items sends the client to its local OCR fallback instead.
+  if (reply.includes("{")) {
+    return Response.json({ items: [], taxLineCount: 0 });
+  }
+  return Response.json(parseReceiptText(reply));
 }

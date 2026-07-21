@@ -1,10 +1,15 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type {
   Bill,
   LocalBill,
   SharedBill,
   SplitterSettings,
 } from "~/splitter/types";
+import {
+  clearReceipts,
+  deleteReceipt,
+  getReceipt,
+} from "~/splitter/utils/receiptStore";
 
 export type Toast = { text: string; type: "success" | "error" };
 
@@ -136,29 +141,49 @@ export function useBillsStore() {
   const [sharing, setSharing] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
 
-  const saveLocalBill = useCallback((bill: LocalBill) => {
-    setLocalBills((prev) => {
-      const next = upsertLocal(prev, bill);
-      try {
-        localStorage.setItem(LOCAL_KEY, JSON.stringify(next));
-      } catch {
-        /* storage full */
-      }
-      return next;
-    });
+  // Mirrors localBills so a save can persist synchronously without waiting for
+  // React to run a setState updater. This matters on the first edit of a new
+  // bill: mutate() navigates to /splitter/:id right after saving, and the
+  // route's loader reads localStorage immediately — if the write is deferred
+  // to the updater, the loader finds nothing and bounces back to /new.
+  const localBillsRef = useRef(localBills);
+
+  const persistLocal = useCallback((next: LocalBill[]) => {
+    localBillsRef.current = next;
+    try {
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(next));
+    } catch {
+      /* storage full */
+    }
+    setLocalBills(next);
   }, []);
 
-  const deleteLocalBill = useCallback((id: string) => {
-    setLocalBills((prev) => {
-      const next = prev.filter((b) => b.id !== id);
-      try {
-        localStorage.setItem(LOCAL_KEY, JSON.stringify(next));
-      } catch {
-        /* storage full */
-      }
-      return next;
-    });
-  }, []);
+  const saveLocalBill = useCallback(
+    (bill: LocalBill) => {
+      persistLocal(upsertLocal(localBillsRef.current, bill));
+    },
+    [persistLocal],
+  );
+
+  /**
+   * Drops the local record only. Sharing uses this because the bill graduates
+   * to a shared one rather than going away — its receipt should survive.
+   */
+  const forgetLocalBill = useCallback(
+    (id: string) => {
+      persistLocal(localBillsRef.current.filter((b) => b.id !== id));
+    },
+    [persistLocal],
+  );
+
+  /** The user deleting a bill outright — its receipt goes too. */
+  const deleteLocalBill = useCallback(
+    (id: string) => {
+      void deleteReceipt(id);
+      forgetLocalBill(id);
+    },
+    [forgetLocalBill],
+  );
 
   const saveSharedBill = useCallback((bill: SharedBill) => {
     setSharedBills((prev) => {
@@ -207,16 +232,32 @@ export function useBillsStore() {
   );
 
   const confirmShare = useCallback(
-    async (activeBill: LocalBill, onSuccess?: (code: string) => void) => {
+    async (
+      activeBill: LocalBill,
+      includeReceipt: boolean,
+      onSuccess?: (code: string) => void,
+    ) => {
       if (sharing) return;
       setSharing(true);
       setShareDialogOpen(false);
       try {
-        const res = await fetch("/api/share-bill", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ bill: activeBill.bill }),
-        });
+        // Attach the receipt only when opted in and one actually exists.
+        // Multipart is used solely for that case; the common share stays JSON.
+        const receipt = includeReceipt ? await getReceipt(activeBill.id) : null;
+
+        let res: Response;
+        if (receipt) {
+          const form = new FormData();
+          form.append("bill", JSON.stringify(activeBill.bill));
+          form.append("receipt", receipt, "receipt.jpg");
+          res = await fetch("/api/share-bill", { method: "POST", body: form });
+        } else {
+          res = await fetch("/api/share-bill", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ bill: activeBill.bill }),
+          });
+        }
         if (!res.ok) throw new Error("Server error");
         const { url, code } = (await res.json()) as {
           url: string;
@@ -230,7 +271,7 @@ export function useBillsStore() {
           cachedAt: now,
           expiresAt: now + SHARED_TTL,
         });
-        deleteLocalBill(activeBill.id);
+        forgetLocalBill(activeBill.id);
         onSuccess?.(code);
       } catch {
         showToast("Failed to create share link.", "error");
@@ -238,7 +279,7 @@ export function useBillsStore() {
         setSharing(false);
       }
     },
-    [sharing, saveSharedBill, deleteLocalBill, showToast],
+    [sharing, saveSharedBill, forgetLocalBill, showToast],
   );
 
   const updateSettings = useCallback((patch: Partial<SplitterSettings>) => {
@@ -250,8 +291,10 @@ export function useBillsStore() {
   }, []);
 
   const clearAllData = useCallback(() => {
+    void clearReceipts();
     localStorage.removeItem(LOCAL_KEY);
     localStorage.removeItem(SHARED_KEY);
+    localBillsRef.current = [];
     setLocalBills([]);
     setSharedBills([]);
   }, []);

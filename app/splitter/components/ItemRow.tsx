@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { MdDelete, MdDeleteForever, MdGroup } from "react-icons/md";
+import { MdAddCircleOutline, MdClose, MdGroup } from "react-icons/md";
 import { ParticipantTile } from "./ParticipantTile";
-import type { Item, Participant } from "~/splitter/types";
+import type { Item, Participant, SubItem } from "~/splitter/types";
+import { itemTotal } from "~/splitter/utils/bill";
 
 interface ItemRowProps {
   item: Item;
@@ -37,10 +38,30 @@ export function ItemRow({
   };
 
   const assignedCount = item.splitBetween.length;
+  const total = itemTotal(item);
+  // Order-level discounts are negative items, and splitting one is as
+  // meaningful as splitting a charge — only a zero price has nothing to show.
   const sharePerPerson =
-    assignedCount > 1 && !isNaN(item.price) && item.price > 0
-      ? item.price / assignedCount
-      : null;
+    assignedCount > 1 && total !== 0 ? total / assignedCount : null;
+
+  const children = item.children ?? [];
+
+  const updateChild = (id: string, patch: Partial<SubItem>) =>
+    onItemChange({
+      ...item,
+      children: children.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+    });
+
+  const addChild = () =>
+    onItemChange({
+      ...item,
+      // Zero, not NaN: a no-cost modification is a supported case, and NaN
+      // round-trips through JSON as null, which is neither blank nor a number.
+      children: [...children, { id: crypto.randomUUID(), name: "", price: 0 }],
+    });
+
+  const removeChild = (id: string) =>
+    onItemChange({ ...item, children: children.filter((c) => c.id !== id) });
 
   return (
     <div
@@ -61,12 +82,21 @@ export function ItemRow({
           placeholder="Item name"
           readOnly={readOnly}
         />
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={addChild}
+            className="shrink-0 rounded-lg p-1.5 text-ctp-subtext0 transition-colors hover:bg-ctp-surface1 hover:text-ctp-teal"
+            title="Add a modification or discount"
+          >
+            <MdAddCircleOutline size={16} />
+          </button>
+        )}
         <div className="flex items-center gap-1 rounded-lg border border-ctp-surface1/50 bg-ctp-surface0 px-2.5 py-1">
           <span className="text-xs font-semibold text-ctp-overlay0">$</span>
           <input
             className="w-16 bg-transparent text-right text-[13px] font-semibold text-ctp-text placeholder-ctp-overlay0 focus:outline-none"
             type="number"
-            min="0"
             step="0.01"
             value={isNaN(item.price) ? "" : item.price}
             onChange={(e) =>
@@ -81,19 +111,81 @@ export function ItemRow({
             type="button"
             onClick={handleDeleteClick}
             className={[
-              "shrink-0 rounded-lg p-1.5 transition-colors hover:bg-ctp-surface1",
-              confirmDelete ? "text-ctp-red" : "text-ctp-subtext0",
+              "shrink-0 rounded-lg p-1.5 transition-colors",
+              confirmDelete
+                ? "bg-ctp-red/15 text-ctp-red"
+                : "text-ctp-subtext0 hover:bg-ctp-surface1 hover:text-ctp-red",
             ].join(" ")}
-            title={confirmDelete ? "Confirm delete" : "Delete item"}
+            title={confirmDelete ? "Tap again to delete" : "Delete item"}
           >
-            {confirmDelete ? (
-              <MdDeleteForever size={18} />
-            ) : (
-              <MdDelete size={18} />
-            )}
+            <MdClose size={18} />
           </button>
         )}
       </div>
+
+      {/* Sub-items: modifications and item-level discounts, indented under the
+          parent so the row reads the way the receipt is printed. */}
+      {children.length > 0 && (
+        <div className="flex flex-col border-t border-ctp-surface1/30 bg-ctp-mantle/30">
+          {children.map((child) => (
+            <div
+              key={child.id}
+              className="flex items-center gap-2 py-1.5 pl-7 pr-3.5"
+            >
+              <span className="shrink-0 text-ctp-overlay0">↳</span>
+              <input
+                className="min-w-0 flex-1 bg-transparent text-xs text-ctp-subtext1 placeholder-ctp-overlay0 focus:outline-none"
+                type="text"
+                value={child.name}
+                onChange={(e) =>
+                  updateChild(child.id, { name: e.target.value })
+                }
+                placeholder="Modification or discount"
+                readOnly={readOnly}
+              />
+              {/* A finalized zero-price modification carries no money, so the
+                  amount is dropped rather than shown as $0.00. Editing still
+                  offers the field, since that's how it stops being zero. */}
+              {readOnly ? (
+                child.price !== 0 && (
+                  <span className="shrink-0 text-xs font-semibold text-ctp-subtext0">
+                    {child.price < 0 ? "−" : ""}$
+                    {Math.abs(child.price).toFixed(2)}
+                  </span>
+                )
+              ) : (
+                <>
+                  <div className="flex items-center gap-1 rounded-lg border border-ctp-surface1/40 bg-ctp-surface0/60 px-2 py-0.5">
+                    <span className="text-[10px] font-semibold text-ctp-overlay0">
+                      $
+                    </span>
+                    <input
+                      className="w-14 bg-transparent text-right text-xs text-ctp-subtext1 placeholder-ctp-overlay0 focus:outline-none"
+                      type="number"
+                      step="0.01"
+                      value={child.price === 0 ? "" : child.price}
+                      onChange={(e) =>
+                        updateChild(child.id, {
+                          price: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeChild(child.id)}
+                    className="shrink-0 rounded p-1 text-ctp-overlay0 transition-colors hover:bg-ctp-surface1 hover:text-ctp-red"
+                    title="Remove"
+                  >
+                    <MdClose size={14} />
+                  </button>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Assignees strip */}
       <div className="flex min-h-12 flex-wrap items-center gap-2 border-t border-ctp-surface1/50 bg-ctp-mantle/50 px-3.5 py-2">
@@ -144,7 +236,8 @@ export function ItemRow({
           ))}
         {sharePerPerson !== null && (
           <span className="ml-auto text-[11px] text-ctp-subtext0">
-            ${sharePerPerson.toFixed(2)} each
+            {sharePerPerson < 0 ? "−" : ""}$
+            {Math.abs(sharePerPerson).toFixed(2)} each
           </span>
         )}
       </div>

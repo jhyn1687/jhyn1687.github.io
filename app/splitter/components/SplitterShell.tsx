@@ -1,23 +1,25 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   useLocation,
   useNavigate,
   useOutletContext,
   useSearchParams,
 } from "react-router";
-import { canShareBill } from "~/splitter/utils/bill";
+import { canShareBill, itemTotal } from "~/splitter/utils/bill";
 import { colorForIndex, nextColorSeed } from "~/splitter/utils/colors";
 import { AppHeader } from "~/splitter/components/AppHeader";
 import { BillSummary } from "~/splitter/components/BillSummary";
 import { ItemSection } from "~/splitter/components/ItemSection";
 import { ParticipantSection } from "~/splitter/components/ParticipantSection";
+import { ReceiptPreview } from "~/splitter/components/ReceiptPreview";
 import { ReceiptUpload } from "~/splitter/components/ReceiptUpload";
 import { ScanReceiptModal } from "~/splitter/components/ScanReceiptModal";
 import { ShareDialog } from "~/splitter/components/ShareDialog";
 import { TaxTip } from "~/splitter/components/TaxTip";
 import type { SplitterLayoutContext } from "~/splitter/routes/splitter.layout";
+import type { ScanResult } from "~/splitter/hooks/useReceiptOcr";
 import type { Bill, Item, LocalBill, SharedBill } from "~/splitter/types";
-import type { OcrItem } from "~/splitter/utils/parseReceiptText";
+import { getReceipt, saveReceipt } from "~/splitter/utils/receiptStore";
 
 interface SplitterShellProps {
   initialLocalBill: LocalBill | null;
@@ -55,6 +57,11 @@ export function SplitterShell({
   const [scanModalOpen, setScanModalOpen] = useState(
     () => searchParams.get("scan") === "1",
   );
+  // Bumped on each import so the preview re-reads a rescan, whose bill id is unchanged.
+  const [receiptVersion, setReceiptVersion] = useState(0);
+  // Whether this draft has a scanned receipt — gates the "include receipt"
+  // option in the share dialog. Read from IndexedDB, re-checked on each scan.
+  const [hasLocalReceipt, setHasLocalReceipt] = useState(false);
   const isFirstMutation = useRef(!savedBillId && isNew);
   // Only ever increments — never decremented on removal — so re-adds after
   // removals always get a fresh color rather than colliding with an existing one.
@@ -62,9 +69,25 @@ export function SplitterShell({
     nextColorSeed(initialLocalBill?.bill.participants ?? []),
   );
 
+  useEffect(() => {
+    let cancelled = false;
+    // Resolve to null (no receipt) rather than setting state synchronously in
+    // the effect body, which the react-hooks rule disallows.
+    const lookup = savedBillId
+      ? getReceipt(savedBillId)
+      : Promise.resolve(null);
+    lookup.then((blob) => {
+      if (!cancelled) setHasLocalReceipt(!!blob);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [savedBillId, receiptVersion]);
+
   const { title, participants, items, tax, tip } = bill;
 
-  function mutate(patch: Partial<Bill>) {
+  /** Returns the bill's id, which for a brand new bill is only minted here. */
+  function mutate(patch: Partial<Bill>): string | null {
     const updated = { ...bill, ...patch };
     setBill(updated);
 
@@ -75,6 +98,7 @@ export function SplitterShell({
       const saved: LocalBill = { id, bill: updated, updatedAt: Date.now() };
       store.saveLocalBill(saved);
       navigate(`/splitter/${id}`, { replace: true });
+      return id;
     } else if (savedBillId) {
       const existing = store.localBills.find((b) => b.id === savedBillId);
       const saved: LocalBill = {
@@ -84,6 +108,7 @@ export function SplitterShell({
       };
       store.saveLocalBill(saved);
     }
+    return savedBillId;
   }
 
   function setTitle(t: string) {
@@ -138,18 +163,53 @@ export function SplitterShell({
     mutate({ items: items.filter((item) => item.id !== id) });
   }
 
-  function handleImport(ocrItems: OcrItem[], ocrTax?: number, ocrTip?: number) {
-    const newItems: Item[] = ocrItems.map(({ description, total_amount }) => ({
-      id: crypto.randomUUID(),
-      name: description,
-      price: total_amount,
-      splitBetween: [],
-    }));
+  function clearItems() {
+    mutate({ items: [] });
+  }
+
+  // Flip every item to split-evenly at once. splitBetween is filled here too so
+  // the assignment holds even if a later render reads it directly.
+  function splitAllEvenly() {
+    const everyone = participants.map((p) => p.id);
     mutate({
-      items: [...items, ...newItems],
-      ...(ocrTax !== undefined ? { tax: ocrTax } : {}),
-      ...(ocrTip !== undefined ? { tip: ocrTip } : {}),
+      items: items.map((item) => ({
+        ...item,
+        splitEvenly: true,
+        splitBetween: everyone,
+      })),
     });
+  }
+
+  function handleImport({ items: ocrItems, tax, tip, image }: ScanResult) {
+    const newItems: Item[] = ocrItems.map(
+      ({ description, total_amount, children }) => ({
+        id: crypto.randomUUID(),
+        name: description,
+        price: total_amount,
+        splitBetween: [],
+        ...(children?.length
+          ? {
+              children: children.map((c) => ({
+                id: crypto.randomUUID(),
+                name: c.description,
+                price: c.total_amount,
+              })),
+            }
+          : {}),
+      }),
+    );
+    // A bill holds one receipt, so a scan replaces rather than accumulates —
+    // appending items while overwriting tax would silently mix two receipts and
+    // drop the first one's tax. ReplaceScanDialog confirms this first.
+    const billId = mutate({
+      items: newItems,
+      tax: tax ?? 0,
+      tip: tip ?? 0,
+    });
+    // Best-effort: the receipt is for cross-checking, so a storage failure
+    // shouldn't surface as an error on an otherwise successful scan.
+    if (billId) void saveReceipt(billId, image);
+    setReceiptVersion((v) => v + 1);
   }
 
   function handleFork() {
@@ -201,14 +261,13 @@ export function SplitterShell({
       navigate(`/splitter/share/${code}`);
     const result = store.initiateShare(activeLocalBill);
     if (result === "confirm") {
-      store.confirmShare(activeLocalBill, onShareSuccess);
+      // The skip-dialog path never shows the opt-in, so a receipt is never
+      // attached here — sharing one is always an explicit, per-share choice.
+      store.confirmShare(activeLocalBill, false, onShareSuccess);
     }
   }
 
-  const subtotal = items.reduce(
-    (sum, item) => sum + (isNaN(item.price) ? 0 : item.price),
-    0,
-  );
+  const subtotal = items.reduce((sum, item) => sum + itemTotal(item), 0);
 
   if (error) {
     return (
@@ -233,6 +292,7 @@ export function SplitterShell({
       {scanModalOpen && (
         <ScanReceiptModal
           onImport={handleImport}
+          hasContent={items.length > 0}
           onClose={() => {
             setScanModalOpen(false);
             if (searchParams.get("scan") === "1") {
@@ -245,10 +305,11 @@ export function SplitterShell({
         open={store.shareDialogOpen}
         sharing={store.sharing}
         skipShareDialog={store.settings.skipShareDialog}
+        hasReceipt={hasLocalReceipt}
         onUpdateSkip={(skip) => store.updateSettings({ skipShareDialog: skip })}
-        onConfirm={() =>
+        onConfirm={(includeReceipt) =>
           activeLocalBill &&
-          store.confirmShare(activeLocalBill, (code) =>
+          store.confirmShare(activeLocalBill, includeReceipt, (code) =>
             navigate(`/splitter/share/${code}`),
           )
         }
@@ -283,6 +344,8 @@ export function SplitterShell({
               participants={participants}
               onAdd={addItem}
               onItemChange={updateItem}
+              onClearAll={clearItems}
+              onSplitAllEvenly={splitAllEvenly}
               onItemRemove={removeItem}
               readOnly={isSharedView}
               showError={
@@ -310,6 +373,16 @@ export function SplitterShell({
                   hasContent={items.length > 0}
                 />
               </div>
+            )}
+            {!isSharedView && (
+              <ReceiptPreview key={receiptVersion} billId={savedBillId} />
+            )}
+            {/* A shared receipt streams from the server rather than IndexedDB,
+                shown only when the sharer opted to include it. */}
+            {isSharedView && sharedBill?.hasReceipt && (
+              <ReceiptPreview
+                imageUrl={`/api/bill/${sharedBill.shareCode}/receipt`}
+              />
             )}
             <BillSummary
               items={items}

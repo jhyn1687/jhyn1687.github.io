@@ -354,6 +354,12 @@ authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
 allow_dynamic_registration = false
 
+# Destructive maintenance endpoint. verify_jwt is disabled so the function's own
+# exact-match check against the service-role key is the sole gate — with
+# verify_jwt on, the public anon key (a valid JWT) would also be accepted.
+[functions.purge-expired-shares]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

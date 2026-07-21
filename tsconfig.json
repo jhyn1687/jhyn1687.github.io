@@ -5,6 +5,9 @@
     "**/.client/**/*",
     ".react-router/types/**/*"
   ],
+  // Supabase Edge Functions run on Deno with their own globals and jsr imports;
+  // they are not part of the app build and must not be typechecked by it.
+  "exclude": ["supabase/functions"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "types": ["node", "vite/client"],
