@@ -1,26 +1,13 @@
 import { useState } from "react";
 import { MdExpandMore, MdReceipt } from "react-icons/md";
 import type { Item, Participant } from "~/splitter/types";
-import { itemTotal } from "~/splitter/utils/bill";
+import { computeBreakdowns, type PersonBreakdown } from "~/splitter/utils/bill";
 
 interface BillSummaryProps {
   items: Item[];
   participants: Participant[];
   tax: number;
   tip: number;
-}
-
-interface PersonBreakdown {
-  participant: Participant;
-  itemsTotal: number;
-  taxShare: number;
-  tipShare: number;
-  total: number;
-  myItems: Array<{
-    name: string;
-    amount: number;
-    children: Array<{ name: string; amount: number }>;
-  }>;
 }
 
 function PersonCard({ bd }: { bd: PersonBreakdown }) {
@@ -123,62 +110,12 @@ export function BillSummary({
   tax,
   tip,
 }: BillSummaryProps) {
-  // Compute per-participant subtotals
-  const subtotals: Record<string, number> = {};
-  // Tax and tip are apportioned by what each person actually bought, counting
-  // only positively priced items. Weighting by the net instead breaks once
-  // discounts are involved: a group total at or below zero has no meaningful
-  // proportion, and one person's positive share against a negative group total
-  // inverts, handing them a negative share of the tax.
-  const weights: Record<string, number> = {};
-  let totalSubtotal = 0;
-  let totalWeight = 0;
-
-  for (const item of items) {
-    const price = itemTotal(item);
-    totalSubtotal += price;
-    const assigned = item.splitBetween;
-    if (assigned.length === 0) continue;
-    const share = price / assigned.length;
-    for (const pid of assigned) {
-      subtotals[pid] = (subtotals[pid] ?? 0) + share;
-      if (price > 0) weights[pid] = (weights[pid] ?? 0) + share;
-    }
-    if (price > 0) totalWeight += price;
-  }
-
-  const grandTotal = totalSubtotal + tax + tip;
+  const {
+    breakdowns,
+    subtotal: totalSubtotal,
+    grandTotal,
+  } = computeBreakdowns(items, participants, tax, tip);
   const hasData = items.length > 0 && participants.length > 0;
-
-  const breakdowns: PersonBreakdown[] = participants.map((p) => {
-    const sub = subtotals[p.id] ?? 0;
-    // Falls back to an even split only when nobody has been assigned a charge
-    // yet, which is the one case with nothing to proportion by.
-    const proportion =
-      totalWeight > 0
-        ? (weights[p.id] ?? 0) / totalWeight
-        : 1 / participants.length;
-    const myItems = items
-      .filter((i) => i.splitBetween.includes(p.id))
-      .map((i) => ({
-        name: i.name,
-        amount: itemTotal(i) / i.splitBetween.length,
-        // Shown under the item so a total that doesn't match the receipt line
-        // is explained by what modified it.
-        children: (i.children ?? []).map((c) => ({
-          name: c.name,
-          amount: isNaN(c.price) ? 0 : c.price / i.splitBetween.length,
-        })),
-      }));
-    return {
-      participant: p,
-      itemsTotal: sub,
-      taxShare: tax * proportion,
-      tipShare: tip * proportion,
-      total: sub + tax * proportion + tip * proportion,
-      myItems,
-    };
-  });
 
   return (
     <div className="overflow-hidden rounded-2xl border border-ctp-surface1/50 bg-ctp-surface0/40 shadow-lg">
