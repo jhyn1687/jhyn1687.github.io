@@ -12,21 +12,27 @@
 -- Two secrets, split on purpose (see the function for the reasoning):
 --   • the INVOKE secret is the doorbell the cron sends as its bearer. It travels
 --     over the wire and through pg_net's logs, so it is low-value — it cannot
---     delete anything by itself. It lives in Vault (for the cron here) and as a
---     function secret (for the function to check), the same value in both.
+--     delete anything by itself. It lives in the purge_config table below (for
+--     the cron) and as a function secret (for the function to check), the same
+--     value in both.
 --   • the privileged delete key lives ONLY as a function secret, read locally
 --     by the function and never sent anywhere. It is not referenced here.
+--
+-- Vault would be the natural home for the invoke secret, but it isn't available
+-- on this project, so a row in a locked-down table stands in. RLS is on with no
+-- policies, so no API role can read it — only the cron, which runs in-database
+-- as the table owner. Acceptable precisely because the secret is low-value.
 --
 -- ── Before applying ──────────────────────────────────────────────────────────
 -- 1. Generate the invoke secret (any random string):
 --        openssl rand -hex 32
--- 2. Give it to the function and to Vault — same value both places:
+-- 2. Give the SAME value to the function and to purge_config:
 --        supabase secrets set PURGE_INVOKE_SECRET=<value>
---        -- then, in the SQL editor:
---        select vault.create_secret('<value>', 'purge_invoke_secret');
--- 3. (Optional, for least privilege) set a scoped delete key on the function;
---    without it the function falls back to the service-role key:
---        supabase secrets set PURGE_DB_KEY=<scoped-secret-key>
+--        -- and, after this migration has created the table, in the SQL editor:
+--        insert into purge_config (secret) values ('<value>');
+-- 3. Set a dedicated secret key (dashboard → Settings → API Keys) as the delete
+--    key; without it the function falls back to the service-role key:
+--        supabase secrets set PURGE_DB_KEY=<secret-key>
 -- 4. Deploy the function:
 --        supabase functions deploy purge-expired-shares
 -- The project ref below (yxpwwpljkuaktjdxckkh) is already public — it is the
@@ -35,6 +41,11 @@
 
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
+
+-- Holds the invoke secret for the cron to read. One row. RLS on, no policies:
+-- unreachable through the API, readable only by the in-database cron.
+create table if not exists purge_config (secret text not null);
+alter table purge_config enable row level security;
 
 -- Replace any earlier definition so re-applying is safe.
 select cron.unschedule('purge-expired-shares')
@@ -52,11 +63,7 @@ select cron.schedule(
     url := 'https://yxpwwpljkuaktjdxckkh.supabase.co/functions/v1/purge-expired-shares',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || (
-        select decrypted_secret
-        from vault.decrypted_secrets
-        where name = 'purge_invoke_secret'
-      )
+      'Authorization', 'Bearer ' || (select secret from purge_config limit 1)
     ),
     body := '{}'::jsonb,
     timeout_milliseconds := 20000
