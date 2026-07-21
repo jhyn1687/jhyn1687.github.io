@@ -1,6 +1,6 @@
 // Deletes shared bills whose links have expired: first the receipt objects in
 // storage, then the rows. Invoked on a schedule by pg_cron (see the migration
-// 20260720_purge_expired_shares.sql). Run on demand with:
+// 20260720120002_purge_expired_shares.sql). Run on demand with:
 //   supabase functions deploy purge-expired-shares
 //
 // RLS already hides expired shares the instant they lapse, so this is only

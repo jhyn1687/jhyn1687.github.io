@@ -9,7 +9,7 @@
 -- These policies govern access, not retention — expired objects are hidden but
 -- not deleted here. A receipt carries more than item names (card last-4,
 -- merchant address, a timestamp), so the purge cron
--- (20260720_purge_expired_shares.sql) deletes them past a grace window.
+-- (20260720120002_purge_expired_shares.sql) deletes them past a grace window.
 
 INSERT INTO storage.buckets (id, name, public)
   VALUES ('receipts', 'receipts', false)

@@ -126,7 +126,7 @@ Costco scans:
 ## Rate limiting & licensing
 
 - Per-IP OCR cap (10/month) enforced by `check_and_increment_ocr`
-  (`supabase/migrations/20260426_ocr_rate_limit*.sql`). The global cap was
+  (`supabase/migrations/20260426*_ocr_rate_limit*.sql`). The global cap was
   dropped; only the per-IP limit remains.
 - The route returns 451 for EU-domiciled IPs (Llama license restriction),
   which routes the client to the local fallback.

@@ -1,0 +1,13 @@
+-- Baseline placeholder — intentionally empty.
+--
+-- The remote database's migration history already records version 20260404011556
+-- (applied 2026-04-04), from before this project tracked schema as migrations.
+-- Its original SQL predates the repo and isn't recovered here. This file exists
+-- only so local and remote histories reconcile: without a local file for that
+-- version, `supabase db push` (and the branching preview) abort with
+-- "Remote migration versions not found in local migrations directory".
+--
+-- The body is empty on purpose. Every environment that has this version in its
+-- history already ran the original, so the migration system skips this file; a
+-- brand-new environment starts from the later migrations, which are written
+-- idempotently. Nothing should be added here — put new schema in a new file.

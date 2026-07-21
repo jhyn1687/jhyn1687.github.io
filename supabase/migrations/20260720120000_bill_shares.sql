@@ -8,7 +8,7 @@
 -- Expiry is enforced by the read policy, not by the application — the loader in
 -- api.bill.$code.ts intentionally has no expires_at filter because rows past
 -- their date are already invisible to the anon role. Expiry hides rows, it does
--- not delete them; the purge cron (20260720_purge_expired_shares.sql) reclaims
+-- not delete them; the purge cron (20260720120002_purge_expired_shares.sql) reclaims
 -- them.
 
 CREATE TABLE IF NOT EXISTS bill_shares (
