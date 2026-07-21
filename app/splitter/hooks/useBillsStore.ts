@@ -270,6 +270,11 @@ export function useBillsStore() {
           bill: activeBill.bill,
           cachedAt: now,
           expiresAt: now + SHARED_TTL,
+          // Record whether a receipt was actually attached, so the sharer's own
+          // view (which reads this cache before the API) shows the preview. The
+          // clientLoader returns this entry as-is on the immediate redirect, so
+          // an omitted flag would hide the receipt until the cache expired.
+          hasReceipt: !!receipt,
         });
         forgetLocalBill(activeBill.id);
         onSuccess?.(code);

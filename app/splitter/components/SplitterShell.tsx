@@ -377,19 +377,20 @@ export function SplitterShell({
             {!isSharedView && (
               <ReceiptPreview key={receiptVersion} billId={savedBillId} />
             )}
-            {/* A shared receipt streams from the server rather than IndexedDB,
-                shown only when the sharer opted to include it. */}
-            {isSharedView && sharedBill?.hasReceipt && (
-              <ReceiptPreview
-                imageUrl={`/api/bill/${sharedBill.shareCode}/receipt`}
-              />
-            )}
             <BillSummary
               items={items}
               participants={participants}
               tax={tax}
               tip={tip}
             />
+            {/* A shared receipt streams from the server rather than IndexedDB,
+                shown only when the sharer opted to include it. It sits below the
+                summary so the totals lead and the receipt backs them up. */}
+            {isSharedView && sharedBill?.hasReceipt && (
+              <ReceiptPreview
+                imageUrl={`/api/bill/${sharedBill.shareCode}/receipt`}
+              />
+            )}
           </div>
         </div>
       </div>
