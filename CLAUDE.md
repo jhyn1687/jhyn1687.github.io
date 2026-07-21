@@ -66,7 +66,11 @@ pnpm build        # Production build
 pnpm preview      # Build + preview with wrangler
 pnpm deploy       # Build + deploy to Cloudflare Pages
 pnpm typecheck    # Generate route types + run tsc
+pnpm test         # Run the Vitest unit suite once
+pnpm test:watch   # Run Vitest in watch mode
 ```
+
+Unit tests (Vitest, jsdom) live beside the code as `*.test.ts` and cover the pure logic in `app/splitter/utils/` and the section registry. Config is `vitest.config.ts`, kept separate from `vite.config.ts` so tests don't boot the Cloudflare/SSR environment.
 
 `pnpm deploy` (wrangler) deploys to a **preview** URL. Production deployments go through CI/CD triggered by pushing to `main`.
 
