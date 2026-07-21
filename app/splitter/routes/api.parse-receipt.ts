@@ -80,11 +80,15 @@ export async function action({ request, context }: Route.ActionArgs) {
   );
   const month = new Date().toISOString().slice(0, 7);
 
-  const { data } = await supabase.rpc("check_and_increment_ocr", {
+  const { data, error } = await supabase.rpc("check_and_increment_ocr", {
     p_month: month,
     p_ip_key: ipHash,
     p_ip_cap: 10,
   });
+  if (error) {
+    // A failed check is a server fault, not a quota hit — don't report 429.
+    return Response.json({ error: "Rate-limit check failed" }, { status: 502 });
+  }
   if (!data?.[0]?.allowed) {
     return Response.json({ error: "OCR quota reached" }, { status: 429 });
   }
