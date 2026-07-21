@@ -32,3 +32,7 @@ build
 .dev.vars*
 !.dev.vars.example
 !.env.example
+
+# Claude Code local config (per-user / machine-specific)
+.claude/settings.local.json
+.claude/launch.json
