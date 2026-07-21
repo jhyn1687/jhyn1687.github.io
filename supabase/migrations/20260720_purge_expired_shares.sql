@@ -9,12 +9,26 @@
 -- storage.objects row, which orphans the underlying file. This migration only
 -- schedules that function to run nightly.
 --
+-- Two secrets, split on purpose (see the function for the reasoning):
+--   • the INVOKE secret is the doorbell the cron sends as its bearer. It travels
+--     over the wire and through pg_net's logs, so it is low-value — it cannot
+--     delete anything by itself. It lives in Vault (for the cron here) and as a
+--     function secret (for the function to check), the same value in both.
+--   • the privileged delete key lives ONLY as a function secret, read locally
+--     by the function and never sent anywhere. It is not referenced here.
+--
 -- ── Before applying ──────────────────────────────────────────────────────────
--- 1. Deploy the function:
+-- 1. Generate the invoke secret (any random string):
+--        openssl rand -hex 32
+-- 2. Give it to the function and to Vault — same value both places:
+--        supabase secrets set PURGE_INVOKE_SECRET=<value>
+--        -- then, in the SQL editor:
+--        select vault.create_secret('<value>', 'purge_invoke_secret');
+-- 3. (Optional, for least privilege) set a scoped delete key on the function;
+--    without it the function falls back to the service-role key:
+--        supabase secrets set PURGE_DB_KEY=<scoped-secret-key>
+-- 4. Deploy the function:
 --        supabase functions deploy purge-expired-shares
--- 2. Store the service-role key in Vault so it isn't written into this file or
---    the cron job definition (run once, in the SQL editor):
---        select vault.create_secret('<service-role-key>', 'service_role_key');
 -- The project ref below (yxpwwpljkuaktjdxckkh) is already public — it is the
 -- host of the project's API URL — so it is hard-coded rather than templated.
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -28,8 +42,8 @@ where exists (
   select 1 from cron.job where jobname = 'purge-expired-shares'
 );
 
--- 04:00 UTC daily. The function reads the service key from its own env and
--- checks the bearer against it, so the key never appears anywhere but Vault.
+-- 04:00 UTC daily. The bearer is only the invoke secret; the privileged key
+-- that authorises the deletes lives in the function's env, never here.
 select cron.schedule(
   'purge-expired-shares',
   '0 4 * * *',
@@ -41,7 +55,7 @@ select cron.schedule(
       'Authorization', 'Bearer ' || (
         select decrypted_secret
         from vault.decrypted_secrets
-        where name = 'service_role_key'
+        where name = 'purge_invoke_secret'
       )
     ),
     body := '{}'::jsonb,

@@ -17,17 +17,31 @@ const GRACE_DAYS = 7;
 const BATCH = 500;
 
 Deno.serve(async (req) => {
-  // This endpoint deletes data, so it must not be reachable with the public
-  // anon key. verify_jwt is off (see config.toml) precisely so the check is
-  // this exact-match against the service-role key rather than "any valid JWT",
-  // which the anon key would satisfy.
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  // Two separate secrets, deliberately:
+  //
+  // PURGE_INVOKE_SECRET is the doorbell — a low-value random string the cron
+  // sends as its bearer and this checks. It travels over the wire (and through
+  // pg_net's logs), so it is worth nothing on its own: ringing the bell with it
+  // still can't delete anything without the key below. verify_jwt is off (see
+  // config.toml) so this exact-match is the gate rather than "any valid JWT",
+  // which the public anon key would satisfy.
+  const invokeSecret = Deno.env.get("PURGE_INVOKE_SECRET") ?? "";
   const auth = req.headers.get("Authorization") ?? "";
-  if (!serviceKey || auth !== `Bearer ${serviceKey}`) {
+  if (!invokeSecret || auth !== `Bearer ${invokeSecret}`) {
     return new Response("Forbidden", { status: 403 });
   }
 
-  const supabase = createClient(Deno.env.get("SUPABASE_URL") ?? "", serviceKey);
+  // PURGE_DB_KEY is the privileged key that actually authorises the deletes. It
+  // is read locally and never leaves the function, so it never lands in a log
+  // or a request. Set it to a scoped secret key to cap the blast radius;
+  // absent, it falls back to the auto-injected service-role key so the function
+  // still works out of the box.
+  const dbKey =
+    Deno.env.get("PURGE_DB_KEY") ??
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+    "";
+
+  const supabase = createClient(Deno.env.get("SUPABASE_URL") ?? "", dbKey);
 
   const cutoff = new Date(
     Date.now() - GRACE_DAYS * 24 * 60 * 60 * 1000,
