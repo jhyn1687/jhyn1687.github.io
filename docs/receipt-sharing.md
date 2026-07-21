@@ -56,7 +56,7 @@ can't exist until its share row does (the storage policy requires it), so the
 column records _intent_, and a failed upload leaves a path pointing at nothing,
 which viewers handle by hiding the image.
 
-Storage policies (`supabase/migrations/20260720_receipt_storage.sql`) key access
+Storage policies (`supabase/migrations/20260720120001_receipt_storage.sql`) key access
 off the first path segment (`storage.foldername(name)[1]` = the share code) and
 mirror `bill_shares`'s `read_share` (`expires_at > now()`), so an image becomes
 unreadable at exactly the moment its bill does — no second expiry mechanism.
@@ -66,7 +66,7 @@ unreadable at exactly the moment its bill does — no second expiry mechanism.
 RLS _hides_ an expired share the instant it lapses, but nothing _deletes_ it.
 A receipt shouldn't sit in a bucket forever, so a nightly job reclaims it:
 [`supabase/functions/purge-expired-shares/index.ts`](../supabase/functions/purge-expired-shares/index.ts),
-scheduled by `supabase/migrations/20260720_purge_expired_shares.sql`
+scheduled by `supabase/migrations/20260720120002_purge_expired_shares.sql`
 (pg_cron + pg_net).
 
 Why an Edge Function and not pure SQL: deleting a `storage.objects` row in SQL

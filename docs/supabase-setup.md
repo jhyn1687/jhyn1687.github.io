@@ -7,22 +7,32 @@ app, it's account-side.
 
 ## Migrations
 
-| File                                | Purpose                                                     | Required for            |
-| ----------------------------------- | ----------------------------------------------------------- | ----------------------- |
-| `20260720_bill_shares.sql`          | Adds `receipt_path` column (rest is idempotent/retroactive) | **Sharing at all**      |
-| `20260720_receipt_storage.sql`      | Private `receipts` bucket + insert/read policies            | Receipt sharing         |
-| `20260720_purge_expired_shares.sql` | `purge_config` table + nightly cron                         | Auto-cleanup (optional) |
+| File                                      | Purpose                                                     | Required for            |
+| ----------------------------------------- | ----------------------------------------------------------- | ----------------------- |
+| `20260720120000_bill_shares.sql`          | Adds `receipt_path` column (rest is idempotent/retroactive) | **Sharing at all**      |
+| `20260720120001_receipt_storage.sql`      | Private `receipts` bucket + insert/read policies            | Receipt sharing         |
+| `20260720120002_purge_expired_shares.sql` | `purge_config` table + nightly cron                         | Auto-cleanup (optional) |
 
-> Because `bill_shares` was originally created **by hand in the dashboard**, run
-> new migrations by pasting them into the **SQL editor** rather than
-> `supabase db push`, to avoid the CLI replaying migration history it doesn't
-> have. All files are written idempotently (`IF NOT EXISTS`, `CREATE OR
-REPLACE`, `DROP POLICY IF EXISTS`), so re-running is safe.
+> **These migrations apply automatically** through the Supabase GitHub
+> integration: the preview branch runs them per-PR, and they land on production
+> when the branch merges. All files are written idempotently (`IF NOT EXISTS`,
+> `CREATE OR REPLACE`, `DROP POLICY IF EXISTS`, `ON CONFLICT DO NOTHING`), so
+> re-running against objects that were originally hand-created in the dashboard
+> is safe. The steps below are for standing up a fresh environment by hand, or
+> auditing what the integration applied — paste each file into the **SQL editor**
+> in the listed order.
+>
+> Migration versions must be **unique 14-digit timestamps**;
+> `schema_migrations.version` is a primary key, so duplicate prefixes break the
+> push. `20260404011556_baseline.sql` is an intentionally empty placeholder that
+> adopts a pre-repo migration already in the remote history — without it, the
+> branching push aborts with "Remote migration versions not found in local
+> migrations directory." Leave it in place.
 
 ## Phase 1 — sharing (required)
 
-1. Run `20260720_bill_shares.sql` — adds `receipt_path`.
-2. Run `20260720_receipt_storage.sql` — bucket + policies.
+1. Run `20260720120000_bill_shares.sql` — adds `receipt_path`.
+2. Run `20260720120001_receipt_storage.sql` — bucket + policies.
 
 > **Sequencing:** the share code inserts `receipt_path`, so if the app deploys
 > before that column exists, **all** sharing throws "column does not exist" —
@@ -51,7 +61,7 @@ link in a private window → the receipt renders and zooms.
    ```bash
    supabase functions deploy purge-expired-shares
    ```
-5. **Apply** `20260720_purge_expired_shares.sql` — creates `purge_config` and
+5. **Apply** `20260720120002_purge_expired_shares.sql` — creates `purge_config` and
    schedules the cron.
 6. **Insert the invoke secret** into the now-existing table (SQL editor), the
    **same** value as step 1:
