@@ -1,9 +1,9 @@
 # Splitter docs
 
-Reference for the bill-splitter sub-app (`/splitter`), covering the receipt
-work landed on the `feat/receipt-pdf-and-formats` branch. These describe how
-things work and — more importantly — **why**, since the reasoning is the part
-that isn't obvious from the code.
+Reference for the bill-splitter sub-app (`/splitter`) — receipt scanning,
+preview, sharing, and cleanup. These describe how things work and — more
+importantly — **why**, since the reasoning is the part that isn't obvious from
+the code.
 
 | Doc                                        | What it covers                                                                                                                |
 | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |

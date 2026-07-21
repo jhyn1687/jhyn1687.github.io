@@ -51,8 +51,7 @@ the adjacent row. The larger model fixed that alignment.
   fake model id fails `pnpm typecheck` because `AI.run` is typed as
   `keyof AiModels`, so typecheck doubles as a "does this model exist" check.
 - Roughly ~100 neurons per scan (~2,600 in / ~400 out tokens); the free tier is
-  10,000 neurons/day, so ~95 scans/day. See the `reference_workers_ai` note for
-  the per-model rates.
+  10,000 neurons/day, so ~95 scans/day.
 - `temperature: 0`. Transcription is not creative writing; sampling made the
   same receipt return different answers run to run, which made prompt changes
   impossible to evaluate.

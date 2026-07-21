@@ -1,10 +1,11 @@
 # Supabase setup runbook
 
-What has to be applied to Supabase for the receipt features to work. The code
-alone is inert until these run. None of it can be automated from the app — it's
-account-side.
+What Supabase needs for the receipt features to work — the migrations, secrets,
+and function that live outside the app code. Use this when standing up a fresh
+environment or auditing an existing one; none of it can be automated from the
+app, it's account-side.
 
-## Migrations in this branch
+## Migrations
 
 | File                                | Purpose                                                     | Required for            |
 | ----------------------------------- | ----------------------------------------------------------- | ----------------------- |
@@ -18,17 +19,17 @@ account-side.
 > have. All files are written idempotently (`IF NOT EXISTS`, `CREATE OR
 REPLACE`, `DROP POLICY IF EXISTS`), so re-running is safe.
 
-## Phase 1 — required for sharing (before/with merge)
+## Phase 1 — sharing (required)
 
 1. Run `20260720_bill_shares.sql` — adds `receipt_path`.
 2. Run `20260720_receipt_storage.sql` — bucket + policies.
 
-> **Sequencing:** the new share code inserts `receipt_path`, so if the code
-> deploys before that column exists, **all** sharing throws "column does not
-> exist" — not just receipts. The Supabase migration and the Cloudflare Workers
-> build are independent systems triggered by the same merge and can race, so
-> apply migration 1 **by hand before merging**. It's idempotent, so the
-> integration re-applying it later is harmless.
+> **Sequencing:** the share code inserts `receipt_path`, so if the app deploys
+> before that column exists, **all** sharing throws "column does not exist" —
+> not just receipts. The Supabase migration and the Cloudflare Workers build are
+> independent systems, so when redeploying a fresh environment, apply the schema
+> before (or alongside) the code that uses it. The migrations are idempotent, so
+> re-applying is harmless.
 
 **Verify:** scan a receipt → Finalize & Share with the box checked → open the
 link in a private window → the receipt renders and zooms.
@@ -79,7 +80,7 @@ Expect `{"purged":1,"objectsRemoved":1}`, with the row and object gone.
 
 - **Only Phase 1 is required.** Skip Phase 2 and nothing breaks — expired
   receipts just linger (RLS-hidden) until you add it.
-- **Secrets are always manual** — the merge won't set them, by design (they
+- **Secrets are always manual** — a deploy won't set them, by design (they
   aren't in the repo). Do Phase 2 steps 1–3, 6 before the first 4am run.
 - **Never commit** the secret key or invoke secret — they belong only in
   `supabase secrets` and `purge_config`.

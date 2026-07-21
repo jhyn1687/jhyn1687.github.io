@@ -33,13 +33,13 @@ Order-level discounts are negative top-level items. `BillSummary` apportions tax
 by **positive spend**, not net subtotal — weighting by net inverted the split on
 discounted bills. A negative per-person share is shown with a leading `−`.
 
-## The sub-item button bug (fixed)
+## Sub-item propagation
 
-Adding a sub-item did nothing for a while: `ItemSection`'s `onItemChange`
-adapter forwarded only `name`/`price`/`splitBetween`/`splitEvenly` and **dropped
-`children`** before it reached the store. It now forwards the whole item, which
-`updateItem` already merges. A reminder to forward whole objects rather than
-hand-picking fields.
+`ItemSection`'s `onItemChange` forwards the **whole** updated item to the store,
+which `updateItem` merges. This matters: an adapter that forwards only a
+hand-picked subset (`name`/`price`/`splitBetween`/`splitEvenly`) silently drops
+`children`, so added sub-items never persist and the button appears dead.
+Forward whole objects rather than enumerating fields.
 
 ## Bulk actions — [`components/ItemSection.tsx`](../app/splitter/components/ItemSection.tsx)
 
@@ -50,29 +50,26 @@ shared read-only view:
 - **Clear all** — removes all items, behind a [`ConfirmDialog`](../app/splitter/components/ConfirmDialog.tsx)
   (a reusable yes/no, styled to match `ReplaceScanDialog`).
 
-Item delete was unified to an **X** icon matching the sub-item remove, keeping a
-two-tap confirm (red-tinted on the first tap) since a top-level row carries
-assignees and children.
+Item delete uses an **X** icon matching the sub-item remove, with a two-tap
+confirm (red-tinted on the first tap) since a top-level row carries assignees
+and children.
 
-## New-bill URL persistence (fixed)
+## New-bill URL persistence
 
-**Symptom:** naming a new bill left the URL at `/splitter/new`, so the "New Bill"
-link — pointing at that same URL — did nothing.
+On the first edit of a new bill, the URL switches from `/splitter/new` to
+`/splitter/:id` and the draft persists — so the "New Bill" link (pointing at
+`/splitter/new`) is then a real navigation rather than a no-op.
 
-**Cause:** a race, not a missing navigation. `mutate()` in
-[`SplitterShell.tsx`](../app/splitter/components/SplitterShell.tsx) _did_ call
-`navigate('/splitter/:id')` on the first edit. But the save wrote to
-localStorage **inside a `setLocalBills` updater**, which React runs on its own
-schedule, while `navigate` fired on the next line. The `$billId` route's loader
-read localStorage before the deferred write landed, found nothing, and its
-`redirect('/splitter/new')` bounced straight back.
-
-**Fix** — [`hooks/useBillsStore.ts`](../app/splitter/hooks/useBillsStore.ts): a
-`localBillsRef` mirrors the list so `persistLocal` writes localStorage
-**synchronously** in the same tick as the save, before navigation. The loader
-now finds the bill and the URL sticks. Computing each change from the ref rather
-than the setState updater is also correct under React batching, where several
-saves in one tick would otherwise compose on stale state.
+This is timing-sensitive. `mutate()` in
+[`SplitterShell.tsx`](../app/splitter/components/SplitterShell.tsx) navigates to
+`/splitter/:id` immediately after saving, and the `$billId` route's loader reads
+localStorage on arrival, redirecting back to `/new` if it finds nothing. So the
+save **must be synchronous** — [`hooks/useBillsStore.ts`](../app/splitter/hooks/useBillsStore.ts)
+keeps a `localBillsRef` mirror and `persistLocal` writes localStorage in the
+same tick as the save, before navigation, rather than inside a `setLocalBills`
+updater React runs on its own schedule. Computing each change from the ref is
+also correct under React batching, where several saves in one tick would
+otherwise compose on stale state.
 
 > This fires on the first _edit_ (title, participant, item, or scan) — not
 > specifically on naming — since all of them go through `mutate`.
