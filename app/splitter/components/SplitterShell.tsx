@@ -374,18 +374,18 @@ export function SplitterShell({
                 />
               </div>
             )}
-            {!isSharedView && (
-              <ReceiptPreview key={receiptVersion} billId={savedBillId} />
-            )}
             <BillSummary
               items={items}
               participants={participants}
               tax={tax}
               tip={tip}
             />
-            {/* A shared receipt streams from the server rather than IndexedDB,
-                shown only when the sharer opted to include it. It sits below the
-                summary so the totals lead and the receipt backs them up. */}
+            {/* The scanned receipt sits below the summary in both views so the
+                totals lead and the receipt backs them up — a local draft reads
+                it from IndexedDB, a shared view streams it from the server. */}
+            {!isSharedView && (
+              <ReceiptPreview key={receiptVersion} billId={savedBillId} />
+            )}
             {isSharedView && sharedBill?.hasReceipt && (
               <ReceiptPreview
                 imageUrl={`/api/bill/${sharedBill.shareCode}/receipt`}
