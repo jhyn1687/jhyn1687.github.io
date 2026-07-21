@@ -1,17 +1,15 @@
--- Private bucket for receipt images attached to shared bills.
---
--- NOT YET APPLIED. This is the storage half of the opt-in receipt sharing
--- feature; the client upload path is not built yet, so nothing writes here.
+-- Private bucket for receipt images attached to shared bills. The storage half
+-- of opt-in receipt sharing; api.share-bill.ts uploads here.
 --
 -- Objects are keyed "<shareCode>/receipt.jpg" so the read policy can resolve
 -- the owning bill from the path. That mirrors read_share on bill_shares rather
 -- than inventing a second expiry mechanism: an image becomes unreadable at
 -- exactly the moment its bill does.
 --
--- Note this governs access, not retention — like bill_shares, expired rows and
--- objects are hidden but never deleted. A receipt carries more than item names
--- (card last-4, merchant address, a timestamp), so actual deletion is worth
--- adding before this sees real use.
+-- These policies govern access, not retention — expired objects are hidden but
+-- not deleted here. A receipt carries more than item names (card last-4,
+-- merchant address, a timestamp), so the purge cron
+-- (20260720_purge_expired_shares.sql) deletes them past a grace window.
 
 INSERT INTO storage.buckets (id, name, public)
   VALUES ('receipts', 'receipts', false)

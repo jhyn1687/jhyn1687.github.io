@@ -1,14 +1,15 @@
 -- Shared bill snapshots, addressed by a 6-char short code.
 --
--- Mostly retroactive: the table and both policies were created by hand in the
--- Supabase dashboard when the splitter was first built, so they are written
--- idempotently and describe what production already has. The one exception is
--- receipt_path below, which is new and NOT YET APPLIED.
+-- Mostly retroactive: the table and both policies were first created by hand in
+-- the Supabase dashboard, so they are written idempotently and describe what
+-- production has. The receipt_path column below was added for opt-in receipt
+-- sharing.
 --
 -- Expiry is enforced by the read policy, not by the application — the loader in
 -- api.bill.$code.ts intentionally has no expires_at filter because rows past
--- their date are already invisible to the anon role. Note that expiry hides
--- rows, it does not delete them; nothing currently reclaims expired snapshots.
+-- their date are already invisible to the anon role. Expiry hides rows, it does
+-- not delete them; the purge cron (20260720_purge_expired_shares.sql) reclaims
+-- them.
 
 CREATE TABLE IF NOT EXISTS bill_shares (
   id         TEXT PRIMARY KEY,           -- 6-char alphanumeric short code

@@ -1,6 +1,6 @@
 -- Scheduled cleanup of expired shared bills and their receipt objects.
 --
--- NOT YET APPLIED, and it has manual prerequisites — see the steps below. RLS
+-- Has manual prerequisites (function + secrets) — see the steps below. RLS
 -- already hides a share the moment it expires; this reclaims the storage so a
 -- receipt (card last-4, merchant address) doesn't linger in the bucket forever.
 --
@@ -23,7 +23,7 @@
 -- policies, so no API role can read it — only the cron, which runs in-database
 -- as the table owner. Acceptable precisely because the secret is low-value.
 --
--- ── Before applying ──────────────────────────────────────────────────────────
+-- ── Setup (one-time, alongside this migration) ───────────────────────────────
 -- 1. Generate the invoke secret (any random string):
 --        openssl rand -hex 32
 -- 2. Give the SAME value to the function and to purge_config:
