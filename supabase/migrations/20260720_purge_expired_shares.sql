@@ -15,7 +15,8 @@
 -- 2. Store the service-role key in Vault so it isn't written into this file or
 --    the cron job definition (run once, in the SQL editor):
 --        select vault.create_secret('<service-role-key>', 'service_role_key');
--- 3. Replace <project-ref> below with the project ref (Settings → General).
+-- The project ref below (yxpwwpljkuaktjdxckkh) is already public — it is the
+-- host of the project's API URL — so it is hard-coded rather than templated.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 create extension if not exists pg_cron;
@@ -34,7 +35,7 @@ select cron.schedule(
   '0 4 * * *',
   $$
   select net.http_post(
-    url := 'https://<project-ref>.supabase.co/functions/v1/purge-expired-shares',
+    url := 'https://yxpwwpljkuaktjdxckkh.supabase.co/functions/v1/purge-expired-shares',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'Authorization', 'Bearer ' || (
