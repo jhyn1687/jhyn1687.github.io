@@ -63,6 +63,8 @@ export function SplitterShell({
   // option in the share dialog. Read from IndexedDB, re-checked on each scan.
   const [hasLocalReceipt, setHasLocalReceipt] = useState(false);
   const isFirstMutation = useRef(!savedBillId && isNew);
+  // The bill a scan imported into, so closing the scanner can land on it.
+  const scannedBillId = useRef<string | null>(null);
   // Only ever increments — never decremented on removal — so re-adds after
   // removals always get a fresh color rather than colliding with an existing one.
   const colorSeed = useRef(
@@ -206,6 +208,7 @@ export function SplitterShell({
       tax: tax ?? 0,
       tip: tip ?? 0,
     });
+    scannedBillId.current = billId;
     // Best-effort: the receipt is for cross-checking, so a storage failure
     // shouldn't surface as an error on an otherwise successful scan.
     if (billId) void saveReceipt(billId, image);
@@ -295,9 +298,16 @@ export function SplitterShell({
           hasContent={items.length > 0}
           onClose={() => {
             setScanModalOpen(false);
-            if (searchParams.get("scan") === "1") {
-              navigate(location.pathname, { replace: true });
-            }
+            if (searchParams.get("scan") !== "1") return;
+            // Drop ?scan=1 so a reload doesn't reopen the scanner. A successful
+            // scan has already minted a bill and navigated to it, but the
+            // `location` in this closure is the one from the render that opened
+            // the modal — still /splitter/new — so replacing with it would
+            // strand that bill and leave the user on a blank page.
+            const scanned = scannedBillId.current;
+            navigate(scanned ? `/splitter/${scanned}` : location.pathname, {
+              replace: true,
+            });
           }}
         />
       )}
