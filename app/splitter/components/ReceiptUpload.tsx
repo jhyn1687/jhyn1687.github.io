@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { MdScanner, MdChevronRight } from "react-icons/md";
 import { useReceiptOcr, type ScanResult } from "~/splitter/hooks/useReceiptOcr";
+import { useFileDrop } from "~/splitter/hooks/useFileDrop";
 import { RECEIPT_ACCEPT } from "~/splitter/utils/prepareReceipt";
 import { ReplaceScanDialog } from "~/splitter/components/ReplaceScanDialog";
 
@@ -20,6 +21,7 @@ export function ReceiptUpload({ onImport, hasContent }: ReceiptUploadProps) {
     confirmReplace,
     cancelReplace,
   } = useReceiptOcr(onImport, () => setExpanded(false), hasContent);
+  const { dragging, dropZoneProps } = useFileDrop(handleFile);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-ctp-surface1/50 bg-ctp-surface0/40">
@@ -60,7 +62,13 @@ export function ReceiptUpload({ onImport, hasContent }: ReceiptUploadProps) {
               <button
                 type="button"
                 onClick={() => inputRef.current?.click()}
-                className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-ctp-surface1 bg-ctp-mantle/50 py-6 text-center transition-colors hover:border-ctp-teal/50 hover:bg-ctp-teal/5"
+                {...dropZoneProps}
+                className={[
+                  "flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed py-6 text-center transition-colors",
+                  dragging
+                    ? "border-ctp-teal bg-ctp-teal/10"
+                    : "border-ctp-surface1 bg-ctp-mantle/50 hover:border-ctp-teal/50 hover:bg-ctp-teal/5",
+                ].join(" ")}
               >
                 <MdScanner size={32} />
                 <span className="text-sm font-semibold text-ctp-subtext0">

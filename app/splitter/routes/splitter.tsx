@@ -1,8 +1,11 @@
-import { Link, useOutletContext } from "react-router";
+import { useCallback } from "react";
+import { Link, useNavigate, useOutletContext } from "react-router";
 import { MdAdd, MdMenu, MdScanner } from "react-icons/md";
 import type { Route } from "./+types/splitter";
 import type { SplitterLayoutContext } from "~/splitter/routes/splitter.layout";
 import type { LocalBill, SharedBill } from "~/splitter/types";
+import { useFileDrop } from "~/splitter/hooks/useFileDrop";
+import { setPendingScan } from "~/splitter/utils/pendingScan";
 
 export function meta(_args: Route.MetaArgs) {
   return [
@@ -132,6 +135,20 @@ function SharedCard({ bill }: { bill: SharedBill }) {
 
 export default function SplitterDashboard() {
   const { store, onMobileMenu } = useOutletContext<SplitterLayoutContext>();
+  const navigate = useNavigate();
+
+  // The dashboard has no scanner of its own, so a dropped receipt becomes the
+  // same thing the "Scan Receipt" button starts: a new bill with the scan
+  // already running. The file is parked for the modal because it can't be
+  // passed through the URL.
+  const scanDroppedFile = useCallback(
+    (file: File) => {
+      setPendingScan(file);
+      navigate("/splitter/new?scan=1");
+    },
+    [navigate],
+  );
+  const { dragging, dropZoneProps } = useFileDrop(scanDroppedFile);
 
   const sortedLocal = [...store.localBills].sort(
     (a, b) => b.updatedAt - a.updatedAt,
@@ -142,7 +159,7 @@ export default function SplitterDashboard() {
   const hasBills = sortedLocal.length > 0 || sortedShared.length > 0;
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
+    <div className="flex flex-1 flex-col overflow-hidden" {...dropZoneProps}>
       {/* Mobile-only header */}
       <header className="flex items-center gap-3 border-b border-ctp-surface1/50 bg-ctp-base/85 px-4 py-3 backdrop-blur-md md:hidden">
         <button
@@ -164,15 +181,22 @@ export default function SplitterDashboard() {
           {/* CTA */}
           <div
             className={[
-              "flex flex-col items-center rounded-2xl border border-ctp-surface1/50 bg-ctp-surface0/30 px-8 text-center",
+              "flex flex-col items-center rounded-2xl border px-8 text-center transition-colors",
               hasBills ? "py-10" : "py-16",
+              dragging
+                ? "border-ctp-teal bg-ctp-teal/10"
+                : "border-ctp-surface1/50 bg-ctp-surface0/30",
             ].join(" ")}
           >
             <p className="mb-1 font-mono text-2xl font-extrabold text-ctp-text">
               Split a bill
             </p>
+            {/* Nothing else advertises drop-to-scan, and the moment the hint is
+                useful is the moment a file is overhead. */}
             <p className="mb-8 text-sm text-ctp-subtext0">
-              No login required · Bills auto-save locally
+              {dragging
+                ? "Drop your receipt to scan it"
+                : "No login required · Bills auto-save locally"}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Link
