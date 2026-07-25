@@ -80,12 +80,28 @@ Uses `@cloudflare/vite-plugin` (the newer Vite Environment API approach) with `v
 
 ### Managed robots.txt
 
-Cloudflare [prepends its managed `robots.txt`](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/) before `public/robots.txt`, merging both into one response rather than letting either win. Two consequences:
+**The Managed robots.txt rule must stay OFF on this zone**, and the served output is the only way to confirm it. Both states have been observed in production:
 
-- The content-signals preamble (including the EU Article 4 reservation of rights) comes from Cloudflare's half, which is why `public/robots.txt` doesn't carry a copy.
-- The managed block **can be configured to emit its own `Content-Signal` with `ai-train=no`, plus `Disallow: /` for named AI crawlers** (ClaudeBot, GPTBot, …). Both are currently off for this zone. Because the managed content is prepended, either would sit _above_ our directives and take precedence — so a dashboard toggle can invert the crawl policy with no change in this repo. If crawlers stop honoring `/AGENTS.md`, check that setting before debugging the file.
+- **Off (current, intended).** The managed content is a fallback, not a merge — served only when the origin has none. `public/robots.txt` replaces it outright, and the content-signals preamble disappears entirely.
+- **On.** [The docs](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/) are accurate here: the preamble and a managed block are prepended above our directives, combined into one response.
 
-Verify the merged output after deploying, not just `public/robots.txt`:
+Enabling it inverts the crawl policy with no change in this repo, in two ways:
+
+- It emits `Disallow: /` for eight named AI crawlers (ClaudeBot, GPTBot, CCBot, Google-Extended, Applebot-Extended, Bytespider, Amazonbot, meta-externalagent). Under [RFC 9309 §2.2.1](https://www.rfc-editor.org/rfc/rfc9309.html#section-2.2.1) a crawler obeys only the **most specific** matching `User-agent` group, so those crawlers read their own block and never consult our `User-agent: *` group at all. `Allow: /` cannot override it, and neither can ordering. `/AGENTS.md` becomes unreachable to exactly the agents it was written for.
+- It emits its own `Content-Signal` (`search=yes,ai-train=no,use=reference`), leaving two `User-agent: *` groups with conflicting signals in one file. The convention doesn't define which wins, so the published policy becomes genuinely ambiguous rather than merely overridden.
+
+If crawlers stop honoring `/AGENTS.md`, check this setting before debugging the file.
+
+The content-signals preamble at the top of `public/robots.txt` is Cloudflare's, copied verbatim from the served output while the rule was briefly on. With the rule off nothing supplies it for us, and the EU Article 4 reservation of rights lives only there — which now matters, because `ai-train=no` is a restriction for that language to attach to. **Keep the preamble as long as any signal is `no`, and don't reword it**; it is boilerplate whose value is in being the standard text.
+
+The signal set is deliberately mixed, not uniformly open or closed:
+
+- `ai-train=no` is the only one of the four that doesn't affect agents reading the site. An agent fetching a page to answer someone's question is `ai-input`; `ai-train` covers corpus collection for training runs, which returns neither traffic nor attribution. Declining it costs no readers.
+- `use=full` ("summarize and reproduce") is set because `/AGENTS.md` is a summarization brief — it pre-approves a specific one-line description of Tony and assumes summarizing is inevitable. `use=reference` ("index, excerpt, and link back") would tell agents not to do the thing that file then coaches them through. **If the prose in the bucket changes, re-check this pairing.** Note `use` is an [optional extension](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/) rather than one of the three original signals.
+
+One side effect: if the rule is ever re-enabled, the preamble will appear twice. Harmless (comments only), and a useful tell.
+
+Always verify the served output after deploying, not just `public/robots.txt`. Two directive groups, or any `User-agent` other than `*`, means the rule got switched back on:
 
 ```sh
 curl -s https://jhyn.dev/robots.txt | grep -vE "^\s*#" | grep -v "^$"
