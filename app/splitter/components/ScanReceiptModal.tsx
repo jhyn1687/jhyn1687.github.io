@@ -1,8 +1,9 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { MdClose, MdScanner } from "react-icons/md";
 import { useReceiptOcr, type ScanResult } from "~/splitter/hooks/useReceiptOcr";
 import { useFileDrop } from "~/splitter/hooks/useFileDrop";
 import { RECEIPT_ACCEPT } from "~/splitter/utils/prepareReceipt";
+import { takePendingScan } from "~/splitter/utils/pendingScan";
 import { ReplaceScanDialog } from "~/splitter/components/ReplaceScanDialog";
 
 interface ScanReceiptModalProps {
@@ -26,6 +27,17 @@ export function ScanReceiptModal({
     cancelReplace,
   } = useReceiptOcr(onImport, onClose, hasContent);
   const { dragging, dropZoneProps } = useFileDrop(handleFile);
+
+  // A receipt dropped on the dashboard opened this modal to be scanned, so pick
+  // up where that drop left off. Latched because handleFile is a fresh closure
+  // every render — without it the scan would restart on each one.
+  const claimed = useRef(false);
+  useEffect(() => {
+    if (claimed.current) return;
+    claimed.current = true;
+    const dropped = takePendingScan();
+    if (dropped) handleFile(dropped);
+  }, [handleFile]);
 
   return (
     <div
