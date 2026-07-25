@@ -92,7 +92,9 @@ Enabling it inverts the crawl policy with no change in this repo, in two ways:
 
 If crawlers stop honoring `/AGENTS.md`, check this setting before debugging the file.
 
-The Article 4 reservation of rights lives only in that preamble, so with the rule off nothing supplies it for us. It is deliberately omitted from `public/robots.txt` while all three signals are `yes`, because it reserves rights only against restrictions the file expresses, and this one expresses none. **If any signal is ever changed to `no`, restore the preamble in the same commit** — that is the point at which the reservation language starts doing work.
+The content-signals preamble at the top of `public/robots.txt` is Cloudflare's, copied verbatim from the served output while the rule was briefly on. With the rule off nothing supplies it for us, and the EU Article 4 reservation of rights lives only there. It reserves nothing today — all three signals are `yes`, and the language only bites on restrictions the file expresses — but it is carried anyway so that the reservation is already in place the moment any signal changes to `no`, rather than being something a future edit has to remember. **Don't reword it**; it is boilerplate whose value is in being the standard text.
+
+One side effect: if the rule is ever re-enabled, the preamble will appear twice. Harmless (comments only), and a useful tell.
 
 Always verify the served output after deploying, not just `public/robots.txt`. Two directive groups, or any `User-agent` other than `*`, means the rule got switched back on:
 
