@@ -20,4 +20,5 @@ export default [
   route("api/bill/:code/receipt", "splitter/routes/api.bill.$code.receipt.ts"),
   route("files/resume.pdf", "files/routes/resume.pdf.ts"),
   route("AGENTS.md", "files/routes/agents.md.ts"),
+  route("llms.txt", "files/routes/llms.txt.ts"),
 ] satisfies RouteConfig;
