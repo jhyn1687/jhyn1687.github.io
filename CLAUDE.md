@@ -92,7 +92,12 @@ Enabling it inverts the crawl policy with no change in this repo, in two ways:
 
 If crawlers stop honoring `/AGENTS.md`, check this setting before debugging the file.
 
-The content-signals preamble at the top of `public/robots.txt` is Cloudflare's, copied verbatim from the served output while the rule was briefly on. With the rule off nothing supplies it for us, and the EU Article 4 reservation of rights lives only there. It reserves nothing today — all three signals are `yes`, and the language only bites on restrictions the file expresses — but it is carried anyway so that the reservation is already in place the moment any signal changes to `no`, rather than being something a future edit has to remember. **Don't reword it**; it is boilerplate whose value is in being the standard text.
+The content-signals preamble at the top of `public/robots.txt` is Cloudflare's, copied verbatim from the served output while the rule was briefly on. With the rule off nothing supplies it for us, and the EU Article 4 reservation of rights lives only there — which now matters, because `ai-train=no` is a restriction for that language to attach to. **Keep the preamble as long as any signal is `no`, and don't reword it**; it is boilerplate whose value is in being the standard text.
+
+The signal set is deliberately mixed, not uniformly open or closed:
+
+- `ai-train=no` is the only one of the four that doesn't affect agents reading the site. An agent fetching a page to answer someone's question is `ai-input`; `ai-train` covers corpus collection for training runs, which returns neither traffic nor attribution. Declining it costs no readers.
+- `use=full` ("summarize and reproduce") is set because `/AGENTS.md` is a summarization brief — it pre-approves a specific one-line description of Tony and assumes summarizing is inevitable. `use=reference` ("index, excerpt, and link back") would tell agents not to do the thing that file then coaches them through. **If the prose in the bucket changes, re-check this pairing.** Note `use` is an [optional extension](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/) rather than one of the three original signals.
 
 One side effect: if the rule is ever re-enabled, the preamble will appear twice. Harmless (comments only), and a useful tell.
 
