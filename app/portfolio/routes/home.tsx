@@ -3,6 +3,7 @@ import type { Section } from "~/portfolio/types";
 import { getSupabaseClient, getPublicUrl } from "~/utils/supabase.server";
 import { getSection } from "~/portfolio/registry";
 import { RippleBackground } from "~/portfolio/components/RippleBackground";
+import { Footer } from "~/portfolio/components/Footer";
 
 export function meta(_args: Route.MetaArgs) {
   return [
@@ -11,6 +12,12 @@ export function meta(_args: Route.MetaArgs) {
     { name: "color-scheme", content: "dark" },
   ];
 }
+
+// Machine-readable counterpart to the footer link. Scoped to `/` rather than
+// root.tsx because it's only true here — /splitter has no markdown equivalent.
+export const links: Route.LinksFunction = () => [
+  { rel: "alternate", type: "text/markdown", href: "/AGENTS.md" },
+];
 
 export async function loader({ context }: Route.LoaderArgs) {
   const supabase = getSupabaseClient(context.cloudflare.env);
@@ -54,6 +61,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           return <Component key={section.id} props={section.props} />;
         })}
       </main>
+      <Footer />
     </>
   );
 }
