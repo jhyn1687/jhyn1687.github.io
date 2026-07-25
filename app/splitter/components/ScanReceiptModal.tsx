@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { MdClose, MdScanner } from "react-icons/md";
 import { useReceiptOcr, type ScanResult } from "~/splitter/hooks/useReceiptOcr";
+import { useFileDrop } from "~/splitter/hooks/useFileDrop";
 import { RECEIPT_ACCEPT } from "~/splitter/utils/prepareReceipt";
 import { ReplaceScanDialog } from "~/splitter/components/ReplaceScanDialog";
 
@@ -24,6 +25,7 @@ export function ScanReceiptModal({
     confirmReplace,
     cancelReplace,
   } = useReceiptOcr(onImport, onClose, hasContent);
+  const { dragging, dropZoneProps } = useFileDrop(handleFile);
 
   return (
     <div
@@ -68,14 +70,20 @@ export function ScanReceiptModal({
               <button
                 type="button"
                 onClick={() => inputRef.current?.click()}
-                className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-ctp-surface1 bg-ctp-base/50 py-8 text-center transition-colors hover:border-ctp-teal/50 hover:bg-ctp-teal/5"
+                {...dropZoneProps}
+                className={[
+                  "flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed py-8 text-center transition-colors",
+                  dragging
+                    ? "border-ctp-teal bg-ctp-teal/10"
+                    : "border-ctp-surface1 bg-ctp-base/50 hover:border-ctp-teal/50 hover:bg-ctp-teal/5",
+                ].join(" ")}
               >
                 <MdScanner size={36} className="text-ctp-overlay0" />
                 <span className="text-sm font-semibold text-ctp-subtext0">
-                  Tap to upload your receipt
+                  Drop your receipt here
                 </span>
                 <span className="text-xs text-ctp-overlay0">
-                  JPG, PNG, WebP, PDF
+                  or tap to browse · JPG, PNG, WebP, PDF
                 </span>
               </button>
               {status && (
