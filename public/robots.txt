@@ -27,7 +27,12 @@
 #   /AGENTS.md   the full briefing — who i am, what's here, how i'd rather you crawl
 #   /llms.txt    a short index of the above
 
+# the preamble above defines this vocabulary but states no policy on its own, so
+# without this line clause (c) applies and nothing is either granted or
+# restricted. granting all three: a site that ships a briefing for agents at
+# /AGENTS.md shouldn't turn around and tell them not to read it.
 User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 # these mutate state. the prose in /AGENTS.md asks nicely; this is for whatever
