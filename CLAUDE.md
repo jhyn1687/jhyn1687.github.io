@@ -80,12 +80,21 @@ Uses `@cloudflare/vite-plugin` (the newer Vite Environment API approach) with `v
 
 ### Managed robots.txt
 
-Cloudflare [prepends its managed `robots.txt`](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/) before `public/robots.txt`, merging both into one response rather than letting either win. Two consequences:
+**The Managed robots.txt rule must stay OFF on this zone**, and the served output is the only way to confirm it. Both states have been observed in production:
 
-- The content-signals preamble (including the EU Article 4 reservation of rights) comes from Cloudflare's half, which is why `public/robots.txt` doesn't carry a copy.
-- The managed block **can be configured to emit its own `Content-Signal` with `ai-train=no`, plus `Disallow: /` for named AI crawlers** (ClaudeBot, GPTBot, …). Both are currently off for this zone. Because the managed content is prepended, either would sit _above_ our directives and take precedence — so a dashboard toggle can invert the crawl policy with no change in this repo. If crawlers stop honoring `/AGENTS.md`, check that setting before debugging the file.
+- **Off (current, intended).** The managed content is a fallback, not a merge — served only when the origin has none. `public/robots.txt` replaces it outright, and the content-signals preamble disappears entirely.
+- **On.** [The docs](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/) are accurate here: the preamble and a managed block are prepended above our directives, combined into one response.
 
-Verify the merged output after deploying, not just `public/robots.txt`:
+Enabling it inverts the crawl policy with no change in this repo, in two ways:
+
+- It emits `Disallow: /` for eight named AI crawlers (ClaudeBot, GPTBot, CCBot, Google-Extended, Applebot-Extended, Bytespider, Amazonbot, meta-externalagent). Under [RFC 9309 §2.2.1](https://www.rfc-editor.org/rfc/rfc9309.html#section-2.2.1) a crawler obeys only the **most specific** matching `User-agent` group, so those crawlers read their own block and never consult our `User-agent: *` group at all. `Allow: /` cannot override it, and neither can ordering. `/AGENTS.md` becomes unreachable to exactly the agents it was written for.
+- It emits its own `Content-Signal` (`search=yes,ai-train=no,use=reference`), leaving two `User-agent: *` groups with conflicting signals in one file. The convention doesn't define which wins, so the published policy becomes genuinely ambiguous rather than merely overridden.
+
+If crawlers stop honoring `/AGENTS.md`, check this setting before debugging the file.
+
+The Article 4 reservation of rights lives only in that preamble, so with the rule off nothing supplies it for us. It is deliberately omitted from `public/robots.txt` while all three signals are `yes`, because it reserves rights only against restrictions the file expresses, and this one expresses none. **If any signal is ever changed to `no`, restore the preamble in the same commit** — that is the point at which the reservation language starts doing work.
+
+Always verify the served output after deploying, not just `public/robots.txt`. Two directive groups, or any `User-agent` other than `*`, means the rule got switched back on:
 
 ```sh
 curl -s https://jhyn.dev/robots.txt | grep -vE "^\s*#" | grep -v "^$"
