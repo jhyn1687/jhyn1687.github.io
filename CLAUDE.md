@@ -78,6 +78,19 @@ Unit tests (Vitest, jsdom) live beside the code as `*.test.ts` and cover the pur
 
 Uses `@cloudflare/vite-plugin` (the newer Vite Environment API approach) with `v8_viteEnvironmentApi: true` in `react-router.config.ts`. **Do not use `cloudflareDevProxy()`** from `@react-router/dev/vite/cloudflare` — it conflicts with this plugin. The Worker entry is `workers/app.ts`, which injects `{ cloudflare: { env, ctx } }` into the React Router load context.
 
+### Managed robots.txt
+
+Cloudflare [prepends its managed `robots.txt`](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/) before `public/robots.txt`, merging both into one response rather than letting either win. Two consequences:
+
+- The content-signals preamble (including the EU Article 4 reservation of rights) comes from Cloudflare's half, which is why `public/robots.txt` doesn't carry a copy.
+- The managed block **can be configured to emit its own `Content-Signal` with `ai-train=no`, plus `Disallow: /` for named AI crawlers** (ClaudeBot, GPTBot, …). Both are currently off for this zone. Because the managed content is prepended, either would sit _above_ our directives and take precedence — so a dashboard toggle can invert the crawl policy with no change in this repo. If crawlers stop honoring `/AGENTS.md`, check that setting before debugging the file.
+
+Verify the merged output after deploying, not just `public/robots.txt`:
+
+```sh
+curl -s https://jhyn.dev/robots.txt | grep -vE "^\s*#" | grep -v "^$"
+```
+
 ## Theming
 
 Catppuccin Mocha via `@catppuccin/tailwindcss`. The `class="mocha"` on `<html>` (in `root.tsx`) activates the Mocha palette by setting `--catppuccin-color-*` CSS custom properties that cascade to the whole page. All Tailwind color utilities use the `ctp-` prefix (e.g., `text-ctp-text`, `bg-ctp-surface0/40`, `border-ctp-surface1/50`). `@catppuccin/palette` is also imported directly in `RippleBackground.tsx` for JavaScript-side RGB values used in the canvas color table.
