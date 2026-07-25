@@ -23,12 +23,24 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   // Accept: text/html, so they still get the accurate type.
   const wantsHtml = request.headers.get("Accept")?.includes("text/html");
 
+  // The object's own mtime, passed straight through. This file's whole pitch is
+  // that it's the current one, and a date typed into the body would eventually
+  // lie; this can't. ETag rides along so conditional requests work.
+  const lastModified = res.headers.get("Last-Modified");
+  const etag = res.headers.get("ETag");
+
   return new Response(res.body, {
     headers: {
       "Content-Type": wantsHtml
         ? "text/plain; charset=utf-8"
         : "text/markdown; charset=utf-8",
       "Cache-Control": "public, max-age=3600",
+      // Two different bodies' worth of Content-Type come out of one URL above,
+      // so shared caches have to key on Accept or they'll hand an agent the
+      // variant meant for a browser.
+      Vary: "Accept",
+      ...(lastModified && { "Last-Modified": lastModified }),
+      ...(etag && { ETag: etag }),
     },
   });
 }
