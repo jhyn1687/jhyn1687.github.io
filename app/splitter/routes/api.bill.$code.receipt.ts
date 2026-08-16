@@ -34,6 +34,11 @@ export async function loader({ params, context }: Route.LoaderArgs) {
       // Safe to cache privately: the path is unguessable and the object is
       // immutable for a share's life.
       "Cache-Control": "private, max-age=3600",
+      // robots.txt allows this one path so link unfurlers can fetch it for a
+      // shared bill's og:image. Being crawlable isn't meant to make it
+      // findable: a receipt has a card last-4 and an address on it, and has no
+      // business in image search.
+      "X-Robots-Tag": "noindex",
     },
   });
 }
