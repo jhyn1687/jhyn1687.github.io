@@ -44,6 +44,9 @@ export function meta({ data }: Route.MetaArgs) {
     { property: "og:site_name", content: "Splitter" },
     { property: "og:title", content: title },
     { property: "og:url", content: shared.shareUrl },
+    // Stays `summary`, not `summary_large_image`: a receipt is tall and narrow,
+    // and the large-image slot centre-crops to roughly 2:1, which throws away
+    // most of one. The small thumbnail also keeps the amounts as the headline.
     { name: "twitter:card", content: "summary" },
     // A bill with nobody on it has nothing to say here, and an empty
     // description tag makes some unfurlers render a blank line.
@@ -51,6 +54,24 @@ export function meta({ data }: Route.MetaArgs) {
       ? [
           { name: "description", content: description },
           { property: "og:description", content: description },
+        ]
+      : []),
+    // The scanned receipt, when the sharer opted to include one. Absolute URL
+    // because unfurlers don't resolve relative ones, and pointed at the same
+    // proxy the viewer uses, so the image keeps expiring with the share. An
+    // upload that failed leaves `hasReceipt` true and this 404s — unfurlers
+    // then just drop the image, which is the right outcome.
+    ...(shared.hasReceipt
+      ? [
+          {
+            property: "og:image",
+            content: new URL(
+              `/api/bill/${shared.shareCode}/receipt`,
+              shared.shareUrl,
+            ).href,
+          },
+          { property: "og:image:type", content: "image/jpeg" },
+          { property: "og:image:alt", content: `Receipt for ${title}` },
         ]
       : []),
   ];

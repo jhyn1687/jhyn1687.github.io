@@ -48,6 +48,15 @@ Two things this constrains:
 - **Don't set `clientLoader.hydrate`** on that route. It makes React Router treat the route as unloaded during the server render, so `meta` gets `undefined` data and every tag falls back to "Bill not found". The 30-day localStorage cache is written from an effect in the route component instead, which also lands the bill in the sidebar without waiting for a remount.
 - **`/splitter/share/` is no longer disallowed in `robots.txt`** — unfurlers honor it, so blocking crawls blocked previews. The route sends `noindex` instead, which keeps expired links out of search results without hiding them from a preview.
 
+When the share includes a scanned receipt, `og:image` points at `/api/bill/:code/receipt` — the same proxy the viewer uses, so the image still expires with the share rather than becoming a public URL. Two things had to give for that to work, and both are deliberately narrow:
+
+- `robots.txt` carves `Allow: /api/bill/*/receipt` out of the blanket `Disallow: /api/` (longest match wins under [RFC 9309 §2.2.2](https://www.rfc-editor.org/rfc/rfc9309.html#section-2.2.2)). `/api/bill/:code`, which returns the whole bill as JSON, stays closed.
+- The receipt response carries `X-Robots-Tag: noindex`, so being crawlable doesn't make it findable — a receipt has a card last-4 and an address on it.
+
+Worth knowing when weighing changes here: Discord re-hosts what it unfurls on its own CDN, so a receipt pasted into a channel outlives the 30-day expiry there. The sharer opts into the receipt per-share, and anyone in the channel can click through to it anyway, but the "access and expiry are the same thing" property of the proxy route stops at Discord's cache.
+
+`twitter:card` stays `summary` rather than `summary_large_image` — receipts are tall and narrow, and the large-image slot centre-crops to roughly 2:1.
+
 ## API routes
 
 All API routes are in `routes/`. They run server-side on Cloudflare Workers.
