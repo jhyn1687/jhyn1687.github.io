@@ -36,6 +36,8 @@ Allow: /
 # isn't reading prose.
 Disallow: /api/
 
-# shared bills expire after 30 days, so anything indexed here is a dead link by
-# the time someone clicks it.
-Disallow: /splitter/share/
+# shared bills used to be disallowed here — they expire after 30 days, so
+# anything indexed is a dead link by the time someone clicks it. that's now a
+# `noindex` in the page head instead: link unfurlers (discord, slack, imessage)
+# honor robots.txt too, and blocking the fetch blocked the preview that makes
+# a shared bill worth pasting into a group chat.
