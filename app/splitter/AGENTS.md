@@ -39,6 +39,15 @@ SharedBill  = { shareCode, shareUrl, bill, cachedAt, expiresAt }  // cached in l
 6. `confirmShare` → `POST /api/share-bill` → Supabase `bill_shares` table → returns `{ url, code }`
 7. Shared bill is cached in `splitter_shared_bills`; local bill is deleted; user navigates to the read-only shared view
 
+## Link previews
+
+`/splitter/share/:code` is the one splitter route with a **server** loader. Unfurlers (Discord, Slack, iMessage) read the head of the first response and never run JavaScript, so the bill is fetched server-side and `meta` turns it into `og:title` (the bill name) and `og:description` (`Name: $amount`, one line per person — Discord is the only common unfurler that keeps the newlines). `utils/shareMeta.ts` holds that formatting, trimmed to the ~300 characters unfurlers show.
+
+Two things this constrains:
+
+- **Don't set `clientLoader.hydrate`** on that route. It makes React Router treat the route as unloaded during the server render, so `meta` gets `undefined` data and every tag falls back to "Bill not found". The 30-day localStorage cache is written from an effect in the route component instead, which also lands the bill in the sidebar without waiting for a remount.
+- **`/splitter/share/` is no longer disallowed in `robots.txt`** — unfurlers honor it, so blocking crawls blocked previews. The route sends `noindex` instead, which keeps expired links out of search results without hiding them from a preview.
+
 ## API routes
 
 All API routes are in `routes/`. They run server-side on Cloudflare Workers.
@@ -59,21 +68,22 @@ All API routes are in `routes/`. They run server-side on Cloudflare Workers.
 
 ## Key files
 
-| File                              | Role                                                               |
-| --------------------------------- | ------------------------------------------------------------------ |
-| `types.ts`                        | All shared types                                                   |
-| `components/SplitterShell.tsx`    | Root component: all bill state + mutations                         |
-| `components/BillSummary.tsx`      | Per-person breakdown (tax/tip split proportionally by subtotal)    |
-| `hooks/useBillsStore.ts`          | localStorage read/write + share flow + toast                       |
-| `hooks/useReceiptOcr.ts`          | Receipt upload orchestration (server AI → Tesseract fallback)      |
-| `utils/bill.ts`                   | `canShareBill()` validation                                        |
-| `utils/colors.ts`                 | Participant color palette                                          |
-| `utils/parseReceiptText.ts`       | Text → `OcrItem[]` parser (used by both Llama and Tesseract paths) |
-| `routes/splitter.layout.tsx`      | Root layout: sidebar, toast system, `SplitterLayoutContext`        |
-| `routes/splitter.tsx`             | Dashboard: lists local drafts and shared bills                     |
-| `routes/splitter.new.tsx`         | New bill (generates UUID + redirects to `/$billId` on first edit)  |
-| `routes/splitter.$billId.tsx`     | Edit a local bill (clientLoader reads from localStorage)           |
-| `routes/splitter.share.$code.tsx` | View a shared bill (clientLoader fetches from API, caches 30d)     |
+| File                              | Role                                                                   |
+| --------------------------------- | ---------------------------------------------------------------------- |
+| `types.ts`                        | All shared types                                                       |
+| `components/SplitterShell.tsx`    | Root component: all bill state + mutations                             |
+| `components/BillSummary.tsx`      | Per-person breakdown (tax/tip split proportionally by subtotal)        |
+| `hooks/useBillsStore.ts`          | localStorage read/write + share flow + toast                           |
+| `hooks/useReceiptOcr.ts`          | Receipt upload orchestration (server AI → Tesseract fallback)          |
+| `utils/bill.ts`                   | `canShareBill()` validation                                            |
+| `utils/colors.ts`                 | Participant color palette                                              |
+| `utils/parseReceiptText.ts`       | Text → `OcrItem[]` parser (used by both Llama and Tesseract paths)     |
+| `routes/splitter.layout.tsx`      | Root layout: sidebar, toast system, `SplitterLayoutContext`            |
+| `routes/splitter.tsx`             | Dashboard: lists local drafts and shared bills                         |
+| `routes/splitter.new.tsx`         | New bill (generates UUID + redirects to `/$billId` on first edit)      |
+| `routes/splitter.$billId.tsx`     | Edit a local bill (clientLoader reads from localStorage)               |
+| `routes/splitter.share.$code.tsx` | View a shared bill (server loader for unfurls, cached 30d client-side) |
+| `utils/shareMeta.ts`              | Title + per-person description used by link previews                   |
 
 ## URL conventions
 
