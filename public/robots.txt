@@ -36,6 +36,14 @@ Allow: /
 # isn't reading prose.
 Disallow: /api/
 
+# except the receipt image, which is what a shared bill's og:image points at —
+# unfurlers won't fetch what they can't crawl. longest match wins under
+# RFC 9309 §2.2.2, so this beats the Disallow above for that one path and
+# nothing else: /api/bill/:code (the whole bill as json) stays closed.
+# the response itself carries X-Robots-Tag: noindex, so this opens it to
+# preview fetches without opening it to image search.
+Allow: /api/bill/*/receipt
+
 # shared bills used to be disallowed here — they expire after 30 days, so
 # anything indexed is a dead link by the time someone clicks it. that's now a
 # `noindex` in the page head instead: link unfurlers (discord, slack, imessage)
