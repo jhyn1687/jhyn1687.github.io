@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MdAdd, MdChevronRight, MdRefresh, MdRemove } from "react-icons/md";
 import { getReceipt } from "~/splitter/utils/receiptStore";
 import { trimReceiptWhitespace } from "~/splitter/utils/trimReceipt";
@@ -13,6 +13,14 @@ interface ReceiptPreviewProps {
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 4;
 const ZOOM_STEP = 0.5;
+
+/** Where the frame was scrolled, and where the pointer was, when a drag began. */
+interface DragOrigin {
+  pointerX: number;
+  pointerY: number;
+  scrollLeft: number;
+  scrollTop: number;
+}
 
 /** Fetches a same-origin URL to a Blob so it can go through the same trim path. */
 async function fetchBlob(url: string): Promise<Blob | null> {
@@ -29,6 +37,9 @@ export function ReceiptPreview({ billId, imageUrl }: ReceiptPreviewProps) {
   const [url, setUrl] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(true);
   const [zoom, setZoom] = useState(1);
+  const [dragging, setDragging] = useState(false);
+  const frameRef = useRef<HTMLDivElement | null>(null);
+  const dragRef = useRef<DragOrigin | null>(null);
 
   useEffect(() => {
     // No synchronous setUrl(null) here — the previous run's cleanup already
@@ -67,6 +78,43 @@ export function ReceiptPreview({ billId, imageUrl }: ReceiptPreviewProps) {
     setZoom(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, next)));
   }
 
+  // Touch already pans the frame natively, with momentum and rubber-banding, so
+  // only mouse and pen are taken over — there a drag would otherwise do nothing
+  // but select the image.
+  function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    const frame = frameRef.current;
+    if (!frame || event.pointerType === "touch" || event.button !== 0) return;
+    dragRef.current = {
+      pointerX: event.clientX,
+      pointerY: event.clientY,
+      scrollLeft: frame.scrollLeft,
+      scrollTop: frame.scrollTop,
+    };
+    // Capture so a drag that leaves the frame keeps panning until the release.
+    frame.setPointerCapture(event.pointerId);
+    setDragging(true);
+    event.preventDefault();
+  }
+
+  function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    const origin = dragRef.current;
+    const frame = frameRef.current;
+    if (!origin || !frame) return;
+    // The content follows the pointer, so the scroll offset moves against it.
+    frame.scrollLeft = origin.scrollLeft - (event.clientX - origin.pointerX);
+    frame.scrollTop = origin.scrollTop - (event.clientY - origin.pointerY);
+  }
+
+  function endDrag(event: React.PointerEvent<HTMLDivElement>) {
+    if (!dragRef.current) return;
+    dragRef.current = null;
+    setDragging(false);
+    const frame = frameRef.current;
+    if (frame?.hasPointerCapture(event.pointerId)) {
+      frame.releasePointerCapture(event.pointerId);
+    }
+  }
+
   return (
     <div className="overflow-hidden rounded-2xl border border-ctp-surface1/50 bg-ctp-surface0/40">
       <button
@@ -92,13 +140,33 @@ export function ReceiptPreview({ billId, imageUrl }: ReceiptPreviewProps) {
               without scrolling away with the image. */}
           <div className="relative">
             {/* The frame scrolls; zooming widens the image past it so panning is
-                just scrolling. On a wide screen the rail is tall and narrow, so
-                let it fill the viewport height rather than capping it short. */}
-            <div className="thin-scrollbar max-h-80 overflow-auto overscroll-contain rounded-xl border border-ctp-surface1/50 bg-white min-[1160px]:max-h-[calc(100vh-11rem)]">
+                just scrolling. The cap grows with the screen but stays a share
+                of the viewport, so a short window (a landscape phone) never
+                gives the receipt the whole page. On a wide screen the rail is
+                tall and narrow, so let it fill the viewport height instead.
+                The steps are all min-[…] rather than sm:/lg: — Tailwind emits
+                named breakpoints after arbitrary ones, so a named lg: step
+                would outrank the min-[1160px] rail cap above it. */}
+            <div
+              ref={frameRef}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
+              className={[
+                "thin-scrollbar overflow-auto overscroll-contain rounded-xl border border-ctp-surface1/50 bg-white",
+                "max-h-[min(55dvh,20rem)] min-[640px]:max-h-[min(60dvh,26rem)] min-[1024px]:max-h-[min(65dvh,32rem)]",
+                "min-[1160px]:max-h-[calc(100dvh-11rem)]",
+                dragging ? "cursor-grabbing select-none" : "cursor-grab",
+              ].join(" ")}
+            >
               <img
                 src={url}
                 alt="Scanned receipt"
                 style={{ width: `${zoom * 100}%` }}
+                // Native image dragging would start its own drag-and-drop and
+                // swallow the pan.
+                draggable={false}
                 className="block h-auto max-w-none"
               />
             </div>
@@ -138,7 +206,7 @@ export function ReceiptPreview({ billId, imageUrl }: ReceiptPreviewProps) {
             </div>
           </div>
           <p className="mt-2 text-center text-xs text-ctp-overlay0">
-            Zoom in to compare with the items
+            Zoom in and drag to compare with the items
           </p>
         </div>
       )}
