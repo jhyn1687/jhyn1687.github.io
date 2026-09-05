@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { MdAdd, MdChevronRight, MdRefresh, MdRemove } from "react-icons/md";
 import { getReceipt } from "~/splitter/utils/receiptStore";
 import { trimReceiptWhitespace } from "~/splitter/utils/trimReceipt";
@@ -13,6 +13,8 @@ interface ReceiptPreviewProps {
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 4;
 const ZOOM_STEP = 0.5;
+/** Keeps a zoom that is already sitting exactly on a step from skipping one. */
+const STEP_EPSILON = 1e-6;
 
 /** Where the frame was scrolled, and where the pointer was, when a drag began. */
 interface DragOrigin {
@@ -20,6 +22,26 @@ interface DragOrigin {
   pointerY: number;
   scrollLeft: number;
   scrollTop: number;
+}
+
+/** A viewport point a zoom is anchored to, so the content under it stays put. */
+interface Focal {
+  x: number;
+  y: number;
+}
+
+function touchGap(touches: TouchList): number {
+  return Math.hypot(
+    touches[0].clientX - touches[1].clientX,
+    touches[0].clientY - touches[1].clientY,
+  );
+}
+
+function touchMidpoint(touches: TouchList): Focal {
+  return {
+    x: (touches[0].clientX + touches[1].clientX) / 2,
+    y: (touches[0].clientY + touches[1].clientY) / 2,
+  };
 }
 
 /** Fetches a same-origin URL to a Blob so it can go through the same trim path. */
@@ -36,10 +58,19 @@ async function fetchBlob(url: string): Promise<Blob | null> {
 export function ReceiptPreview({ billId, imageUrl }: ReceiptPreviewProps) {
   const [url, setUrl] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(true);
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(MIN_ZOOM);
   const [dragging, setDragging] = useState(false);
   const frameRef = useRef<HTMLDivElement | null>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
   const dragRef = useRef<DragOrigin | null>(null);
+  /** The rendered zoom — whole percentage points, matching the readout. */
+  const zoomRef = useRef(MIN_ZOOM);
+  /**
+   * The unrounded zoom a gesture is working from. Pinch deltas arrive well
+   * under a percentage point at a time, so continuing from the rendered value
+   * would round each one away and leave the gesture feeling stuck.
+   */
+  const gestureZoomRef = useRef(MIN_ZOOM);
 
   useEffect(() => {
     // No synchronous setUrl(null) here — the previous run's cleanup already
@@ -72,11 +103,124 @@ export function ReceiptPreview({ billId, imageUrl }: ReceiptPreviewProps) {
     };
   }, [billId, imageUrl]);
 
-  if (!url) return null;
+  /**
+   * Zooms to an arbitrary scale, keeping whatever is under `focal` — or the
+   * middle of the frame, for the buttons — under it afterwards.
+   */
+  const zoomTo = useCallback((next: number, focal?: Focal) => {
+    const frame = frameRef.current;
+    const image = imageRef.current;
+    const previous = zoomRef.current;
+    const target = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, next));
+    gestureZoomRef.current = target;
+    // Round to whole percentage points so the value always matches the integer
+    // in the readout, and a pinch can't leave 137.4% on screen as "137%".
+    const scale = Math.round(target * 100) / 100;
+    if (!frame || !image || scale === previous) return;
 
-  function changeZoom(next: number) {
-    setZoom(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, next)));
-  }
+    // clientLeft/clientTop step over the border, since scrollLeft/scrollTop are
+    // measured from the padding box.
+    const rect = frame.getBoundingClientRect();
+    const anchorX = focal
+      ? focal.x - rect.left - frame.clientLeft
+      : frame.clientWidth / 2;
+    const anchorY = focal
+      ? focal.y - rect.top - frame.clientTop
+      : frame.clientHeight / 2;
+    // The image keeps its aspect ratio, so both axes scale by the same factor
+    // and one pair of content coordinates repositions the frame on both.
+    const contentX = (frame.scrollLeft + anchorX) / previous;
+    const contentY = (frame.scrollTop + anchorY) / previous;
+
+    zoomRef.current = scale;
+    // Written to the DOM here rather than left to the re-render: the scroll
+    // offsets below only mean anything once the image has its new size, and
+    // going through state would paint one frame at the stale offset first.
+    image.style.width = `${scale * 100}%`;
+    frame.scrollLeft = contentX * scale - anchorX;
+    frame.scrollTop = contentY * scale - anchorY;
+    setZoom(scale);
+  }, []);
+
+  /**
+   * Moves one notch along the step grid. A pinch can land anywhere, so this
+   * snaps rather than adds: 137% goes to 150% or 100%, not 187% or 87%.
+   */
+  const stepZoom = useCallback(
+    (direction: 1 | -1) => {
+      const steps =
+        direction > 0
+          ? Math.floor(zoomRef.current / ZOOM_STEP + STEP_EPSILON) + 1
+          : Math.ceil(zoomRef.current / ZOOM_STEP - STEP_EPSILON) - 1;
+      zoomTo(steps * ZOOM_STEP);
+    },
+    [zoomTo],
+  );
+
+  // Pinch zoom, from a trackpad (a ctrl-modified wheel event) or two fingers.
+  // Both have to be preventDefault'd or the browser zooms the whole page
+  // instead, and React attaches wheel and touchmove passively at the root —
+  // where preventDefault is a no-op — so these listeners go on the element.
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame) return;
+
+    function handleWheel(event: WheelEvent) {
+      // A plain wheel still scrolls the frame; only the pinch gesture zooms.
+      if (!event.ctrlKey) return;
+      event.preventDefault();
+      // deltaY here is a zoom velocity rather than a distance. Exponentiating
+      // it keeps the gesture feeling the same at 100% and at 400%, and the
+      // clamp stops one flung event from crossing the whole range.
+      const delta = Math.max(-50, Math.min(50, event.deltaY));
+      zoomTo(gestureZoomRef.current * Math.exp(-delta / 100), {
+        x: event.clientX,
+        y: event.clientY,
+      });
+    }
+
+    // Baselines for the pinch in progress: comparing against where the fingers
+    // started, rather than the previous move, keeps rounding from accumulating.
+    let startGap = 0;
+    let startZoom = MIN_ZOOM;
+
+    function handleTouchStart(event: TouchEvent) {
+      if (event.touches.length !== 2) return;
+      startGap = touchGap(event.touches);
+      startZoom = gestureZoomRef.current;
+    }
+
+    function handleTouchMove(event: TouchEvent) {
+      if (event.touches.length !== 2 || startGap === 0) return;
+      event.preventDefault();
+      zoomTo(
+        (startZoom * touchGap(event.touches)) / startGap,
+        touchMidpoint(event.touches),
+      );
+    }
+
+    function handleTouchEnd(event: TouchEvent) {
+      // Lifting either finger ends the pinch; a second one landing again starts
+      // a fresh one from the current zoom.
+      if (event.touches.length < 2) startGap = 0;
+    }
+
+    frame.addEventListener("wheel", handleWheel, { passive: false });
+    frame.addEventListener("touchstart", handleTouchStart, { passive: true });
+    frame.addEventListener("touchmove", handleTouchMove, { passive: false });
+    frame.addEventListener("touchend", handleTouchEnd, { passive: true });
+    frame.addEventListener("touchcancel", handleTouchEnd, { passive: true });
+    return () => {
+      frame.removeEventListener("wheel", handleWheel);
+      frame.removeEventListener("touchstart", handleTouchStart);
+      frame.removeEventListener("touchmove", handleTouchMove);
+      frame.removeEventListener("touchend", handleTouchEnd);
+      frame.removeEventListener("touchcancel", handleTouchEnd);
+    };
+    // The frame is only in the tree once there's an image and the panel is open.
+  }, [url, expanded, zoomTo]);
+
+  if (!url) return null;
 
   // Touch already pans the frame natively, with momentum and rubber-banding, so
   // only mouse and pen are taken over — there a drag would otherwise do nothing
@@ -146,7 +290,11 @@ export function ReceiptPreview({ billId, imageUrl }: ReceiptPreviewProps) {
                 tall and narrow, so let it fill the viewport height instead.
                 The steps are all min-[…] rather than sm:/lg: — Tailwind emits
                 named breakpoints after arbitrary ones, so a named lg: step
-                would outrank the min-[1160px] rail cap above it. */}
+                would outrank the min-[1160px] rail cap above it.
+
+                touch-pan-x/y keeps one-finger scrolling native while handing
+                the two-finger pinch to the listeners above; without it the
+                browser claims the gesture and page-zooms. */}
             <div
               ref={frameRef}
               onPointerDown={handlePointerDown}
@@ -154,13 +302,14 @@ export function ReceiptPreview({ billId, imageUrl }: ReceiptPreviewProps) {
               onPointerUp={endDrag}
               onPointerCancel={endDrag}
               className={[
-                "thin-scrollbar overflow-auto overscroll-contain rounded-xl border border-ctp-surface1/50 bg-white",
+                "thin-scrollbar touch-pan-x touch-pan-y overflow-auto overscroll-contain rounded-xl border border-ctp-surface1/50 bg-white",
                 "max-h-[min(55dvh,20rem)] min-[640px]:max-h-[min(60dvh,26rem)] min-[1024px]:max-h-[min(65dvh,32rem)]",
                 "min-[1160px]:max-h-[calc(100dvh-11rem)]",
                 dragging ? "cursor-grabbing select-none" : "cursor-grab",
               ].join(" ")}
             >
               <img
+                ref={imageRef}
                 src={url}
                 alt="Scanned receipt"
                 style={{ width: `${zoom * 100}%` }}
@@ -175,7 +324,7 @@ export function ReceiptPreview({ billId, imageUrl }: ReceiptPreviewProps) {
             <div className="absolute right-2 top-2 flex items-center gap-0.5 rounded-lg border border-ctp-surface1/50 bg-ctp-base/90 p-0.5 shadow-md backdrop-blur-sm">
               <button
                 type="button"
-                onClick={() => changeZoom(zoom - ZOOM_STEP)}
+                onClick={() => stepZoom(-1)}
                 disabled={zoom <= MIN_ZOOM}
                 className="rounded-md p-1.5 text-ctp-subtext0 transition-colors hover:bg-ctp-surface1 hover:text-ctp-text disabled:opacity-40 disabled:hover:bg-transparent"
                 title="Zoom out"
@@ -187,7 +336,7 @@ export function ReceiptPreview({ billId, imageUrl }: ReceiptPreviewProps) {
               </span>
               <button
                 type="button"
-                onClick={() => changeZoom(zoom + ZOOM_STEP)}
+                onClick={() => stepZoom(1)}
                 disabled={zoom >= MAX_ZOOM}
                 className="rounded-md p-1.5 text-ctp-subtext0 transition-colors hover:bg-ctp-surface1 hover:text-ctp-text disabled:opacity-40 disabled:hover:bg-transparent"
                 title="Zoom in"
@@ -196,8 +345,8 @@ export function ReceiptPreview({ billId, imageUrl }: ReceiptPreviewProps) {
               </button>
               <button
                 type="button"
-                onClick={() => changeZoom(1)}
-                disabled={zoom === 1}
+                onClick={() => zoomTo(MIN_ZOOM)}
+                disabled={zoom === MIN_ZOOM}
                 className="rounded-md p-1.5 text-ctp-subtext0 transition-colors hover:bg-ctp-surface1 hover:text-ctp-text disabled:opacity-40 disabled:hover:bg-transparent"
                 title="Reset zoom"
               >
