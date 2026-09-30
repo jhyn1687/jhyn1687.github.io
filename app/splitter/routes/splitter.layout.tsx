@@ -2,6 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { Outlet } from "react-router";
 import { BillSidebar } from "~/splitter/components/BillSidebar";
 import { useBillsStore } from "~/splitter/hooks/useBillsStore";
+import type { Route } from "./+types/splitter.layout";
+
+export const links: Route.LinksFunction = () => [
+  { rel: "icon", type: "image/svg+xml", href: "/splitter/logo-dark.svg" },
+  { rel: "apple-touch-icon", href: "/splitter/apple-touch-icon.png" },
+];
 
 function Toast({
   text,

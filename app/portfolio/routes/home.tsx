@@ -15,7 +15,10 @@ export function meta(_args: Route.MetaArgs) {
 
 // Machine-readable counterpart to the footer link. Scoped to `/` rather than
 // root.tsx because it's only true here — /splitter has no markdown equivalent.
+// The favicon is scoped here too, since /splitter declares its own; pages that
+// declare none (error pages) still get /favicon.ico by browser default.
 export const links: Route.LinksFunction = () => [
+  { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
   { rel: "alternate", type: "text/markdown", href: "/AGENTS.md" },
 ];
 

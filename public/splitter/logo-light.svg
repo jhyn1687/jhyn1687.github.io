@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="splitter">
+  <defs>
+    <mask id="cut" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+      <rect width="512" height="512" fill="#fff"/>
+      <rect x="241.0" y="192" width="30" height="128" fill="#000"/>
+    </mask>
+  </defs>
+  <rect width="512" height="512" fill="#eff1f5"/>
+  <g fill="none" stroke-linecap="round">
+    <g mask="url(#cut)">
+      <path d="M311.4 160.0A64 64 0 1 0 250.4 255.8" stroke="#4c4f69" stroke-width="36"/>
+      <path d="M261.6 256.2A64 64 0 1 1 200.6 352.0" stroke="#179299" stroke-width="36"/>
+    </g>
+    <path d="M256 72.0V79.0" stroke="#4c4f69" stroke-width="30"/>
+    <path d="M256 440.0V433.0" stroke="#179299" stroke-width="30"/>
+  </g>
+</svg>
