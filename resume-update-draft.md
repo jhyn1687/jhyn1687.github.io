@@ -22,14 +22,15 @@ and full resume lines would wrap to 3–4 lines on mobile.
 
 ## 1. Hero (`hero`): `props.bio`
 
-Markdown paragraphs. `actions` are left untouched.
+Markdown paragraphs, lowercase to match your voice (brand names stay capitalized, as in
+`[**Block**](//block.xyz)`). `actions` are left untouched.
 
 ```json
 [
-  "Hey there! I'm **Tony**, a Software Engineer at **Block**, where I build mobile and full-stack products for Square.",
-  "Before that I spent two years at **Roblox** working on creation and sharing, including the launch of Roblox Moments.",
-  "Outside of work I build small things on the edge, like [2nty](https://2nty.app), a daily Twenty Questions game, and [Splitter](/splitter), a no-login bill splitter.",
-  "Check out what I've worked on below, or reach out via email."
+  "hey there! i'm **tony**, a software engineer at [**Block**](//block.xyz).",
+  "these days i build mobile and full-stack products for Square. before that, i spent two years at **Roblox** working on creation and sharing, including the launch of Roblox Moments.",
+  "outside of work i build small things on the edge, like [2nty](https://2nty.app), a daily twenty questions game, and [splitter](/splitter), a no-login bill splitter.",
+  "check out what i've worked on below, or reach out via email."
 ]
 ```
 
@@ -111,10 +112,10 @@ begin;
 
 update sections
 set props = jsonb_set(props, '{bio}', $json$[
-  "Hey there! I'm **Tony**, a Software Engineer at **Block**, where I build mobile and full-stack products for Square.",
-  "Before that I spent two years at **Roblox** working on creation and sharing, including the launch of Roblox Moments.",
-  "Outside of work I build small things on the edge, like [2nty](https://2nty.app), a daily Twenty Questions game, and [Splitter](/splitter), a no-login bill splitter.",
-  "Check out what I've worked on below, or reach out via email."
+  "hey there! i'm **tony**, a software engineer at [**Block**](//block.xyz).",
+  "these days i build mobile and full-stack products for Square. before that, i spent two years at **Roblox** working on creation and sharing, including the launch of Roblox Moments.",
+  "outside of work i build small things on the edge, like [2nty](https://2nty.app), a daily twenty questions game, and [splitter](/splitter), a no-login bill splitter.",
+  "check out what i've worked on below, or reach out via email."
 ]$json$::jsonb)
 where type = 'hero';
 
