@@ -3,27 +3,23 @@
 Portfolio content lives in the Supabase `sections` table (`props` jsonb), so
 these changes are data, not code. Nothing here needs a redeploy.
 
-> **I couldn't see the live content** — jhyn.dev and Supabase aren't reachable
-> from the session that drafted this. Dump the current rows first and diff
-> against the drafts below before running anything, so we don't drop an item
-> that's on the site but not on the resume.
->
-> ```sql
-> select id, type, "order", visible, jsonb_pretty(props) from sections order by "order";
-> ```
+Style follows the live content: lowercase, short bullets, no trailing periods,
+acronyms (UI, DAU, POS) in caps. Dates and `description` aren't rendered by the
+components, so they're left out (or included only for future use).
 
-Shapes follow the components: `ExperienceCard` renders `job_title`, `company`,
-`highlights`, `actions`, `current`; `ProjectCard` renders `title`, `subtitle`,
-image, `actions`. **Dates and `description` aren't rendered** (description is in
-the type but unused), so I've kept highlights short. They're `text-sm` bullets
-and full resume lines would wrap to 3–4 lines on mobile.
+| Section | Based on live data? |
+| --- | --- |
+| hero `bio` | no, but only `bio` is replaced; `actions` untouched |
+| `experience_list` | **yes**, diffed against what you pasted |
+| `project_list` | **no**. Dump it and check before running |
+
+```sql
+select id, type, jsonb_pretty(props) from sections where type in ('hero', 'project_list');
+```
 
 ---
 
 ## 1. Hero (`hero`): `props.bio`
-
-Markdown paragraphs, lowercase to match your voice (brand names stay capitalized, as in
-`[**Block**](//block.xyz)`). `actions` are left untouched.
 
 ```json
 [
@@ -36,76 +32,117 @@ Markdown paragraphs, lowercase to match your voice (brand names stay capitalized
 
 ## 2. Experience (`experience_list`): `props.children`
 
+Changes vs. live:
+
+- **block:** replaces "building in progress..." with four bullets from the resume.
+- **roblox:** adds the two stats from the resume (1.68M DAU, 15% of sales). The
+  content-sharing bullet keeps your wording: "added desktop support" is more
+  specific than the resume's "worked on".
+- **crbm @ uw, shapelab @ uw:** unchanged (not on the resume, kept as-is).
+
 ```json
 [
   {
-    "job_title": "Software Engineer",
-    "company": "Block",
+    "actions": [],
+    "company": "block",
     "current": true,
+    "job_title": "software engineer",
     "highlights": [
-      "Built the mobile foundation for Square's Bundled Releases: cross-platform feature flags for coordinated releases, plus in-app release notes and scheduling.",
-      "Designed and built the next-gen platform for writing and publishing those release notes, with PM approvals, localization, version history, and CMS integrations.",
-      "Led mobile architecture for Managerbot with a hybrid webview/native approach, and shipped native iOS across POS verticals.",
-      "Shipped lending and Bill Pay features across iOS, Android, and backend, reducing payment failures and bringing mobile to parity with the web Dashboard."
-    ],
-    "actions": []
+      "built the mobile foundation for square's bundled releases: feature flags, in-app release notes, and scheduling",
+      "designed and built the platform that writes and publishes those release notes",
+      "led mobile architecture for managerbot with a hybrid webview/native approach across POS verticals",
+      "shipped lending and bill pay features across iOS, android, and backend"
+    ]
   },
   {
-    "job_title": "Software Engineer",
-    "company": "Roblox",
-    "current": false,
-    "highlights": [
-      "Led front-end for the Roblox Moments showcase (feed, creation flow, and editing tools like text overlay), launching to a peak of 1.68M DAU.",
-      "Built On-Platform Content Sharing, letting users post and share in-experience Captures across Roblox.",
-      "Implemented Inspect & Buy for The Haunt, driving 15% of total sales during the seasonal event."
+    "actions": [
+      {
+        "href": "//about.roblox.com/newsroom/2025/09/roblox-moments-user-generated-discovery",
+        "icon": "link",
+        "type": "link",
+        "label": "roblox moments"
+      }
     ],
-    "actions": []
+    "company": "roblox",
+    "job_title": "software engineer",
+    "highlights": [
+      "led front-end development efforts for the roblox moments showcase experience, peaking at 1.68M DAU",
+      "added desktop support for the on-platform content sharing project",
+      "implemented inspect & buy for the haunt, contributing 15% of total sales during the seasonal event"
+    ]
+  },
+  {
+    "actions": [
+      {
+        "href": "//reproducibilityportal.org",
+        "icon": "link",
+        "type": "link",
+        "label": "reproducibility portal"
+      }
+    ],
+    "company": "crbm @ uw",
+    "job_title": "software engineer",
+    "highlights": [
+      "designed and developed a web UI for biology researchers to access published articles and associated models/simulation in biosimulations"
+    ]
+  },
+  {
+    "actions": [
+      {
+        "href": "//depts.washington.edu/shapelab",
+        "icon": "link",
+        "type": "link",
+        "label": "lab website"
+      }
+    ],
+    "company": "shapelab @ uw",
+    "job_title": "student assistant",
+    "highlights": [
+      "designed server infrastructure",
+      "rebuilt lab website",
+      "setup and maintain on-site nas"
+    ]
   }
 ]
 ```
 
-If the live Roblox entry already has `actions` (e.g. a Moments link), carry
-them over. Same for any older roles that aren't on the resume. Append them
-rather than deleting them.
-
 ## 3. Projects (`project_list`): `props.children`
 
-2nty is new. Splitter is probably already listed, so keep its existing
-`image_path` and `actions` if they differ from the draft.
+Not yet checked against live data. 2nty is new. Splitter is probably already
+listed, so keep its live `image_path` and `actions` over these.
 
 ```json
 [
   {
     "title": "2nty",
-    "subtitle": "Daily Twenty Questions game",
-    "description": "A daily Twenty Questions game on Cloudflare Workers and Durable Objects, with shared answer caching, signed game tokens, and live crowd stats.",
+    "subtitle": "daily twenty questions game",
+    "description": "a daily twenty questions game on cloudflare workers and durable objects, with shared answer caching, signed game tokens, and live crowd stats",
     "image_path": "2nty.png",
     "actions": [
-      { "type": "link", "label": "Play", "href": "https://2nty.app", "icon": "external-link" }
+      { "type": "link", "label": "play", "href": "//2nty.app", "icon": "external-link" }
     ]
   },
   {
-    "title": "Splitter",
-    "subtitle": "No-login bill splitter",
-    "description": "Receipt photos to line items with a vision model (in-browser OCR fallback), and expiring share links with rich previews.",
+    "title": "splitter",
+    "subtitle": "no-login bill splitter",
+    "description": "receipt photos to line items with a vision model (in-browser OCR fallback), and expiring share links with rich previews",
     "image_path": "splitter.png",
     "actions": [
-      { "type": "link", "label": "Open", "href": "/splitter", "icon": "external-link" }
+      { "type": "link", "label": "open", "href": "/splitter", "icon": "external-link" }
     ]
   }
 ]
 ```
 
 `image_path` resolves against the public `images` bucket. Upload a `2nty.png`
-first, or set it to `null` and the card renders without an image. (`splitter.png`
-is a guess; use whatever the live row has.)
+first, or set it to `null` and the card renders without an image.
+(`splitter.png` is a guess.)
 
 ---
 
-## SQL to apply (after diffing)
+## SQL to apply
 
-Dollar-quoted so apostrophes don't need escaping. Merge in anything from the
-dump you want to keep before running.
+Dollar-quoted so apostrophes don't need escaping.
 
 ```sql
 begin;
@@ -122,49 +159,88 @@ where type = 'hero';
 update sections
 set props = jsonb_set(props, '{children}', $json$[
   {
-    "job_title": "Software Engineer",
-    "company": "Block",
+    "actions": [],
+    "company": "block",
     "current": true,
+    "job_title": "software engineer",
     "highlights": [
-      "Built the mobile foundation for Square's Bundled Releases: cross-platform feature flags for coordinated releases, plus in-app release notes and scheduling.",
-      "Designed and built the next-gen platform for writing and publishing those release notes, with PM approvals, localization, version history, and CMS integrations.",
-      "Led mobile architecture for Managerbot with a hybrid webview/native approach, and shipped native iOS across POS verticals.",
-      "Shipped lending and Bill Pay features across iOS, Android, and backend, reducing payment failures and bringing mobile to parity with the web Dashboard."
-    ],
-    "actions": []
+      "built the mobile foundation for square's bundled releases: feature flags, in-app release notes, and scheduling",
+      "designed and built the platform that writes and publishes those release notes",
+      "led mobile architecture for managerbot with a hybrid webview/native approach across POS verticals",
+      "shipped lending and bill pay features across iOS, android, and backend"
+    ]
   },
   {
-    "job_title": "Software Engineer",
-    "company": "Roblox",
-    "current": false,
-    "highlights": [
-      "Led front-end for the Roblox Moments showcase (feed, creation flow, and editing tools like text overlay), launching to a peak of 1.68M DAU.",
-      "Built On-Platform Content Sharing, letting users post and share in-experience Captures across Roblox.",
-      "Implemented Inspect & Buy for The Haunt, driving 15% of total sales during the seasonal event."
+    "actions": [
+      {
+        "href": "//about.roblox.com/newsroom/2025/09/roblox-moments-user-generated-discovery",
+        "icon": "link",
+        "type": "link",
+        "label": "roblox moments"
+      }
     ],
-    "actions": []
+    "company": "roblox",
+    "job_title": "software engineer",
+    "highlights": [
+      "led front-end development efforts for the roblox moments showcase experience, peaking at 1.68M DAU",
+      "added desktop support for the on-platform content sharing project",
+      "implemented inspect & buy for the haunt, contributing 15% of total sales during the seasonal event"
+    ]
+  },
+  {
+    "actions": [
+      {
+        "href": "//reproducibilityportal.org",
+        "icon": "link",
+        "type": "link",
+        "label": "reproducibility portal"
+      }
+    ],
+    "company": "crbm @ uw",
+    "job_title": "software engineer",
+    "highlights": [
+      "designed and developed a web UI for biology researchers to access published articles and associated models/simulation in biosimulations"
+    ]
+  },
+  {
+    "actions": [
+      {
+        "href": "//depts.washington.edu/shapelab",
+        "icon": "link",
+        "type": "link",
+        "label": "lab website"
+      }
+    ],
+    "company": "shapelab @ uw",
+    "job_title": "student assistant",
+    "highlights": [
+      "designed server infrastructure",
+      "rebuilt lab website",
+      "setup and maintain on-site nas"
+    ]
   }
 ]$json$::jsonb)
 where type = 'experience_list';
 
+-- project_list: check the live row first (see the query at the top).
 update sections
 set props = jsonb_set(props, '{children}', $json$[
   {
     "title": "2nty",
-    "subtitle": "Daily Twenty Questions game",
-    "description": "A daily Twenty Questions game on Cloudflare Workers and Durable Objects, with shared answer caching, signed game tokens, and live crowd stats.",
+    "subtitle": "daily twenty questions game",
+    "description": "a daily twenty questions game on cloudflare workers and durable objects, with shared answer caching, signed game tokens, and live crowd stats",
     "image_path": "2nty.png",
     "actions": [
-      { "type": "link", "label": "Play", "href": "https://2nty.app", "icon": "external-link" }
+      { "type": "link", "label": "play", "href": "//2nty.app", "icon": "external-link" }
     ]
   },
   {
-    "title": "Splitter",
-    "subtitle": "No-login bill splitter",
-    "description": "Receipt photos to line items with a vision model (in-browser OCR fallback), and expiring share links with rich previews.",
+    "title": "splitter",
+    "subtitle": "no-login bill splitter",
+    "description": "receipt photos to line items with a vision model (in-browser OCR fallback), and expiring share links with rich previews",
     "image_path": "splitter.png",
     "actions": [
-      { "type": "link", "label": "Open", "href": "/splitter", "icon": "external-link" }
+      { "type": "link", "label": "open", "href": "/splitter", "icon": "external-link" }
     ]
   }
 ]$json$::jsonb)
@@ -172,10 +248,6 @@ where type = 'project_list';
 
 commit;
 ```
-
-> The `project_list` statement is the most likely to overwrite something.
-> Check that the live Splitter row's `image_path` and `actions` match before
-> running it, along with any other projects you want to keep.
 
 ---
 
@@ -186,9 +258,9 @@ commit;
 - **`/AGENTS.md`:** that briefing is also stored in the `files` bucket. If it
   lists projects or roles, add 2nty and the Block details. Per CLAUDE.md, if
   the prose changes, re-check that `use=full` in `robots.txt` still fits.
-- **`/llms.txt`:** generated in `app/files/routes/llms.txt.ts`. It already says
-  "software engineer at block". 2nty is off-site so it isn't a route, but it
-  could go under an "elsewhere" heading. That's a code change. Say the word.
+- **`/llms.txt`:** generated in `app/files/routes/llms.txt.ts`. 2nty is
+  off-site so it isn't a route, but it could go under an "elsewhere" heading.
+  That's a code change.
 
 ## Resume nits spotted while drafting
 
